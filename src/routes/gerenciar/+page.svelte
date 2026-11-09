@@ -25,6 +25,7 @@
 
 	const linkCount = $derived(hub.items.filter((item) => item.type === 'link').length);
 	const appCount = $derived(hub.items.filter((item) => item.type === 'app').length);
+	const sortedCategories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
 
 	const typeLabels: Record<string, string> = {
 		rss: 'RSS / Atom',
@@ -125,13 +126,21 @@
 	}
 
 	function itemsOf(type: 'link' | 'app'): HubItem[] {
+		const categoryOrder = (id: string) =>
+			hub.categories.find((category) => category.id === id)?.order ?? 0;
+		const groupOrder = (id?: string) => {
+			if (!id) return 9999;
+			return hub.groups.find((group) => group.id === id)?.order ?? 0;
+		};
+
 		return hub.items
 			.filter((item) => item.type === type)
-			.sort((a, b) => {
-				const catA = hub.categories.find((category) => category.id === a.categoryId)?.order ?? 0;
-				const catB = hub.categories.find((category) => category.id === b.categoryId)?.order ?? 0;
-				return catA - catB || a.order - b.order;
-			});
+			.sort(
+				(a, b) =>
+					categoryOrder(a.categoryId) - categoryOrder(b.categoryId) ||
+					groupOrder(a.groupId) - groupOrder(b.groupId) ||
+					a.order - b.order
+			);
 	}
 
 	// Exportar / importar
@@ -384,14 +393,13 @@
 	</div>
 {/if}
 
-<div class="tabs" role="tablist" aria-label="Seções do gerenciador">
+<div class="tabs" aria-label="Seções do gerenciador">
 	{#each tabs as entry (entry.id)}
 		<button
 			class="tab"
 			class:active={tab === entry.id}
 			type="button"
-			role="tab"
-			aria-selected={tab === entry.id}
+			aria-current={tab === entry.id ? 'page' : undefined}
 			onclick={() => (tab = entry.id)}
 		>
 			{entry.label}
@@ -539,7 +547,7 @@
 	</div>
 {:else if tab === 'categorias'}
 	<div class="manage-list">
-		{#each hub.categories as category (category.id)}
+		{#each sortedCategories as category (category.id)}
 			<div class="manage-row">
 				<span class="dot" style="background: {category.color}; width: 12px; height: 12px"></span>
 				<span class="manage-main">

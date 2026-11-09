@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { discoverFeedUrl } from '#lib/feed/discover';
+import { fetchPublicText } from '#lib/net/safe-fetch';
 import type { RequestHandler } from './$types';
 
 const MAX_RESPONSE_BYTES = 5_000_000;
@@ -24,32 +25,13 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: false, error: 'URL inválida.' }, { status: 400 });
 	}
 
-	if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-		return json({ ok: false, error: 'Use uma URL http:// ou https://.' }, { status: 400 });
-	}
-
 	try {
-		const response = await fetch(parsed.toString(), {
-			headers: {
-				'user-agent': 'MeuHub/0.1 (hub pessoal local)',
-				accept: 'text/html, application/rss+xml, application/atom+xml, application/xml, */*'
-			},
-			signal: AbortSignal.timeout(10_000)
+		const { text, finalUrl } = await fetchPublicText(parsed.toString(), {
+			maxBytes: MAX_RESPONSE_BYTES,
+			timeoutMs: 10_000
 		});
+		const feedUrl = discoverFeedUrl(text, finalUrl);
 
-		if (!response.ok) {
-			return json(
-				{ ok: false, error: `A página respondeu HTTP ${response.status}.` },
-				{ status: 502 }
-			);
-		}
-
-		const text = await response.text();
-		if (text.length > MAX_RESPONSE_BYTES) {
-			return json({ ok: false, error: 'Resposta muito grande.' }, { status: 502 });
-		}
-
-		const feedUrl = discoverFeedUrl(text, parsed.toString());
 		if (!feedUrl) {
 			return json(
 				{ ok: false, error: 'Nenhum feed RSS/Atom encontrado nesta página.' },

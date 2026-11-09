@@ -50,7 +50,10 @@ export interface SourceInput {
 	matchMode: MatchMode;
 }
 
-export type SourcePatch = Partial<Omit<SourceInput, 'type'>> & { type?: FeedSource['type'] };
+export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId'>> & {
+	type?: FeedSource['type'];
+	groupId?: string | null;
+};
 
 export type CategoryInput = Pick<Category, 'name' | 'color'>;
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -160,7 +163,12 @@ export function moveItem(hub: HubData, id: string, direction: 'up' | 'down'): Hu
 	if (!target) return hub;
 
 	const siblings = hub.items
-		.filter((item) => item.categoryId === target.categoryId && item.groupId === target.groupId)
+		.filter(
+			(item) =>
+				item.categoryId === target.categoryId &&
+				item.groupId === target.groupId &&
+				item.type === target.type
+		)
 		.sort((a, b) => a.order - b.order);
 
 	const index = siblings.findIndex((item) => item.id === id);
@@ -204,8 +212,26 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 		...hub,
 		feedSources: hub.feedSources.map((source) => {
 			if (source.id !== id) return source;
-			const next: FeedSource = { ...source, ...patch };
-			if (patch.groupId === null) delete next.groupId;
+
+			const next: FeedSource = {
+				...source,
+				type: patch.type ?? source.type,
+				name: patch.name ?? source.name,
+				target: patch.target ?? source.target,
+				categoryId: patch.categoryId ?? source.categoryId,
+				intervalMinutes: patch.intervalMinutes ?? source.intervalMinutes,
+				enabled: patch.enabled ?? source.enabled,
+				include: patch.include ?? source.include,
+				exclude: patch.exclude ?? source.exclude,
+				matchMode: patch.matchMode ?? source.matchMode
+			};
+
+			if (patch.groupId === null) {
+				delete next.groupId;
+			} else if (patch.groupId !== undefined) {
+				next.groupId = patch.groupId;
+			}
+
 			return next;
 		})
 	};
@@ -227,7 +253,10 @@ export function toggleSource(hub: HubData, id: string): HubData {
 export function addCategory(hub: HubData, input: CategoryInput): HubData {
 	const id = uniqueId(slugify(input.name), new Set(hub.categories.map((category) => category.id)));
 	const order = hub.categories.reduce((max, category) => Math.max(max, category.order), 0) + 1;
-	return { ...hub, categories: [...hub.categories, { id, ...input, order }] };
+	return {
+		...hub,
+		categories: [...hub.categories, { id, name: input.name, color: input.color, order }]
+	};
 }
 
 export function removeCategory(hub: HubData, id: string): HubData {
@@ -247,7 +276,13 @@ export function updateCategory(hub: HubData, id: string, patch: Partial<Category
 	return {
 		...hub,
 		categories: hub.categories.map((category) =>
-			category.id === id ? { ...category, ...patch } : category
+			category.id === id
+				? {
+						...category,
+						name: patch.name ?? category.name,
+						color: patch.color ?? category.color
+					}
+				: category
 		)
 	};
 }
@@ -277,7 +312,19 @@ export function moveCategory(hub: HubData, id: string, direction: 'up' | 'down')
 export function addSavedFilter(hub: HubData, input: SavedFilterInput): HubData {
 	const base = input.label || input.include[0] || input.exclude[0] || 'filtro';
 	const id = uniqueId(slugify(base), new Set(hub.savedFilters.map((filter) => filter.id)));
-	return { ...hub, savedFilters: [...hub.savedFilters, { id, ...input }] };
+	return {
+		...hub,
+		savedFilters: [
+			...hub.savedFilters,
+			{
+				id,
+				label: input.label,
+				include: input.include,
+				exclude: input.exclude,
+				matchMode: input.matchMode
+			}
+		]
+	};
 }
 
 export function removeSavedFilter(hub: HubData, id: string): HubData {

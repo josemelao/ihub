@@ -233,7 +233,7 @@
 				>
 					Tudo
 				</button>
-				{#each categories as category (category.id)}
+				{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
 					<button
 						class="chip"
 						class:active={categoryFilter === category.id}

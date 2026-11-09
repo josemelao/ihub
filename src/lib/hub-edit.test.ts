@@ -14,7 +14,10 @@ import {
 	updateCategory,
 	updateItem,
 	updateSource,
-	moveCategory
+	moveCategory,
+	type CategoryInput,
+	type SavedFilterInput,
+	type SourcePatch
 } from './hub-edit';
 import { parseHub } from './schema';
 import type { HubData } from './types';
@@ -138,6 +141,17 @@ describe('moveItem', () => {
 		const hub = moveItem(base(), 'darktide-reddit', 'up');
 		expect(hub.items.find((item) => item.id === 'darktide-reddit')?.order).toBe(1);
 	});
+
+	it('não troca item com outro tipo', () => {
+		const withApp = addApp(base(), {
+			name: 'App',
+			launchValue: 'steam://run/1',
+			categoryId: 'jogos',
+			groupId: 'darktide'
+		});
+		const moved = moveItem(withApp, 'app', 'up');
+		expect(moved.items.find((item) => item.id === 'app')?.order).toBe(3);
+	});
 });
 
 describe('fontes', () => {
@@ -214,5 +228,38 @@ describe('categorias e filtros', () => {
 
 		const removed = removeSavedFilter(hub, 'hotfix');
 		expect(removed.savedFilters).toHaveLength(0);
+	});
+
+	it('ignora id e order injetados ao criar categoria', () => {
+		const hub = addCategory(base(), {
+			name: 'Leitura',
+			color: '#E58BC0',
+			id: 'injetado',
+			order: 99
+		} as CategoryInput);
+		const created = hub.categories.find((category) => category.name === 'Leitura');
+		expect(created?.id).toBe('leitura');
+		expect(created?.order).toBe(3);
+	});
+
+	it('ignora id injetado ao criar filtro', () => {
+		const hub = addSavedFilter(base(), {
+			label: 'beta',
+			include: ['beta'],
+			exclude: [],
+			matchMode: 'any',
+			id: 'injetado'
+		} as SavedFilterInput);
+		expect(hub.savedFilters[0].id).toBe('beta');
+	});
+
+	it('remove o grupo da fonte quando groupId é null', () => {
+		const hub = updateSource(base(), 'reddit-patch', { groupId: null });
+		expect(hub.feedSources[0].groupId).toBeUndefined();
+	});
+
+	it('não permite trocar o id da fonte via patch', () => {
+		const hub = updateSource(base(), 'reddit-patch', { id: 'outro' } as SourcePatch);
+		expect(hub.feedSources[0].id).toBe('reddit-patch');
 	});
 });

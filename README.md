@@ -4,8 +4,7 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)**, **M3 (feed)** e **M4 (painel de edição)**: concluídos.
-- **M5 (acabamento)**: próximo marco.
+- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)**, **M3 (feed)**, **M4 (painel de edição)** e **M5 (acabamento)**: concluídos.
 - Os dados iniciais vêm dos mockups de referência (categorias, grupos, atalhos fixados, fontes e filtros salvos).
 
 ## Stack
@@ -76,7 +75,7 @@ Em **Gerenciar**, as abas são funcionais:
 
 - **Fontes do feed**: adicionar, editar, remover e ligar/desligar; status de cada fonte.
 - **Links** e **Apps do PC**: adicionar, editar, remover e reordenar (↑/↓).
-- **Categorias**: adicionar e remover (bloqueia se estiver em uso).
+- **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso).
 - **Regras do feed**: adicionar/remover filtros salvos.
 
 O botão **Adicionar** abre um painel lateral com formulário específico. Para fontes RSS, o botão **Detectar** procura automaticamente o feed na página informada. Toda alteração é validada pelo Zod e gravada no `hub.json` de forma atômica, com backup `.bak`.
@@ -159,4 +158,15 @@ Eles não fazem parte do build do app.
 - Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
 - O feed só busca as fontes cadastradas no `hub.json`, com timeout, User-Agent identificado e limite de tamanho.
 - Sem login, sem versão online, sem tema claro.
-- Escrita de links/fontes pela interface é validada e restrita ao `hub.json`; renomear/reordenar categorias fica para o M5.
+- Escrita de links/fontes pela interface é validada e restrita ao `hub.json`.
+- O descobridor de feeds só acessa `http(s)` públicos (bloqueia loopback/redes privadas) e limita o tamanho da resposta.
+
+### Descobrir o protocolo de um app (Windows)
+
+1. Teste o esquema no Executar (`Win+R`): `steam://`, `discord://`, `vscode://`, `obsidian://`, `spotify://`, `ms-word:`.
+2. No Editor do Registro, procure `HKEY_CLASSES_ROOT\<esquema>` para ver o handler instalado.
+3. Muitos apps expõem o esquema em "criar atalho" ou na documentação; use o texto antes de `://` (ou antes de `:` em `ms-word:`).
+
+### Rede do trabalho e proxy
+
+O servidor busca RSS/YouTube/Reddit diretamente. Se a rede do trabalho exigir proxy, o `fetch` do Node não usa `HTTPS_PROXY` automaticamente; nesse caso use VPN ou configure o proxy no nível do sistema/rede. Para diagnosticar, use **Gerenciar → Atualizar agora** e veja o erro de cada fonte.

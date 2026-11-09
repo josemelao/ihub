@@ -18,7 +18,7 @@ function parseAttributes(tag: string): Record<string, string> {
 }
 
 function looksLikeFeed(content: string): boolean {
-	return /^\s*(?:<\?xml[^>]*>\s*)?<(?:rss|feed|rdf:RDF)\b/i.test(content);
+	return /^\s*(?:<\?xml[^>]*>\s*)?<(?:rss|feed|rdf:RDF)\b/i.test(content.replace(/^\uFEFF/, ''));
 }
 
 export function discoverFeedUrl(html: string, baseUrl: string): string | null {
@@ -41,9 +41,10 @@ export function discoverFeedUrl(html: string, baseUrl: string): string | null {
 		if (!isFeedType) continue;
 
 		try {
-			const url = new URL(href, baseUrl).toString();
+			const url = new URL(href, baseUrl);
+			if (url.protocol !== 'http:' && url.protocol !== 'https:') continue;
 			candidates.push({
-				url,
+				url: url.toString(),
 				priority: type.includes('rss') || type.includes('atom') ? 2 : 1
 			});
 		} catch {

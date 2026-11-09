@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import type {
 		Category,
@@ -110,6 +110,7 @@
 	let issues = $state<ValidationIssue[]>([]);
 	let notice = $state('');
 	let detecting = $state(false);
+	let panelEl = $state<HTMLElement | null>(null);
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
 	const kindLabel = $derived(
@@ -124,6 +125,52 @@
 						: 'filtro'
 	);
 	const title = $derived(`${isEdit ? 'Editar' : 'Adicionar'} ${kindLabel}`);
+
+	onMount(() => {
+		document.querySelector('.app-shell')?.setAttribute('inert', '');
+		const field = panelEl?.querySelector<HTMLElement>('input:not([type="hidden"]), select');
+		(field ?? panelEl)?.focus();
+	});
+
+	onDestroy(() => {
+		document.querySelector('.app-shell')?.removeAttribute('inert');
+	});
+
+	function onKeydown(event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onclose();
+			return;
+		}
+		if (event.key !== 'Tab' || !panelEl) return;
+
+		const focusable = [
+			...panelEl.querySelectorAll<HTMLElement>(
+				'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			)
+		].filter((element) => element.offsetParent !== null);
+
+		if (focusable.length === 0) return;
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+
+		if (event.shiftKey && document.activeElement === first) {
+			event.preventDefault();
+			last.focus();
+		} else if (!event.shiftKey && document.activeElement === last) {
+			event.preventDefault();
+			first.focus();
+		}
+	}
+
+	function onCategoryChange(): void {
+		if (
+			groupId &&
+			!hub.groups.some((group) => group.id === groupId && group.categoryId === categoryId)
+		) {
+			groupId = '';
+		}
+	}
 
 	function parseList(value: string): string[] {
 		return value
@@ -193,12 +240,11 @@
 					}
 				: { action: 'add-item', item };
 		} else if (kind === 'source') {
-			const source = {
+			const sourceBase = {
 				type: sourceType,
 				name,
 				target,
 				categoryId,
-				...(groupId ? { groupId } : {}),
 				intervalMinutes,
 				enabled,
 				include: parseList(include),
@@ -206,8 +252,15 @@
 				matchMode
 			};
 			payload = isEdit
-				? { action: 'update-source', id: (initial as FeedSource).id, sourcePatch: source }
-				: { action: 'add-source', source };
+				? {
+						action: 'update-source',
+						id: (initial as FeedSource).id,
+						sourcePatch: { ...sourceBase, groupId: groupId || null }
+					}
+				: {
+						action: 'add-source',
+						source: { ...sourceBase, ...(groupId ? { groupId } : {}) }
+					};
 		} else if (kind === 'category') {
 			payload = isEdit
 				? {
@@ -256,15 +309,18 @@
 	}
 </script>
 
-<svelte:window
-	onkeydown={(event) => {
-		if (event.key === 'Escape') onclose();
-	}}
-/>
+<svelte:window onkeydown={onKeydown} />
 
 <div class="editor-backdrop"></div>
 
-<aside class="editor-panel" aria-label={title}>
+<div
+	bind:this={panelEl}
+	class="editor-panel"
+	role="dialog"
+	aria-modal="true"
+	aria-label={title}
+	tabindex="-1"
+>
 	<div class="editor-head">
 		<h2>{title}</h2>
 		<button type="button" class="palette-close" aria-label="Fechar painel" onclick={onclose}>
@@ -295,7 +351,7 @@
 			<div class="editor-row">
 				<div class="field">
 					<label for="e-cat">Categoria</label>
-					<select id="e-cat" bind:value={categoryId} required>
+					<select id="e-cat" bind:value={categoryId} onchange={onCategoryChange} required>
 						{#each hub.categories as category (category.id)}
 							<option value={category.id}>{category.name}</option>
 						{/each}
@@ -366,7 +422,7 @@
 			<div class="editor-row">
 				<div class="field">
 					<label for="e-source-cat">Categoria</label>
-					<select id="e-source-cat" bind:value={categoryId} required>
+					<select id="e-source-cat" bind:value={categoryId} onchange={onCategoryChange} required>
 						{#each hub.categories as category (category.id)}
 							<option value={category.id}>{category.name}</option>
 						{/each}
@@ -477,4 +533,4 @@
 			</button>
 		</div>
 	</form>
-</aside>
+</div>

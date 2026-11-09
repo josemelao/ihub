@@ -21,6 +21,16 @@ describe('discoverFeedUrl', () => {
 		expect(discoverFeedUrl(xml, 'https://example.com/feed')).toBe('https://example.com/feed');
 	});
 
+	it('reconhece feed com BOM UTF-8', () => {
+		const xml = `\uFEFF<?xml version="1.0"?><feed></feed>`;
+		expect(discoverFeedUrl(xml, 'https://example.com/feed')).toBe('https://example.com/feed');
+	});
+
+	it('ignora candidatos que não são http(s)', () => {
+		const html = `<link rel="alternate" type="application/rss+xml" href="file:///etc/passwd">`;
+		expect(discoverFeedUrl(html, 'https://example.com')).toBeNull();
+	});
+
 	it('devolve null quando não há feed', () => {
 		expect(
 			discoverFeedUrl('<html><head><title>Sem feed</title></head></html>', 'https://example.com')
