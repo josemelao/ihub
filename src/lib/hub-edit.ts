@@ -243,6 +243,37 @@ export function removeCategory(hub: HubData, id: string): HubData {
 	return { ...hub, categories: hub.categories.filter((category) => category.id !== id) };
 }
 
+export function updateCategory(hub: HubData, id: string, patch: Partial<CategoryInput>): HubData {
+	return {
+		...hub,
+		categories: hub.categories.map((category) =>
+			category.id === id ? { ...category, ...patch } : category
+		)
+	};
+}
+
+export function moveCategory(hub: HubData, id: string, direction: 'up' | 'down'): HubData {
+	const sorted = [...hub.categories].sort((a, b) => a.order - b.order);
+	const index = sorted.findIndex((category) => category.id === id);
+	const swapWith = direction === 'up' ? index - 1 : index + 1;
+
+	if (index < 0 || swapWith < 0 || swapWith >= sorted.length) return hub;
+
+	const current = sorted[index];
+	const other = sorted[swapWith];
+	const orderById = new Map([
+		[current.id, other.order],
+		[other.id, current.order]
+	]);
+
+	return {
+		...hub,
+		categories: hub.categories.map((category) =>
+			orderById.has(category.id) ? { ...category, order: orderById.get(category.id)! } : category
+		)
+	};
+}
+
 export function addSavedFilter(hub: HubData, input: SavedFilterInput): HubData {
 	const base = input.label || input.include[0] || input.exclude[0] || 'filtro';
 	const id = uniqueId(slugify(base), new Set(hub.savedFilters.map((filter) => filter.id)));

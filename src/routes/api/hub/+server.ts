@@ -5,6 +5,7 @@ import {
 	addLink,
 	addSavedFilter,
 	addSource,
+	moveCategory,
 	moveItem,
 	removeCategory,
 	removeItem,
@@ -13,6 +14,7 @@ import {
 	toggleSource,
 	updateItem,
 	updateSource,
+	updateCategory,
 	type AppInput,
 	type CategoryInput,
 	type ItemPatch,
@@ -115,6 +117,16 @@ export const POST: RequestHandler = async ({ request }) => {
 			case 'delete-category':
 				if (!payload.id) return invalid('Informe o id da categoria.');
 				next = removeCategory(hub, payload.id);
+				break;
+
+			case 'update-category':
+				if (!payload.id) return invalid('Informe o id da categoria.');
+				next = updateCategory(hub, payload.id, payload.category ?? {});
+				break;
+
+			case 'move-category':
+				if (!payload.id || !payload.direction) return invalid('Informe id e direção.');
+				next = moveCategory(hub, payload.id, payload.direction);
 				break;
 
 			case 'add-filter':

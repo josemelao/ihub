@@ -551,6 +551,25 @@
 				</span>
 				<div class="manage-actions">
 					<button
+						class="mini-btn"
+						type="button"
+						aria-label="Mover categoria para cima"
+						onclick={() => mutate({ action: 'move-category', id: category.id, direction: 'up' })}
+					>
+						↑
+					</button>
+					<button
+						class="mini-btn"
+						type="button"
+						aria-label="Mover categoria para baixo"
+						onclick={() => mutate({ action: 'move-category', id: category.id, direction: 'down' })}
+					>
+						↓
+					</button>
+					<button class="mini-btn" type="button" onclick={() => openEditor('category', category)}>
+						Editar
+					</button>
+					<button
 						class="mini-btn danger"
 						type="button"
 						onclick={() => removeEntry('category', category.id, category.name)}
@@ -589,10 +608,10 @@
 {/if}
 
 <div class="placeholder-panel">
-	<span class="placeholder-title">Edição na V3</span>
+	<span class="placeholder-title">Edição validada</span>
 	<span class="muted">
 		As alterações são validadas e gravadas no <code>hub.json</code> de forma atômica, com backup automático.
-		A edição de categorias (renomear/cor) e a reordenação de categorias ficam para o M5.
+		Use ↑/↓ para reordenar itens e categorias.
 	</span>
 </div>
 

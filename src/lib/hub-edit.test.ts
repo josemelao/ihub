@@ -11,8 +11,10 @@ import {
 	removeSavedFilter,
 	removeSource,
 	toggleSource,
+	updateCategory,
 	updateItem,
-	updateSource
+	updateSource,
+	moveCategory
 } from './hub-edit';
 import { parseHub } from './schema';
 import type { HubData } from './types';
@@ -182,6 +184,23 @@ describe('categorias e filtros', () => {
 	it('remove categoria vazia', () => {
 		const hub = removeCategory(base(), 'trabalho');
 		expect(hub.categories.map((category) => category.id)).not.toContain('trabalho');
+	});
+
+	it('atualiza nome e cor da categoria', () => {
+		const hub = updateCategory(base(), 'trabalho', { name: 'Trabalho novo', color: '#123456' });
+		expect(hub.categories.find((category) => category.id === 'trabalho')).toMatchObject({
+			name: 'Trabalho novo',
+			color: '#123456'
+		});
+	});
+
+	it('reordena categorias para cima e para baixo', () => {
+		const up = moveCategory(base(), 'trabalho', 'up');
+		expect(up.categories.find((category) => category.id === 'trabalho')?.order).toBe(1);
+		expect(up.categories.find((category) => category.id === 'jogos')?.order).toBe(2);
+
+		const unchanged = moveCategory(base(), 'jogos', 'up');
+		expect(unchanged.categories.find((category) => category.id === 'jogos')?.order).toBe(1);
 	});
 
 	it('adiciona e remove filtro salvo', () => {

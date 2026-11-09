@@ -112,11 +112,18 @@
 	let detecting = $state(false);
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
-	const title = $derived(
-		isEdit
-			? `Editar ${kind === 'source' ? 'fonte' : kind === 'link' ? 'link' : kind === 'app' ? 'app' : kind}`
-			: `Adicionar ${kind === 'source' ? 'fonte' : kind === 'link' ? 'link' : kind === 'app' ? 'app' : kind}`
+	const kindLabel = $derived(
+		kind === 'source'
+			? 'fonte'
+			: kind === 'link'
+				? 'link'
+				: kind === 'app'
+					? 'app'
+					: kind === 'category'
+						? 'categoria'
+						: 'filtro'
 	);
+	const title = $derived(`${isEdit ? 'Editar' : 'Adicionar'} ${kindLabel}`);
 
 	function parseList(value: string): string[] {
 		return value
@@ -202,7 +209,13 @@
 				? { action: 'update-source', id: (initial as FeedSource).id, sourcePatch: source }
 				: { action: 'add-source', source };
 		} else if (kind === 'category') {
-			payload = { action: 'add-category', category: { name, color } };
+			payload = isEdit
+				? {
+						action: 'update-category',
+						id: (initial as Category).id,
+						category: { name, color }
+					}
+				: { action: 'add-category', category: { name, color } };
 		} else {
 			payload = {
 				action: 'add-filter',

@@ -1,369 +1,452 @@
 {
 	"version": 1,
-	"settings": { "accent": "#8AA4FF" },
+	"settings": {
+		"accent": "#8AA4FF"
+	},
 	"categories": [
-		{ "id": "jogos", "name": "Jogos", "color": "#8AA4FF", "order": 1 },
-		{ "id": "ferramentas", "name": "Ferramentas", "color": "#7DD3A8", "order": 2 },
-		{ "id": "trabalho", "name": "Trabalho", "color": "#F2A65A", "order": 3 },
-		{ "id": "leitura", "name": "Leitura", "color": "#E58BC0", "order": 4 },
-		{ "id": "estudos", "name": "Estudos", "color": "#B79CFF", "order": 5 }
+		{
+			"id": "jogos",
+			"name": "Jogos",
+			"color": "#8AA4FF",
+			"order": 1
+		},
+		{
+			"id": "ferramentas",
+			"name": "Ferramentas",
+			"color": "#7DD3A8",
+			"order": 2
+		},
+		{
+			"id": "trabalho",
+			"name": "Trabalho",
+			"color": "#F2A65A",
+			"order": 3
+		},
+		{
+			"id": "leitura",
+			"name": "Leitura",
+			"color": "#E58BC0",
+			"order": 4
+		},
+		{
+			"id": "estudos",
+			"name": "Estudos",
+			"color": "#B79CFF",
+			"order": 5
+		}
 	],
 	"groups": [
-		{ "id": "darktide", "categoryId": "jogos", "name": "Darktide", "order": 1 },
+		{
+			"id": "darktide",
+			"categoryId": "jogos",
+			"name": "Darktide",
+			"order": 1
+		},
 		{
 			"id": "risk-of-rain-returns",
 			"categoryId": "jogos",
 			"name": "Risk of Rain Returns",
 			"order": 2
 		},
-		{ "id": "baldurs-gate-3", "categoryId": "jogos", "name": "Baldur's Gate 3", "order": 3 },
-		{ "id": "jogos-geral", "categoryId": "jogos", "name": "Geral", "order": 4 },
-		{ "id": "ferramentas-geral", "categoryId": "ferramentas", "name": "Do dia a dia", "order": 1 },
-		{ "id": "trabalho-geral", "categoryId": "trabalho", "name": "Rotina", "order": 1 },
-		{ "id": "leitura-geral", "categoryId": "leitura", "name": "Para ler", "order": 1 },
-		{ "id": "estudos-geral", "categoryId": "estudos", "name": "Referências", "order": 1 }
+		{
+			"id": "baldurs-gate-3",
+			"categoryId": "jogos",
+			"name": "Baldur's Gate 3",
+			"order": 3
+		},
+		{
+			"id": "jogos-geral",
+			"categoryId": "jogos",
+			"name": "Geral",
+			"order": 4
+		},
+		{
+			"id": "ferramentas-geral",
+			"categoryId": "ferramentas",
+			"name": "Do dia a dia",
+			"order": 1
+		},
+		{
+			"id": "trabalho-geral",
+			"categoryId": "trabalho",
+			"name": "Rotina",
+			"order": 1
+		},
+		{
+			"id": "leitura-geral",
+			"categoryId": "leitura",
+			"name": "Para ler",
+			"order": 1
+		},
+		{
+			"id": "estudos-geral",
+			"categoryId": "estudos",
+			"name": "Referências",
+			"order": 1
+		}
 	],
 	"items": [
 		{
 			"id": "darktide-app",
-			"type": "app",
 			"name": "Abrir Darktide",
-			"launch": { "kind": "protocol", "value": "steam://run/1361210" },
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["steam"],
 			"pinned": true,
-			"order": 1
+			"order": 1,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "steam://run/1361210"
+			}
 		},
 		{
 			"id": "darktide-reddit",
-			"type": "link",
 			"name": "Subreddit r/Darktide",
-			"url": "https://www.reddit.com/r/Darktide/",
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["reddit"],
 			"pinned": false,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://www.reddit.com/r/Darktide/"
 		},
 		{
 			"id": "darktide-wiki",
-			"type": "link",
 			"name": "Wiki da comunidade",
-			"url": "https://darktide.wiki.fextralife.com/",
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["wiki"],
 			"pinned": false,
-			"order": 3
+			"order": 3,
+			"type": "link",
+			"url": "https://darktide.wiki.fextralife.com/"
 		},
 		{
 			"id": "darktide-steam",
-			"type": "link",
 			"name": "Página na Steam",
-			"url": "https://store.steampowered.com/app/1361210/",
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["steam"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://store.steampowered.com/app/1361210/"
 		},
 		{
 			"id": "darktide-builds",
-			"type": "link",
 			"name": "Calculadora de builds",
-			"url": "https://darktide.gameslantern.com/",
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["build"],
 			"pinned": false,
-			"order": 5
+			"order": 5,
+			"type": "link",
+			"url": "https://darktide.gameslantern.com/"
 		},
 		{
 			"id": "ror-app",
-			"type": "app",
 			"name": "Abrir o jogo",
-			"launch": { "kind": "protocol", "value": "steam://run/1337520" },
 			"categoryId": "jogos",
 			"groupId": "risk-of-rain-returns",
 			"tags": ["steam"],
 			"pinned": false,
-			"order": 1
+			"order": 1,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "steam://run/1337520"
+			}
 		},
 		{
 			"id": "ror-wiki",
-			"type": "link",
 			"name": "Wiki",
-			"url": "https://riskofrain2.fandom.com/wiki/Risk_of_Rain_Returns",
 			"categoryId": "jogos",
 			"groupId": "risk-of-rain-returns",
 			"tags": ["wiki"],
 			"pinned": false,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://riskofrain2.fandom.com/wiki/Risk_of_Rain_Returns"
 		},
 		{
 			"id": "ror-steam",
-			"type": "link",
 			"name": "Página na Steam",
-			"url": "https://store.steampowered.com/app/1337520/",
 			"categoryId": "jogos",
 			"groupId": "risk-of-rain-returns",
 			"tags": ["steam"],
 			"pinned": false,
-			"order": 3
+			"order": 3,
+			"type": "link",
+			"url": "https://store.steampowered.com/app/1337520/"
 		},
 		{
 			"id": "ror-mods",
-			"type": "link",
 			"name": "Mods",
-			"url": "https://thunderstore.io/c/risk-of-rain-returns/",
 			"categoryId": "jogos",
 			"groupId": "risk-of-rain-returns",
 			"tags": ["mods"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://thunderstore.io/c/risk-of-rain-returns/"
 		},
 		{
 			"id": "bg3-app",
-			"type": "app",
 			"name": "Abrir o jogo",
-			"launch": { "kind": "protocol", "value": "steam://run/1086940" },
 			"categoryId": "jogos",
 			"groupId": "baldurs-gate-3",
 			"tags": ["steam"],
 			"pinned": false,
-			"order": 1
+			"order": 1,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "steam://run/1086940"
+			}
 		},
 		{
 			"id": "bg3-wiki",
-			"type": "link",
 			"name": "Wiki",
-			"url": "https://bg3.wiki/",
 			"categoryId": "jogos",
 			"groupId": "baldurs-gate-3",
 			"tags": ["wiki"],
 			"pinned": false,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://bg3.wiki/"
 		},
 		{
 			"id": "bg3-builds",
-			"type": "link",
 			"name": "Guia de builds",
-			"url": "https://bg3.wiki/wiki/Guides",
 			"categoryId": "jogos",
 			"groupId": "baldurs-gate-3",
 			"tags": ["build"],
 			"pinned": false,
-			"order": 3
+			"order": 3,
+			"type": "link",
+			"url": "https://bg3.wiki/wiki/Guides"
 		},
 		{
 			"id": "bg3-mods",
-			"type": "link",
 			"name": "Mods",
-			"url": "https://www.nexusmods.com/baldursgate3",
 			"categoryId": "jogos",
 			"groupId": "baldurs-gate-3",
 			"tags": ["mods"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://www.nexusmods.com/baldursgate3"
 		},
 		{
 			"id": "geral-steam",
-			"type": "app",
 			"name": "Steam",
-			"launch": { "kind": "protocol", "value": "steam://open/main" },
 			"categoryId": "jogos",
 			"groupId": "jogos-geral",
 			"tags": ["steam"],
 			"pinned": true,
-			"order": 1
+			"order": 1,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "steam://open/main"
+			}
 		},
 		{
 			"id": "geral-discord",
-			"type": "app",
 			"name": "Discord",
-			"launch": { "kind": "protocol", "value": "discord://" },
 			"categoryId": "jogos",
 			"groupId": "jogos-geral",
 			"tags": ["chat"],
 			"pinned": true,
-			"order": 2
+			"order": 2,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "discord://"
+			}
 		},
 		{
 			"id": "geral-steamdb",
-			"type": "link",
 			"name": "SteamDB",
-			"url": "https://steamdb.info/",
 			"categoryId": "jogos",
 			"groupId": "jogos-geral",
 			"tags": ["steam"],
 			"pinned": false,
-			"order": 3
+			"order": 3,
+			"type": "link",
+			"url": "https://steamdb.info/"
 		},
 		{
 			"id": "geral-hltb",
-			"type": "link",
 			"name": "HowLongToBeat",
-			"url": "https://howlongtobeat.com/",
 			"categoryId": "jogos",
 			"groupId": "jogos-geral",
 			"tags": ["tempo"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://howlongtobeat.com/"
 		},
 		{
 			"id": "quick-gmail",
-			"type": "link",
 			"name": "Gmail",
-			"url": "https://mail.google.com/",
 			"categoryId": "trabalho",
 			"groupId": "trabalho-geral",
 			"tags": ["email"],
 			"pinned": true,
-			"order": 1
+			"order": 1,
+			"type": "link",
+			"url": "https://mail.google.com/"
 		},
 		{
 			"id": "quick-planilhas",
-			"type": "link",
 			"name": "Planilhas",
-			"url": "https://docs.google.com/spreadsheets/",
 			"categoryId": "trabalho",
 			"groupId": "trabalho-geral",
 			"tags": ["planilha"],
 			"pinned": true,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://docs.google.com/spreadsheets/"
 		},
 		{
 			"id": "quick-vscode",
-			"type": "app",
 			"name": "VS Code",
-			"launch": { "kind": "protocol", "value": "vscode://" },
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["editor"],
 			"pinned": true,
-			"order": 1
+			"order": 1,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "vscode://"
+			}
 		},
 		{
 			"id": "quick-word",
-			"type": "app",
 			"name": "Word",
-			"launch": { "kind": "protocol", "value": "ms-word:" },
 			"categoryId": "trabalho",
 			"groupId": "trabalho-geral",
 			"tags": ["office"],
 			"pinned": true,
-			"order": 3
+			"order": 3,
+			"type": "app",
+			"launch": {
+				"kind": "protocol",
+				"value": "ms-word:"
+			}
 		},
 		{
 			"id": "quick-github",
-			"type": "link",
 			"name": "GitHub",
-			"url": "https://github.com/",
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["código"],
 			"pinned": true,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://github.com/"
 		},
 		{
 			"id": "quick-tradutor",
-			"type": "link",
 			"name": "Tradutor",
-			"url": "https://translate.google.com/",
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["idiomas"],
 			"pinned": true,
-			"order": 3
+			"order": 3,
+			"type": "link",
+			"url": "https://translate.google.com/"
 		},
 		{
 			"id": "ferramentas-excalidraw",
-			"type": "link",
 			"name": "Excalidraw",
-			"url": "https://excalidraw.com/",
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["diagrama"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://excalidraw.com/"
 		},
 		{
 			"id": "ferramentas-regex101",
-			"type": "link",
 			"name": "regex101",
-			"url": "https://regex101.com/",
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["regex"],
 			"pinned": false,
-			"order": 5
+			"order": 5,
+			"type": "link",
+			"url": "https://regex101.com/"
 		},
 		{
 			"id": "trabalho-jira",
-			"type": "link",
 			"name": "Jira",
-			"url": "https://www.atlassian.com/software/jira",
 			"categoryId": "trabalho",
 			"groupId": "trabalho-geral",
 			"tags": ["tarefas"],
 			"pinned": false,
-			"order": 4
+			"order": 4,
+			"type": "link",
+			"url": "https://www.atlassian.com/software/jira"
 		},
 		{
 			"id": "trabalho-outlook",
-			"type": "link",
 			"name": "Outlook",
-			"url": "https://outlook.office.com/",
 			"categoryId": "trabalho",
 			"groupId": "trabalho-geral",
 			"tags": ["email"],
 			"pinned": false,
-			"order": 5
+			"order": 5,
+			"type": "link",
+			"url": "https://outlook.office.com/"
 		},
 		{
 			"id": "leitura-hn",
-			"type": "link",
 			"name": "Hacker News",
-			"url": "https://news.ycombinator.com/",
 			"categoryId": "leitura",
 			"groupId": "leitura-geral",
 			"tags": ["notícias"],
 			"pinned": false,
-			"order": 1
+			"order": 1,
+			"type": "link",
+			"url": "https://news.ycombinator.com/"
 		},
 		{
 			"id": "leitura-verge",
-			"type": "link",
 			"name": "The Verge",
-			"url": "https://www.theverge.com/",
 			"categoryId": "leitura",
 			"groupId": "leitura-geral",
 			"tags": ["tecnologia"],
 			"pinned": false,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://www.theverge.com/"
 		},
 		{
 			"id": "estudos-mdn",
-			"type": "link",
 			"name": "MDN Web Docs",
-			"url": "https://developer.mozilla.org/",
 			"categoryId": "estudos",
 			"groupId": "estudos-geral",
 			"tags": ["web"],
 			"pinned": false,
-			"order": 1
+			"order": 1,
+			"type": "link",
+			"url": "https://developer.mozilla.org/"
 		},
 		{
 			"id": "estudos-freecodecamp",
-			"type": "link",
 			"name": "freeCodeCamp",
-			"url": "https://www.freecodecamp.org/",
 			"categoryId": "estudos",
 			"groupId": "estudos-geral",
 			"tags": ["curso"],
 			"pinned": false,
-			"order": 2
+			"order": 2,
+			"type": "link",
+			"url": "https://www.freecodecamp.org/"
 		}
 	],
 	"feedSources": [
@@ -434,9 +517,27 @@
 		}
 	],
 	"savedFilters": [
-		{ "id": "patch", "label": "patch", "include": ["patch"], "exclude": [], "matchMode": "any" },
-		{ "id": "hotfix", "label": "hotfix", "include": ["hotfix"], "exclude": [], "matchMode": "any" },
-		{ "id": "beta", "label": "beta", "include": ["beta"], "exclude": [], "matchMode": "any" },
+		{
+			"id": "patch",
+			"label": "patch",
+			"include": ["patch"],
+			"exclude": [],
+			"matchMode": "any"
+		},
+		{
+			"id": "hotfix",
+			"label": "hotfix",
+			"include": ["hotfix"],
+			"exclude": [],
+			"matchMode": "any"
+		},
+		{
+			"id": "beta",
+			"label": "beta",
+			"include": ["beta"],
+			"exclude": [],
+			"matchMode": "any"
+		},
 		{
 			"id": "sem-promocao",
 			"label": "sem: promoção",
