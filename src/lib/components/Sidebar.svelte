@@ -57,10 +57,10 @@
 				<span class="cat-count">{counts[cat.id] ?? 0}</span>
 			</a>
 		{/each}
-		<button class="nav-link muted" type="button" disabled title="Painel de edição chega na V3">
+		<a class="nav-link" href={resolve('/gerenciar')} title="Adicione categorias em Gerenciar">
 			<Icon name="plus" size={16} />
 			Nova categoria
-		</button>
+		</a>
 	</div>
 
 	<div class="sidebar-footer">
@@ -68,6 +68,6 @@
 			<Icon name="settings" />
 			Gerenciar fontes e links
 		</a>
-		<div class="sidebar-footnote">Feed chega na V2</div>
+		<div class="sidebar-footnote">Feed com atualização automática</div>
 	</div>
 </nav>

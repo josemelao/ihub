@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { matchesFilter } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
@@ -213,9 +214,7 @@
 						{filter.label} · {countFor(filter)}
 					</button>
 				{/each}
-				<button class="chip link" type="button" disabled title="Edição de filtros chega na V3">
-					+ Salvar filtro
-				</button>
+				<a class="chip link" href={resolve('/gerenciar')}>+ Salvar filtro</a>
 			</div>
 		{/if}
 

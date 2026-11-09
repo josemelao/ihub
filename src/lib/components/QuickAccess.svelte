@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { initials, itemHref, itemKind, tint } from '#lib/display';
 	import type { HubData } from '#lib/types';
 
@@ -11,7 +12,7 @@
 <section class="section" aria-labelledby="t-rapido">
 	<div class="section-head">
 		<h2 id="t-rapido">Acesso rápido</h2>
-		<span class="muted small" title="Edição de atalhos chega na V3">Editar atalhos</span>
+		<a class="muted small" href={resolve('/gerenciar')}>Editar atalhos</a>
 	</div>
 	<div class="quick-grid">
 		{#each quick as item (item.id)}

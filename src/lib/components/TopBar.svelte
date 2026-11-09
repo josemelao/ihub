@@ -1,11 +1,12 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { ui } from '#lib/ui.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
 		placeholder = 'Buscar links, apps e posts do feed',
 		action = 'Adicionar',
-		actionTitle = 'Disponível na V3'
+		actionTitle = 'Abre o gerenciador'
 	}: { placeholder?: string; action?: string; actionTitle?: string } = $props();
 </script>
 
@@ -21,10 +22,10 @@
 		<span class="kbd" aria-hidden="true">Ctrl K</span>
 	</button>
 	<div class="topbar-actions">
-		<button class="btn" type="button" disabled title="Modo edição chega na V3">Modo edição</button>
-		<button class="btn btn-primary" type="button" disabled title={actionTitle}>
+		<a class="btn" href={resolve('/gerenciar')} title={actionTitle}>Editar</a>
+		<a class="btn btn-primary" href={resolve('/gerenciar')} title={actionTitle}>
 			<Icon name="plus" size={16} />
 			{action}
-		</button>
+		</a>
 	</div>
 </header>
