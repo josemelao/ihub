@@ -1,18 +1,9 @@
+import { EMPTY_HUB } from '#lib/defaults';
 import { startScheduler } from '#lib/feed/scheduler';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
 import type { HubData, ValidationIssue } from '#lib/types';
 import type { LayoutServerLoad } from './$types';
-
-const EMPTY_HUB: HubData = {
-	version: 1,
-	settings: { accent: '#8AA4FF' },
-	categories: [],
-	groups: [],
-	items: [],
-	feedSources: [],
-	savedFilters: []
-};
 
 export const load: LayoutServerLoad = async () => {
 	const storage = getStorage();

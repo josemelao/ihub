@@ -108,4 +108,56 @@ describe('JsonFileStorage', () => {
 		expect(cache.items).toEqual([]);
 		expect(cache.version).toBe(1);
 	});
+
+	it('exporta hub e estado juntos', async () => {
+		await storage.saveHub(hub('Jogos'));
+		await storage.saveState({
+			version: 1,
+			read: { post: '2026-11-09T12:00:00Z' },
+			saved: ['post']
+		});
+
+		const bundle = await storage.exportBundle();
+		expect(bundle.hub.categories[0].name).toBe('Jogos');
+		expect(bundle.state).toEqual({
+			version: 1,
+			read: { post: '2026-11-09T12:00:00Z' },
+			saved: ['post']
+		});
+	});
+
+	it('importa no modo substituir, incluindo o estado', async () => {
+		await storage.saveHub(hub('Original'));
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+		await storage.importBundle(
+			{
+				hub: incoming,
+				state: { version: 1, read: { novo: '2026-11-09T12:00:00Z' }, saved: ['novo'] }
+			},
+			'replace'
+		);
+
+		const loaded = await storage.loadHub();
+		const state = await storage.loadState();
+		expect(loaded.categories.map((c) => c.id)).toEqual(['ferramentas']);
+		expect(state.saved).toEqual(['novo']);
+	});
+
+	it('mescla o estado no modo merge', async () => {
+		await storage.saveHub(hub('Original'));
+		await storage.saveState({ version: 1, read: { a: 't1' }, saved: ['a'] });
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+		await storage.importBundle(
+			{ hub: incoming, state: { version: 1, read: { b: 't2' }, saved: ['b'] } },
+			'merge'
+		);
+
+		const state = await storage.loadState();
+		expect(Object.keys(state.read).sort()).toEqual(['a', 'b']);
+		expect(state.saved.sort()).toEqual(['a', 'b']);
+	});
 });

@@ -355,8 +355,8 @@ button {
 }
 
 .palette-close {
-	width: 32px;
-	height: 32px;
+	width: 40px;
+	height: 40px;
 	border-radius: 8px;
 	border: 1px solid var(--line);
 	background: var(--panel2);
@@ -590,7 +590,7 @@ button {
 }
 
 .mini-btn {
-	height: 32px;
+	height: 40px;
 	padding: 0 10px;
 	border-radius: 8px;
 	border: 1px solid var(--line);
@@ -610,8 +610,9 @@ button {
 }
 
 .switch-button {
+	min-height: 40px;
+	padding: 9px 0;
 	border: 0;
-	padding: 0;
 	background: none;
 	cursor: pointer;
 }
@@ -807,7 +808,7 @@ h3 {
 }
 
 .chip {
-	height: 30px;
+	height: 40px;
 	padding: 0 12px;
 	border-radius: 99px;
 	border: 1px solid var(--line);
@@ -1113,7 +1114,7 @@ h3 {
 }
 
 .tab {
-	height: 36px;
+	height: 40px;
 	padding: 0 14px;
 	border-radius: 8px;
 	border: 0;

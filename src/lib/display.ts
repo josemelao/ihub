@@ -44,10 +44,6 @@ export function itemHref(item: HubItem): string {
 	return item.type === 'app' ? item.launch.value : item.url;
 }
 
-export function itemTarget(item: HubItem): string | undefined {
-	return item.type === 'link' && !item.url.startsWith('http') ? undefined : '_blank';
-}
-
 export function relativeTime(iso: string, now: number = Date.now()): string {
 	if (!iso) return 'sem data';
 	const timestamp = Date.parse(iso);
