@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Hub Pessoal Categoria Jogos</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0F1115}
+:root{--bg:#0F1115;--side:#12151B;--panel:#161A21;--panel2:#1B2029;--line:#262C37;--tx:#E8EAF0;--mut:#9AA3B2}
+a{color:#E8EAF0;text-decoration:none}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="--accent: {{accent}}; font-family: Inter, system-ui, sans-serif; font-size: 14px; background: var(--bg); color: var(--tx); min-height: 1260px; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<nav aria-label="Menu principal" style="flex: 0 0 248px; box-sizing: border-box; background: var(--side); border-right: 1px solid var(--line); padding: 20px 14px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 6px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: var(--accent); color: #0B1020; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: 17px">H</div>
+<div style="font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 600; font-size: 17px">Meu Hub</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 2px">
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--mut)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>
+Início
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--mut)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg>
+Feed completo
+<span style="margin-left: auto; font-size: 12px; background: var(--accent); color: #0B1020; border-radius: 99px; padding: 1px 8px; font-weight: 600">12</span>
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--mut)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5l-5.4 3 1.2-6L3.3 9.3l6.1-.7z"></path></svg>
+Favoritos
+</a>
+<a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--mut)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+Apps do PC
+</a>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 4px">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 0 10px 6px; color: var(--mut); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase">
+<span>Categorias</span>
+</div>
+<sc-for list="{{categories}}" as="cat" hint-placeholder-count="5">
+<a href="Categoria.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: {{cat.bg}}; color: {{cat.color}}">
+<span style="width: 9px; height: 9px; border-radius: 3px; background: {{cat.dot}}"></span>
+<span>{{cat.name}}</span>
+<span style="margin-left: auto; color: var(--mut); font-size: 12px">{{cat.count}}</span>
+</a>
+</sc-for>
+<a href="Gerenciar.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--mut)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+Nova categoria
+</a>
+</div>
+
+<div style="margin-top: auto; display: flex; flex-direction: column; gap: 2px; border-top: 1px solid var(--line); padding-top: 14px">
+<a href="Gerenciar.dc.html" style="display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #C9CFDA">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+Gerenciar fontes e links
+</a>
+<div style="padding: 6px 10px; color: var(--mut); font-size: 12px">Feed atualizado há 4 min</div>
+</div>
+</nav>
+
+<main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 20px 32px 32px; display: flex; flex-direction: column; gap: 24px">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="flex: 1 1 320px; position: relative">
+<label for="busca" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar links, apps e posts do feed</label>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9AA3B2" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 14px; top: 13px"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+<input id="busca" type="text" placeholder="Buscar em Jogos" style="box-sizing: border-box; width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--tx); padding: 0 80px 0 42px; font: inherit">
+<span style="position: absolute; right: 12px; top: 11px; font-size: 12px; color: var(--mut); border: 1px solid var(--line); border-radius: 6px; padding: 3px 7px; background: var(--panel2)">Ctrl K</span>
+</div>
+<div style="display: flex; gap: 8px">
+<button type="button" style="height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--tx); font: inherit; font-weight: 500">Modo edição</button>
+<button type="button" style="height: 44px; padding: 0 18px; border-radius: 12px; border: 0; background: var(--accent); color: #0B1020; font: inherit; font-weight: 600; display: flex; align-items: center; gap: 8px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+Adicionar em Jogos
+</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="width: 12px; height: 12px; border-radius: 4px; background: #8AA4FF"></span>
+<h1 style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 28px; font-weight: 600">Jogos</h1>
+</div>
+<span style="color: var(--mut)">24 itens em 4 grupos · 3 fontes de feed</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" style="height: 32px; padding: 0 14px; border-radius: 99px; border: 0; background: var(--tx); color: #0F1115; font: inherit; font-size: 13px; font-weight: 600">Todos os grupos</button>
+<button type="button" style="height: 32px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: #C9CFDA; font: inherit; font-size: 13px">Darktide</button>
+<button type="button" style="height: 32px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: #C9CFDA; font: inherit; font-size: 13px">Risk of Rain Returns</button>
+<button type="button" style="height: 32px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: #C9CFDA; font: inherit; font-size: 13px">Baldur's Gate 3</button>
+<button type="button" style="height: 32px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel); color: #C9CFDA; font: inherit; font-size: 13px">Geral</button>
+</div>
+</div>
+
+<section aria-labelledby="t-links" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="t-links" style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600">Links e apps</h2>
+<div style="display: flex; flex-wrap: wrap; gap: 14px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<section style="flex: 1 1 300px; min-width: 0; box-sizing: border-box; padding: 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; align-items: baseline; justify-content: space-between">
+<h3 style="margin: 0; font-size: 15px; font-weight: 600">{{g.name}}</h3>
+<span style="font-size: 12px; color: var(--mut)">{{g.count}} itens</span>
+</div>
+<sc-for list="{{g.items}}" as="it" hint-placeholder-count="4">
+<a href="Categoria.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 10px; background: var(--panel2)">
+<span style="flex: 0 0 30px; height: 30px; border-radius: 8px; background: {{it.tint}}; color: {{it.dot}}; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">{{it.letter}}</span>
+<span style="flex: 1 1 auto; min-width: 0; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{it.name}}</span>
+<span style="flex: 0 0 auto; font-size: 12px; color: var(--mut)">{{it.kind}}</span>
+</a>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="t-feedcat" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px">
+<h2 id="t-feedcat" style="margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; font-weight: 600">Feed de Jogos</h2>
+<span style="font-size: 12px; color: var(--mut)">Só fontes desta categoria · Mostrando 3 de 14 posts</span>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line)">
+<div style="flex: 1 1 240px; position: relative">
+<label for="kw" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Filtrar o feed de Jogos por palavra-chave</label>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9AA3B2" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="position: absolute; left: 12px; top: 12px"><path d="M3 5h18l-7 8v6l-4-2v-4z"></path></svg>
+<input id="kw" type="text" value="patch" style="box-sizing: border-box; width: 100%; height: 40px; border-radius: 10px; border: 1px solid var(--accent); background: var(--panel2); color: var(--tx); padding: 0 12px 0 36px; font: inherit">
+</div>
+<button type="button" style="height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--accent); background: var(--panel2); color: var(--tx); font: inherit; font-size: 13px; font-weight: 600">patch · 3</button>
+<button type="button" style="height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel2); color: #C9CFDA; font: inherit; font-size: 13px">hotfix · 1</button>
+<button type="button" style="height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--panel2); color: #C9CFDA; font: inherit; font-size: 13px">beta · 0</button>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{feed}}" as="p" hint-placeholder-count="3">
+<article style="display: flex; gap: 16px; padding: 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line)">
+<div style="flex: 0 0 132px; height: 88px; border-radius: 10px; background: {{p.tint}}; color: {{p.dot}}; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; font-weight: 700">{{p.initials}}</div>
+<div style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: var(--mut)">
+<span style="display: inline-flex; align-items: center; gap: 6px; color: {{p.dot}}; font-weight: 600"><span style="width: 7px; height: 7px; border-radius: 50%; background: {{p.dot}}"></span>{{p.source}}</span>
+<span>·</span>
+<span>{{p.time}}</span>
+<span style="border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px">{{p.group}}</span>
+</div>
+<h3 style="margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35">{{p.pre}}<mark style="background: rgba(138,164,255,0.25); color: #E8EAF0; border-radius: 4px; padding: 0 3px">{{p.kw}}</mark>{{p.post}}</h3>
+<p style="margin: 0; color: var(--mut); line-height: 1.45">{{p.desc}}</p>
+</div>
+</article>
+</sc-for>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#8AA4FF","options":["#8AA4FF","#7DD3A8","#F2A65A","#E58BC0"]},"$preview":{"width":1440,"height":1260}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const it = (name, kind, letter, dot, tint) => ({ name, kind, letter, dot, tint });
+    return {
+      accent: this.props.accent ?? '#8AA4FF',
+      categories: [
+        { name: 'Jogos', count: 24, dot: '#8AA4FF', bg: '#1B2029', color: '#E8EAF0' },
+        { name: 'Ferramentas', count: 18, dot: '#7DD3A8', bg: 'transparent', color: '#C9CFDA' },
+        { name: 'Trabalho', count: 12, dot: '#F2A65A', bg: 'transparent', color: '#C9CFDA' },
+        { name: 'Leitura', count: 9, dot: '#E58BC0', bg: 'transparent', color: '#C9CFDA' },
+        { name: 'Estudos', count: 7, dot: '#B79CFF', bg: 'transparent', color: '#C9CFDA' }
+      ],
+      groups: [
+        { name: 'Darktide', count: 5, items: [
+          it('Abrir Darktide', 'App do PC', 'D', '#8AA4FF', '#1A2136'),
+          it('Subreddit r/Darktide', 'Reddit', 'R', '#F2A65A', '#2A2218'),
+          it('Wiki da comunidade', 'Site', 'W', '#7DD3A8', '#142520'),
+          it('Página na Steam', 'Site', 'S', '#6CB6FF', '#15222E'),
+          it('Calculadora de builds', 'Site', 'C', '#B79CFF', '#221D33')
+        ] },
+        { name: 'Risk of Rain Returns', count: 4, items: [
+          it('Abrir o jogo', 'App do PC', 'R', '#8AA4FF', '#1A2136'),
+          it('Wiki', 'Site', 'W', '#7DD3A8', '#142520'),
+          it('Página na Steam', 'Site', 'S', '#6CB6FF', '#15222E'),
+          it('Mods', 'Site', 'M', '#F2A65A', '#2A2218')
+        ] },
+        { name: "Baldur's Gate 3", count: 4, items: [
+          it('Abrir o jogo', 'App do PC', 'B', '#8AA4FF', '#1A2136'),
+          it('Wiki', 'Site', 'W', '#7DD3A8', '#142520'),
+          it('Guia de builds', 'Site', 'G', '#B79CFF', '#221D33'),
+          it('Mods', 'Site', 'M', '#F2A65A', '#2A2218')
+        ] },
+        { name: 'Geral', count: 4, items: [
+          it('Steam', 'App do PC', 'S', '#8AA4FF', '#1A2136'),
+          it('Discord', 'App do PC', 'D', '#B79CFF', '#221D33'),
+          it('SteamDB', 'Site', 'S', '#6CB6FF', '#15222E'),
+          it('HowLongToBeat', 'Site', 'H', '#E58BC0', '#2A1D27')
+        ] }
+      ],
+      feed: [
+        { source: 'Reddit · r/Darktide', dot: '#F2A65A', tint: '#2A2218', initials: 'RD', time: 'há 25 min', group: 'Darktide', pre: 'Notas do ', kw: 'patch', post: ' mais recente: correções e ajustes', desc: 'Thread com a lista de mudanças publicada pelos desenvolvedores.' },
+        { source: 'Steam News · Darktide', dot: '#8AA4FF', tint: '#1A2136', initials: 'ST', time: 'há 1 h', group: 'Darktide', pre: 'Atualização da semana e ', kw: 'patch', post: ' notes', desc: 'Resumo das alterações com link para as notas completas.' },
+        { source: 'YouTube · Canal de guias', dot: '#F28B82', tint: '#2A1D20', initials: 'YT', time: 'há 3 h', group: 'Darktide', pre: 'O que mudou no ', kw: 'patch', post: ': resumo em 8 minutos', desc: 'Vídeo comentando as principais mudanças de balanceamento.' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
