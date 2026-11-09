@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import { masonry } from '#lib/actions/masonry';
+	import { assignBentoSpans } from '#lib/feed/bento';
 	import { matchesFilter } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
@@ -75,7 +76,15 @@
 			return matchesFilter(`${entry.item.title}\n${entry.item.summary}`, terms, exclude, mode);
 		})
 	);
-	const visible = $derived(filtered.slice(0, limit));
+	const bentoSpans = $derived(
+		assignBentoSpans(filtered.map((entry) => ({ hasImage: Boolean(entry.item.thumbnail) })))
+	);
+	const visible = $derived(
+		filtered.slice(0, limit).map((entry, index) => ({
+			entry,
+			span: bentoSpans[index] ?? 3
+		}))
+	);
 
 	function countFor(filter: SavedFilter): number {
 		return base.filter((entry) =>
@@ -301,22 +310,25 @@
 		</div>
 	</div>
 
-	<div
-		class="feed-layout"
-		class:bento={view === 'bento'}
-		class:grid-view={view === 'grid'}
-		class:compact-view={view === 'compact'}
-		use:masonry={{ enabled: view === 'bento', rowHeight: 8, gap: 12 }}
-	>
-		{#each visible as entry (entry.item.id)}
-			<FeedCard
-				{entry}
-				{terms}
-				variant={view}
-				onread={() => toggleRead(entry)}
-				onsave={() => toggleSave(entry)}
-			/>
-		{/each}
+	<div class="feed-container">
+		<div
+			class="feed-layout"
+			class:bento={view === 'bento'}
+			class:grid-view={view === 'grid'}
+			class:compact-view={view === 'compact'}
+			use:masonry={{ enabled: view === 'bento', rowHeight: 8, gap: 12 }}
+		>
+			{#each visible as { entry, span } (entry.item.id)}
+				<FeedCard
+					{entry}
+					{terms}
+					{span}
+					variant={view}
+					onread={() => toggleRead(entry)}
+					onsave={() => toggleSave(entry)}
+				/>
+			{/each}
+		</div>
 	</div>
 
 	{#if filtered.length === 0}

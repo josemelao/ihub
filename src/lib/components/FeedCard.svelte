@@ -7,25 +7,42 @@
 		entry,
 		terms = [],
 		variant = 'bento',
+		span = 3,
 		onread,
 		onsave
 	}: {
 		entry: FeedViewItem;
 		terms?: string[];
 		variant?: 'bento' | 'compact' | 'grid';
+		span?: number;
 		onread: () => void;
 		onsave: () => void;
 	} = $props();
 
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
 	let imageFailed = $state(false);
+	let naturalAspect = $state<number | null>(null);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
-	const wide = $derived(variant === 'bento' && hasImage);
+
+	const thumbAspect = $derived.by(() => {
+		if (!naturalAspect) return 1.5;
+		return Math.min(1.6, Math.max(0.7, naturalAspect));
+	});
+	const thumbStyle = $derived(
+		`background: ${tint(color, 0.14)}; color: ${color};` +
+			(variant === 'bento' ? ` aspect-ratio: ${thumbAspect};` : '')
+	);
+
+	function onImageLoad(event: Event): void {
+		const image = event.currentTarget as HTMLImageElement;
+		if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+			naturalAspect = image.naturalWidth / image.naturalHeight;
+		}
+	}
 </script>
 
 <article
-	class="feed-card variant-{variant}"
-	class:wide
+	class="feed-card variant-{variant} span-{span}"
 	class:no-image={!hasImage}
 	class:read={entry.read}
 >
@@ -36,12 +53,13 @@
 			target="_blank"
 			rel="noopener noreferrer"
 			aria-label={`Abrir: ${entry.item.title}`}
-			style="background: {tint(color, 0.14)}; color: {color}"
+			style={thumbStyle}
 		>
 			<img
 				src={entry.item.thumbnail ?? ''}
 				alt=""
 				loading="lazy"
+				onload={onImageLoad}
 				onerror={() => (imageFailed = true)}
 			/>
 		</a>
