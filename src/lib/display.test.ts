@@ -23,15 +23,47 @@ describe('tint', () => {
 describe('categoryItemCounts', () => {
 	it('conta itens por categoria', () => {
 		const hub = {
+			version: 1,
+			settings: { accent: '#8AA4FF' },
 			categories: [
 				{ id: 'a', name: 'A', color: '#fff', order: 1 },
 				{ id: 'b', name: 'B', color: '#fff', order: 2 }
 			],
 			items: [
-				{ id: '1', type: 'link', name: '1', url: 'https://a.com', categoryId: 'a', tags: [], pinned: false, order: 0 },
-				{ id: '2', type: 'link', name: '2', url: 'https://b.com', categoryId: 'b', tags: [], pinned: false, order: 0 },
-				{ id: '3', type: 'link', name: '3', url: 'https://c.com', categoryId: 'a', tags: [], pinned: false, order: 0 }
-			]
+				{
+					id: '1',
+					type: 'link',
+					name: '1',
+					url: 'https://a.com',
+					categoryId: 'a',
+					tags: [],
+					pinned: false,
+					order: 0
+				},
+				{
+					id: '2',
+					type: 'link',
+					name: '2',
+					url: 'https://b.com',
+					categoryId: 'b',
+					tags: [],
+					pinned: false,
+					order: 0
+				},
+				{
+					id: '3',
+					type: 'link',
+					name: '3',
+					url: 'https://c.com',
+					categoryId: 'a',
+					tags: [],
+					pinned: false,
+					order: 0
+				}
+			],
+			groups: [],
+			feedSources: [],
+			savedFilters: []
 		} as HubData;
 
 		expect(categoryItemCounts(hub)).toEqual({ a: 2, b: 1 });

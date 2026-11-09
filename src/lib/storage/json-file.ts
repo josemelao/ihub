@@ -35,7 +35,10 @@ export class JsonFileStorage implements HubStorage {
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
 				throw new HubValidationError([
-					{ path: [], message: `Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.` }
+					{
+						path: [],
+						message: `Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.`
+					}
 				]);
 			}
 			throw error;
@@ -70,6 +73,14 @@ export class JsonFileStorage implements HubStorage {
 
 	async loadHub(): Promise<HubData> {
 		return parseHub(await this.readJson('hub.json'));
+	}
+
+	async loadHubFromBackup(): Promise<HubData | null> {
+		try {
+			return parseHub(await this.readJson('hub.json.bak'));
+		} catch {
+			return null;
+		}
 	}
 
 	async saveHub(data: HubData): Promise<void> {

@@ -10,7 +10,12 @@
 	],
 	"groups": [
 		{ "id": "darktide", "categoryId": "jogos", "name": "Darktide", "order": 1 },
-		{ "id": "risk-of-rain-returns", "categoryId": "jogos", "name": "Risk of Rain Returns", "order": 2 },
+		{
+			"id": "risk-of-rain-returns",
+			"categoryId": "jogos",
+			"name": "Risk of Rain Returns",
+			"order": 2
+		},
 		{ "id": "baldurs-gate-3", "categoryId": "jogos", "name": "Baldur's Gate 3", "order": 3 },
 		{ "id": "jogos-geral", "categoryId": "jogos", "name": "Geral", "order": 4 },
 		{ "id": "ferramentas-geral", "categoryId": "ferramentas", "name": "Do dia a dia", "order": 1 },

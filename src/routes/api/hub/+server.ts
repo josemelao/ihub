@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
-import { HubValidationError } from '$lib/schema';
-import { getStorage } from '$lib/storage';
+import { HubValidationError } from '#lib/schema';
+import { getStorage } from '#lib/storage';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async () => {

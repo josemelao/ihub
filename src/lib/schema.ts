@@ -92,11 +92,7 @@ const savedFilterSchema = z.object({
 	matchMode: matchModeSchema
 });
 
-function addIssue(
-	ctx: z.RefinementCtx,
-	path: (string | number)[],
-	message: string
-): void {
+function addIssue(ctx: z.RefinementCtx, path: (string | number)[], message: string): void {
 	ctx.addIssue({ code: 'custom', path, message });
 }
 

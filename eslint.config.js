@@ -10,6 +10,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	{ ignores: ['mockups/**', 'PLANEJAMENTO-hub.md'] },
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,
@@ -32,6 +33,12 @@ export default defineConfig(
 				parser: ts.parser
 			}
 		}
+	},
+	{
+		// Estes componentes apontam para URLs externas e protocolos de app,
+		// então o resolve() de rotas internas não se aplica.
+		files: ['src/lib/components/ItemRow.svelte', 'src/lib/components/QuickAccess.svelte'],
+		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	},
 	{
 		// Override or add rule settings here, such as:
