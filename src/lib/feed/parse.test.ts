@@ -121,4 +121,16 @@ describe('parseFeed', () => {
 			'https://i.ytimg.com/vi/abc123def45/hqdefault.jpg'
 		);
 	});
+
+	it('limpa entidades numéricas e boilerplate do Reddit', () => {
+		const reddit = `<rss version="2.0"><channel><item>
+			<title>Post</title>
+			<link>https://reddit.com/r/x/1</link>
+			<description><![CDATA[Texto&#32;com espaços e &amp;#32;duplo. submitted by /u/teste [link] [comments]]]></description>
+		</item></channel></rss>`;
+		const summary = parseFeed(reddit, 'reddit')[0].summary;
+		expect(summary).toBe('Texto com espaços e duplo.');
+		expect(summary).not.toContain('submitted by');
+		expect(summary).not.toContain('&#32;');
+	});
 });

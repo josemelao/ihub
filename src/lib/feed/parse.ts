@@ -27,17 +27,31 @@ function asArray<T>(value: T | T[] | undefined): T[] {
 	return Array.isArray(value) ? value : [value];
 }
 
-function stripTags(value: string): string {
+function decodeEntities(value: string): string {
 	return value
-		.replace(/<script[\s\S]*?<\/script>/gi, ' ')
-		.replace(/<style[\s\S]*?<\/style>/gi, ' ')
-		.replace(/<[^>]*>/g, ' ')
 		.replace(/&nbsp;/gi, ' ')
 		.replace(/&amp;/gi, '&')
 		.replace(/&lt;/gi, '<')
 		.replace(/&gt;/gi, '>')
 		.replace(/&quot;/gi, '"')
 		.replace(/&#0?39;/gi, "'")
+		.replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => {
+			const code = Number.parseInt(hex, 16);
+			return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : '';
+		})
+		.replace(/&#(\d+);/g, (_, decimal: string) => {
+			const code = Number(decimal);
+			return Number.isFinite(code) && code <= 0x10ffff ? String.fromCodePoint(code) : '';
+		});
+}
+
+function stripTags(value: string): string {
+	return decodeEntities(value)
+		.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+		.replace(/<style[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<[^>]*>/g, ' ')
+		.replace(/\s*submitted by\s+[\s\S]*$/i, ' ')
+		.replace(/\[link\]\s*\[comments\]/gi, ' ')
 		.replace(/\s+/g, ' ')
 		.replace(/\s+([.,!?;:])/g, '$1')
 		.trim();
@@ -150,7 +164,7 @@ export function parseFeed(xml: string, sourceId: string): FeedItem[] {
 
 		const summary = stripTags(
 			textOf(item.description ?? item.summary ?? item.content ?? item['content:encoded'])
-		).slice(0, 280);
+		).slice(0, 700);
 
 		const guid = textOf(item.guid ?? item.id);
 		const publishedAt = publishedAtOf(textOf(item.pubDate ?? item.published ?? item.updated));

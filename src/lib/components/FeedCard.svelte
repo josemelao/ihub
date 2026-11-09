@@ -7,14 +7,12 @@
 		entry,
 		terms = [],
 		variant = 'bento',
-		span = 3,
 		onread,
 		onsave
 	}: {
 		entry: FeedViewItem;
 		terms?: string[];
 		variant?: 'bento' | 'compact' | 'grid';
-		span?: number;
 		onread: () => void;
 		onsave: () => void;
 	} = $props();
@@ -41,11 +39,7 @@
 	}
 </script>
 
-<article
-	class="feed-card variant-{variant} span-{span}"
-	class:no-image={!hasImage}
-	class:read={entry.read}
->
+<article class="feed-card variant-{variant}" class:no-image={!hasImage} class:read={entry.read}>
 	{#if hasImage}
 		<a
 			class="feed-thumb"
