@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
@@ -16,7 +16,9 @@
 
 	let note = $state('');
 	let panelOpen = $state(true);
+	let panelAnimating = $state(false);
 	let uiReady = $state(false);
+	let panelTimer: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
 		note = localStorage.getItem('meu-hub:nota') ?? '';
@@ -28,6 +30,10 @@
 		});
 	});
 
+	onDestroy(() => {
+		clearTimeout(panelTimer);
+	});
+
 	function saveNote() {
 		localStorage.setItem('meu-hub:nota', note);
 	}
@@ -35,6 +41,11 @@
 	function togglePanel(): void {
 		panelOpen = !panelOpen;
 		localStorage.setItem('meu-hub:panel-open', panelOpen ? '1' : '0');
+		panelAnimating = true;
+		clearTimeout(panelTimer);
+		panelTimer = setTimeout(() => {
+			panelAnimating = false;
+		}, 320);
 	}
 
 	function unreadFor(sourceId: string): number {
@@ -53,7 +64,12 @@
 
 <QuickAccess {hub} />
 
-<div class="home-columns" class:panel-closed={!panelOpen} class:ui-ready={uiReady}>
+<div
+	class="home-columns"
+	class:panel-closed={!panelOpen}
+	class:ui-ready={uiReady}
+	class:panel-animating={panelAnimating}
+>
 	<div class="home-main">
 		<div class="home-columns-toolbar">
 			<button class="chip" type="button" aria-pressed={panelOpen} onclick={togglePanel}>
