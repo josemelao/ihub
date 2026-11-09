@@ -24,7 +24,7 @@ export function buildFeedView(
 		const source = sourceById.get(item.sourceId);
 		if (!source || !source.enabled) continue;
 		if (options.categoryId && source.categoryId !== options.categoryId) continue;
-		if (!matchesSourceRules(item, source)) continue;
+		if (!options.savedOnly && !matchesSourceRules(item, source)) continue;
 		if (options.savedOnly && !saved.has(item.id)) continue;
 
 		result.push({

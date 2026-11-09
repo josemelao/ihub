@@ -1,17 +1,17 @@
 # Meu Hub
 
-Hub pessoal local (página inicial do navegador) com links, apps do PC e, nas próximas fases, um feed por palavra-chave. Roda apenas no seu computador, em `localhost`.
+Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed por palavra-chave. Roda apenas no seu computador, em `localhost`.
 
 ## Status
 
-- **M0 (projeto)**, **M1 (dados e layout)** e **M2 (busca Ctrl K, exportar/importar)**: concluídos.
-- **M3 (feed)**: próximo marco.
-- O feed, o painel de edição e as ações de escrita aparecem desabilitados com aviso, sem quebrar o layout.
+- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)** e **M3 (feed)**: concluídos.
+- **M4 (painel de edição)** e **M5 (acabamento)**: próximos marcos.
+- O painel de edição e as ações de escrita de links/fontes aparecem desabilitados com aviso, sem quebrar o layout.
 - Os dados iniciais vêm dos mockups de referência (categorias, grupos, atalhos fixados, fontes e filtros salvos).
 
 ## Stack
 
-SvelteKit 3 + Svelte 5 (runes) + TypeScript, `@sveltejs/adapter-node`, Vitest, Zod, Fuse.js e adapter-node. Tema escuro único, responsivo.
+SvelteKit 3 + Svelte 5 (runes) + TypeScript, `@sveltejs/adapter-node`, Vitest, Zod, Fuse.js, `fast-xml-parser` e adapter-node. Tema escuro único, responsivo.
 
 ## Como rodar
 
@@ -44,12 +44,23 @@ npm start
 Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrita atômica e backup `.bak`.
 
 - `data/hub.json` — configuração portátil: categorias, grupos, itens (links/apps), fontes do feed e filtros salvos.
-- `data/estado.json` — lidos/salvos (criado quando necessário).
-- `data/feed-cache.json` — cache do feed (V2).
+- `data/estado.json` — lidos/salvos (criado quando necessário; não entra no Git).
+- `data/feed-cache.json` — posts já buscados e status por fonte (regenerável; não entra no Git).
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
 
 O schema e as referências (categoria/grupo inexistente, id duplicado, URL inválida, protocolo inseguro) são validados por Zod em `src/lib/schema.ts`.
+
+### Feed (M3)
+
+- Busca automática a cada ~60 s apenas nas fontes cujo intervalo venceu, e também pelo botão **Atualizar agora** (home, categoria, feed e Gerenciar).
+- Tipos de fonte: **RSS/Atom** (URL direta), **Reddit** (nome do subreddit ou URL do `.rss`) e **YouTube** (ID do canal `UC...` ou URL `feeds/videos.xml?channel_id=...`).
+- Regras por fonte: `include`/`exclude` e `matchMode` (`any`/`all`), aplicadas sobre título + resumo, sem diferenciar maiúsculas nem acentos. Uma fonte com erro não derruba as outras; o status aparece em **Gerenciar** e em **Feed completo**.
+- Filtro ao vivo na home e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria, "Não lidos" e destaque do trecho encontrado.
+- Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido**. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos.
+- Cache: até 30 posts por fonte, retenção de 30 dias, deduplicação por URL/guid. Requisições com timeout de 10 s, User-Agent identificado e limite de 5 MB por resposta.
+
+> Observações: o feed RSS do Reddit pode sofrer rate limit (429) — o erro fica visível e a fonte tenta de novo no próximo intervalo. Para YouTube, é necessário o ID do canal; URLs `@handle` não são resolvidas automaticamente nesta versão.
 
 ### Exportar e importar
 
@@ -73,17 +84,20 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 
 ## Telas
 
-| Rota          | Tela                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------- |
-| `/`           | Início: busca (Ctrl K), acesso rápido, feed (placeholder na V1), fontes e nota rápida |
-| `/c/[slug]`   | Categoria: grupos, links/apps e feed da categoria                                     |
-| `/feed`       | Feed completo (placeholder até a V2)                                                  |
-| `/favoritos`  | Atalhos fixados e filtros salvos                                                      |
-| `/apps`       | Apps do PC por categoria (abrem por protocolo)                                        |
-| `/gerenciar`  | Fontes e links, exportar/importar dados                                               |
-| `/api/hub`    | JSON do hub validado                                                                  |
-| `/api/export` | Download do bundle (hub + estado)                                                     |
-| `/api/import` | Importação validada (substituir/mesclar)                                              |
+| Rota           | Tela                                                                          |
+| -------------- | ----------------------------------------------------------------------------- |
+| `/`            | Início: busca (Ctrl K), acesso rápido, feed com filtros, fontes e nota rápida |
+| `/c/[slug]`    | Categoria: grupos, links/apps e feed restrito à categoria                     |
+| `/feed`        | Feed completo com filtros e fontes cadastradas                                |
+| `/favoritos`   | Atalhos fixados, filtros salvos e posts salvos                                |
+| `/apps`        | Apps do PC por categoria (abrem por protocolo)                                |
+| `/gerenciar`   | Fontes e links, status do feed, exportar/importar dados                       |
+| `/api/hub`     | JSON do hub validado                                                          |
+| `/api/export`  | Download do bundle (hub + estado)                                             |
+| `/api/import`  | Importação validada (substituir/mesclar)                                      |
+| `/api/feed`    | Cache do feed com status por fonte                                            |
+| `/api/refresh` | Dispara a atualização de todas as fontes                                      |
+| `/api/state`   | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                |
 
 ## Estrutura
 
@@ -94,8 +108,9 @@ src/
     schema.ts             # validação Zod + referências
     display.ts            # helpers de exibição (iniciais, cor, contagens)
     storage/              # JsonFileStorage e fábrica
-    components/           # Sidebar, TopBar, QuickAccess, cards...
-  routes/                 # páginas e api/hub
+    feed/                 # parser RSS/Atom, refresh, filtros, view e scheduler
+    components/           # Sidebar, TopBar, QuickAccess, FeedBoard, cards...
+  routes/                 # páginas e APIs
 data/hub.json             # dados temporários vindos dos mockups
 mockups/                  # referências visuais (.dc.html) — não é o app
 PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
@@ -104,7 +119,7 @@ PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
 ## Qualidade
 
 ```powershell
-npm test        # Vitest (schema, storage, helpers e seed)
+npm test        # Vitest (schema, storage, helpers, feed e seed)
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 ```
@@ -122,9 +137,10 @@ python -m http.server 8000
 
 Eles não fazem parte do build do app.
 
-## Segurança e limites da V1
+## Segurança e limites
 
-- Servidor só em `127.0.0.1`, com allowlist de Host/Origin.
+- Servidor só em `127.0.0.1`, com allowlist de Host/Origin; CSRF nativo do SvelteKit.
 - Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
+- O feed só busca as fontes cadastradas no `hub.json`, com timeout, User-Agent identificado e limite de tamanho.
 - Sem login, sem versão online, sem tema claro.
-- Feed e escrita na interface entram nos próximos marcos.
+- Escrita de links/fontes pela interface (painel "Adicionar") entra no M4.

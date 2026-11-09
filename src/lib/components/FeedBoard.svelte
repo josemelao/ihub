@@ -101,7 +101,11 @@
 		refreshFailed = false;
 
 		try {
-			const response = await fetch('/api/refresh', { method: 'POST' });
+			const response = await fetch('/api/refresh', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: '{}'
+			});
 			const result = (await response.json()) as {
 				ok?: boolean;
 				error?: string;

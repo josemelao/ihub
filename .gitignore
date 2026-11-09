@@ -27,3 +27,5 @@ vite.config.ts.timestamp-*
 
 # Backups locais do storage
 data/*.bak
+data/estado.json
+data/feed-cache.json
