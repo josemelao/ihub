@@ -858,7 +858,37 @@ h3 {
 }
 
 /* Feed cards */
-.feed-list {
+.feed-layout {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.feed-layout.bento {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-auto-rows: 8px;
+	gap: 12px;
+	grid-auto-flow: dense;
+	align-items: start;
+}
+
+.feed-layout.bento:not(.masonry-ready) {
+	visibility: hidden;
+}
+
+.feed-layout.bento .feed-card {
+	align-self: start;
+}
+
+.feed-layout.grid-view {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	align-items: stretch;
+}
+
+.feed-layout.compact-view {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -877,6 +907,16 @@ h3 {
 	opacity: 0.72;
 }
 
+.feed-card.variant-bento,
+.feed-card.variant-grid {
+	flex-direction: column;
+	padding: 12px;
+}
+
+.feed-card.wide {
+	grid-column: 1 / -1;
+}
+
 .feed-thumb {
 	flex: 0 0 132px;
 	height: 88px;
@@ -888,6 +928,25 @@ h3 {
 	font-family: 'Space Grotesk', Inter, sans-serif;
 	font-size: 22px;
 	font-weight: 700;
+}
+
+.feed-card.variant-bento .feed-thumb,
+.feed-card.variant-grid .feed-thumb {
+	flex: none;
+	width: 100%;
+	height: auto;
+	aspect-ratio: 16 / 9;
+	margin-bottom: 4px;
+}
+
+.feed-card.wide .feed-thumb {
+	aspect-ratio: 21 / 9;
+	max-height: 280px;
+}
+
+.feed-card.variant-compact .feed-thumb {
+	flex: 0 0 96px;
+	height: 72px;
 }
 
 .feed-thumb img {
@@ -927,6 +986,14 @@ h3 {
 	line-height: 1.35;
 }
 
+.feed-card.variant-bento .feed-title,
+.feed-card.variant-grid .feed-title {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
 .feed-title mark {
 	background: rgba(138, 164, 255, 0.25);
 	color: var(--tx);
@@ -938,6 +1005,22 @@ h3 {
 	margin: 0;
 	color: var(--mut);
 	line-height: 1.45;
+}
+
+.feed-card.variant-bento .feed-summary,
+.feed-card.variant-grid .feed-summary {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.feed-card.variant-compact .feed-title,
+.feed-card.variant-compact .feed-summary {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
 }
 
 .feed-actions {
@@ -978,6 +1061,15 @@ h3 {
 	flex-wrap: wrap;
 	gap: 24px;
 	align-items: flex-start;
+}
+
+.home-columns-toolbar {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.home-columns.panel-closed .home-main {
+	flex-basis: 100%;
 }
 
 .home-main {
@@ -1311,12 +1403,17 @@ h3 {
 		max-width: none;
 	}
 
-	.feed-card {
-		flex-direction: column;
+	.feed-layout.bento,
+	.feed-layout.grid-view {
+		grid-template-columns: 1fr;
 	}
 
-	.feed-thumb {
-		flex: 0 0 140px;
-		width: 100%;
+	.feed-card.wide {
+		grid-column: auto;
+	}
+
+	.feed-card.variant-compact .feed-thumb {
+		flex: 0 0 76px;
+		height: 60px;
 	}
 }

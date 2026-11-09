@@ -1,11 +1,15 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
+	import { masonry } from '#lib/actions/masonry';
 	import { matchesFilter } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
+
+	type FeedView = 'bento' | 'compact' | 'grid';
 
 	let {
 		entries,
@@ -23,6 +27,13 @@
 		contextNote?: string;
 	} = $props();
 
+	const viewOptions: { id: FeedView; label: string }[] = [
+		{ id: 'bento', label: 'Bento' },
+		{ id: 'compact', label: 'Compacto' },
+		{ id: 'grid', label: 'Grade' }
+	];
+
+	let view = $state<FeedView>('bento');
 	let query = $state('');
 	let modeChoice = $state<'any' | 'all'>('any');
 	let activeFilterId = $state<string | null>(null);
@@ -32,6 +43,18 @@
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
+
+	onMount(() => {
+		const saved = localStorage.getItem('meu-hub:feed-view');
+		if (saved === 'bento' || saved === 'compact' || saved === 'grid') {
+			view = saved;
+		}
+	});
+
+	function setView(next: FeedView): void {
+		view = next;
+		localStorage.setItem('meu-hub:feed-view', next);
+	}
 
 	const activeFilter = $derived(
 		savedFilters.find((filter) => filter.id === activeFilterId) ?? null
@@ -143,6 +166,19 @@
 			{/if}
 		</div>
 		<div class="chips">
+			<div class="chips view-switch" role="group" aria-label="Visualização do feed">
+				{#each viewOptions as option (option.id)}
+					<button
+						class="chip"
+						class:active={view === option.id}
+						type="button"
+						aria-pressed={view === option.id}
+						onclick={() => setView(option.id)}
+					>
+						{option.label}
+					</button>
+				{/each}
+			</div>
 			<button class="chip link" type="button" onclick={markAllRead}>Marcar tudo como lido</button>
 			<button class="chip link" type="button" onclick={refresh} disabled={refreshing}>
 				{refreshing ? 'Atualizando...' : 'Atualizar agora'}
@@ -265,9 +301,21 @@
 		</div>
 	</div>
 
-	<div class="feed-list">
+	<div
+		class="feed-layout"
+		class:bento={view === 'bento'}
+		class:grid-view={view === 'grid'}
+		class:compact-view={view === 'compact'}
+		use:masonry={{ enabled: view === 'bento', rowHeight: 8, gap: 12 }}
+	>
 		{#each visible as entry (entry.item.id)}
-			<FeedCard {entry} {terms} onread={() => toggleRead(entry)} onsave={() => toggleSave(entry)} />
+			<FeedCard
+				{entry}
+				{terms}
+				variant={view}
+				onread={() => toggleRead(entry)}
+				onsave={() => toggleSave(entry)}
+			/>
 		{/each}
 	</div>
 

@@ -15,13 +15,20 @@
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 
 	let note = $state('');
+	let panelOpen = $state(true);
 
 	onMount(() => {
 		note = localStorage.getItem('meu-hub:nota') ?? '';
+		panelOpen = localStorage.getItem('meu-hub:panel-open') !== '0';
 	});
 
 	function saveNote() {
 		localStorage.setItem('meu-hub:nota', note);
+	}
+
+	function togglePanel(): void {
+		panelOpen = !panelOpen;
+		localStorage.setItem('meu-hub:panel-open', panelOpen ? '1' : '0');
 	}
 
 	function unreadFor(sourceId: string): number {
@@ -40,8 +47,13 @@
 
 <QuickAccess {hub} />
 
-<div class="home-columns">
+<div class="home-columns" class:panel-closed={!panelOpen}>
 	<div class="home-main">
+		<div class="home-columns-toolbar">
+			<button class="chip" type="button" aria-pressed={panelOpen} onclick={togglePanel}>
+				{panelOpen ? 'Recolher painel' : 'Mostrar painel'}
+			</button>
+		</div>
 		<FeedBoard
 			{entries}
 			savedFilters={hub.savedFilters}
@@ -51,36 +63,38 @@
 		/>
 	</div>
 
-	<aside class="home-aside" aria-label="Painel lateral">
-		<section class="panel section" aria-labelledby="t-fontes">
-			<h2 id="t-fontes" style="font-size: 15px">Fontes ativas</h2>
-			{#each sources as source (source.id)}
-				<div class="source-row">
-					<span
-						class="dot"
-						style="background: {colors[source.categoryId] ?? '#8AA4FF'}; border-radius: 50%"
-					></span>
-					<span class="soft">{source.name}</span>
-					<span class="count" title="Posts não lidos">{unreadFor(source.id)}</span>
-				</div>
-			{/each}
-			{#if sources.length === 0}
-				<p class="muted small">Nenhuma fonte ativa no hub.json.</p>
-			{/if}
-			<a class="chip link" href={resolve('/gerenciar')}>Ver fontes</a>
-		</section>
+	{#if panelOpen}
+		<aside class="home-aside" aria-label="Painel lateral">
+			<section class="panel section" aria-labelledby="t-fontes">
+				<h2 id="t-fontes" style="font-size: 15px">Fontes do feed</h2>
+				{#each sources as source (source.id)}
+					<div class="source-row">
+						<span
+							class="dot"
+							style="background: {colors[source.categoryId] ?? '#8AA4FF'}; border-radius: 50%"
+						></span>
+						<span class="soft">{source.name}</span>
+						<span class="count" title="Posts não lidos">{unreadFor(source.id)}</span>
+					</div>
+				{/each}
+				{#if sources.length === 0}
+					<p class="muted small">Nenhuma fonte ativa no hub.json.</p>
+				{/if}
+				<a class="chip link" href={resolve('/gerenciar')}>Ver fontes</a>
+			</section>
 
-		<section class="panel section" aria-labelledby="t-nota">
-			<h2 id="t-nota" style="font-size: 15px">Nota rápida</h2>
-			<label class="sr-only" for="nota">Nota rápida</label>
-			<textarea
-				id="nota"
-				class="note-area"
-				rows="4"
-				placeholder="Anote algo e siga o dia..."
-				bind:value={note}
-				oninput={saveNote}></textarea>
-			<span class="muted small">Salva neste navegador.</span>
-		</section>
-	</aside>
+			<section class="panel section" aria-labelledby="t-nota">
+				<h2 id="t-nota" style="font-size: 15px">Nota rápida</h2>
+				<label class="sr-only" for="nota">Nota rápida</label>
+				<textarea
+					id="nota"
+					class="note-area"
+					rows="4"
+					placeholder="Anote algo e siga o dia..."
+					bind:value={note}
+					oninput={saveNote}></textarea>
+				<span class="muted small">Salva neste navegador.</span>
+			</section>
+		</aside>
+	{/if}
 </div>

@@ -1,38 +1,51 @@
 <script lang="ts">
-	import { initials, relativeTime, tint } from '#lib/display';
+	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
 
 	let {
 		entry,
 		terms = [],
+		variant = 'bento',
 		onread,
 		onsave
 	}: {
 		entry: FeedViewItem;
 		terms?: string[];
+		variant?: 'bento' | 'compact' | 'grid';
 		onread: () => void;
 		onsave: () => void;
 	} = $props();
 
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
+	let imageFailed = $state(false);
+	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
+	const wide = $derived(variant === 'bento' && hasImage);
 </script>
 
-<article class="feed-card" class:read={entry.read}>
-	<a
-		class="feed-thumb"
-		href={entry.item.url}
-		target="_blank"
-		rel="noopener noreferrer"
-		aria-label={`Abrir: ${entry.item.title}`}
-		style="background: {tint(color, 0.14)}; color: {color}"
-	>
-		{#if entry.item.thumbnail}
-			<img src={entry.item.thumbnail} alt="" loading="lazy" />
-		{:else}
-			<span>{initials(entry.source.name)}</span>
-		{/if}
-	</a>
+<article
+	class="feed-card variant-{variant}"
+	class:wide
+	class:no-image={!hasImage}
+	class:read={entry.read}
+>
+	{#if hasImage}
+		<a
+			class="feed-thumb"
+			href={entry.item.url}
+			target="_blank"
+			rel="noopener noreferrer"
+			aria-label={`Abrir: ${entry.item.title}`}
+			style="background: {tint(color, 0.14)}; color: {color}"
+		>
+			<img
+				src={entry.item.thumbnail ?? ''}
+				alt=""
+				loading="lazy"
+				onerror={() => (imageFailed = true)}
+			/>
+		</a>
+	{/if}
 
 	<div class="feed-body">
 		<div class="feed-meta">

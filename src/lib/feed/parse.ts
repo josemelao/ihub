@@ -83,9 +83,7 @@ function thumbnailOf(item: Record<string, unknown>, link: string): string | null
 	]);
 	if (media) return media;
 
-	const html = textOf(
-		item['content:encoded'] ?? item.description ?? item.content ?? item.summary
-	);
+	const html = textOf(item['content:encoded'] ?? item.description ?? item.content ?? item.summary);
 	const image = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(html);
 	if (image) return image[1];
 
