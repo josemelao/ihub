@@ -1111,6 +1111,10 @@ h3 {
 	transition: none;
 }
 
+.home-columns.panel-animating .feed-container {
+	overflow: hidden;
+}
+
 .home-columns.panel-closed {
 	gap: 0;
 }
