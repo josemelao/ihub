@@ -102,7 +102,10 @@ describe('addApp', () => {
 			categoryId: 'jogos'
 		});
 		const created = hub.items.find((item) => item.id === 'abrir-jogo');
-		expect(created).toMatchObject({ type: 'app', launch: { kind: 'protocol', value: 'steam://run/1' } });
+		expect(created).toMatchObject({
+			type: 'app',
+			launch: { kind: 'protocol', value: 'steam://run/1' }
+		});
 		expect(() => parseHub(hub)).not.toThrow();
 	});
 });

@@ -160,9 +160,7 @@ export function moveItem(hub: HubData, id: string, direction: 'up' | 'down'): Hu
 	if (!target) return hub;
 
 	const siblings = hub.items
-		.filter(
-			(item) => item.categoryId === target.categoryId && item.groupId === target.groupId
-		)
+		.filter((item) => item.categoryId === target.categoryId && item.groupId === target.groupId)
 		.sort((a, b) => a.order - b.order);
 
 	const index = siblings.findIndex((item) => item.id === id);

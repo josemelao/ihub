@@ -38,7 +38,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			return json({ ok: false, error: `A página respondeu HTTP ${response.status}.` }, { status: 502 });
+			return json(
+				{ ok: false, error: `A página respondeu HTTP ${response.status}.` },
+				{ status: 502 }
+			);
 		}
 
 		const text = await response.text();

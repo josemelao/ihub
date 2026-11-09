@@ -13,9 +13,7 @@ describe('discoverFeedUrl', () => {
 
 	it('encontra link Atom absoluto', () => {
 		const html = `<head><link href="https://blog.example.com/atom.xml" type="application/atom+xml" rel="alternate"></head>`;
-		expect(discoverFeedUrl(html, 'https://example.com')).toBe(
-			'https://blog.example.com/atom.xml'
-		);
+		expect(discoverFeedUrl(html, 'https://example.com')).toBe('https://blog.example.com/atom.xml');
 	});
 
 	it('reconhece quando a própria resposta já é um feed', () => {
@@ -24,6 +22,8 @@ describe('discoverFeedUrl', () => {
 	});
 
 	it('devolve null quando não há feed', () => {
-		expect(discoverFeedUrl('<html><head><title>Sem feed</title></head></html>', 'https://example.com')).toBeNull();
+		expect(
+			discoverFeedUrl('<html><head><title>Sem feed</title></head></html>', 'https://example.com')
+		).toBeNull();
 	});
 });
