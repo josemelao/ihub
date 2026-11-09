@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFeedView } from './view';
+import { buildFeedView, buildSavedView } from './view';
 import type { FeedCache, FeedItem, HubData, HubState } from '../types';
 
 const item: FeedItem = {
@@ -42,7 +42,12 @@ const cache: FeedCache = {
 	sources: {}
 };
 
-const state = (saved: string[] = []): HubState => ({ version: 1, read: {}, saved });
+const state = (saved: string[] = []): HubState => ({
+	version: 1,
+	read: {},
+	saved,
+	savedItems: {}
+});
 
 describe('buildFeedView', () => {
 	it('aplica as regras da fonte no feed normal', () => {
@@ -63,5 +68,47 @@ describe('buildFeedView', () => {
 
 	it('filtra por categoria', () => {
 		expect(buildFeedView(hub, cache, state(), { categoryId: 'outra' })).toHaveLength(0);
+	});
+});
+
+describe('buildSavedView', () => {
+	it('inclui posts salvos que ainda estão no cache', () => {
+		const view = buildSavedView(hub, cache, state(['post-1']));
+		expect(view).toHaveLength(1);
+		expect(view[0].saved).toBe(true);
+	});
+
+	it('usa o snapshot quando a fonte/cache não existe mais', () => {
+		const snapshotState = state(['sumiu']);
+		snapshotState.savedItems.sumiu = {
+			item: {
+				...item,
+				id: 'sumiu',
+				sourceId: 'fonte-removida',
+				title: 'Post antigo salvo',
+				publishedAt: '2026-11-08T10:00:00Z'
+			},
+			sourceId: 'fonte-removida',
+			sourceName: 'Fonte removida',
+			categoryId: 'categoria-sumiu',
+			categoryName: 'Jogos',
+			color: '#123456',
+			savedAt: '2026-11-09T12:00:00Z'
+		};
+
+		const view = buildSavedView(hub, cache, snapshotState);
+		expect(view).toHaveLength(1);
+		expect(view[0].source.name).toBe('Fonte removida');
+		expect(view[0].category?.color).toBe('#123456');
+	});
+
+	it('ignora id salvo sem cache e sem snapshot', () => {
+		expect(buildSavedView(hub, cache, state(['fantasma']))).toHaveLength(0);
+	});
+
+	it('mantém salvo mesmo com a fonte desligada', () => {
+		const disabled = structuredClone(hub);
+		disabled.feedSources[0].enabled = false;
+		expect(buildSavedView(disabled, cache, state(['post-1']))).toHaveLength(1);
 	});
 });

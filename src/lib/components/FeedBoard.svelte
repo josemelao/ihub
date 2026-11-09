@@ -7,6 +7,7 @@
 	import { masonry } from '#lib/actions/masonry';
 	import { matchesFilter } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
+	import { snapshotFromEntry } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
@@ -55,6 +56,8 @@
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
 	let reduceMotion = $state(false);
+	let viewReady = $state(false);
+	let animationsEnabled = $state(false);
 	let showFilterForm = $state(false);
 	let filterLabel = $state('');
 	let filterInclude = $state('');
@@ -72,10 +75,19 @@
 			localStorage.setItem('meu-hub:feed-view', 'completo');
 		}
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+		requestAnimationFrame(() => {
+			viewReady = true;
+		});
+		const timer = setTimeout(() => {
+			animationsEnabled = true;
+		}, 400);
+
+		return () => clearTimeout(timer);
 	});
 
-	const motionDuration = $derived(reduceMotion ? 0 : 300);
-	const fadeDuration = $derived(reduceMotion ? 0 : 160);
+	const motionDuration = $derived(reduceMotion || !animationsEnabled ? 0 : 300);
+	const fadeDuration = $derived(reduceMotion || !animationsEnabled ? 0 : 160);
 
 	function setView(next: FeedView): void {
 		view = next;
@@ -206,7 +218,11 @@
 	}
 
 	function toggleSave(entry: FeedViewItem): void {
-		void postState({ action: entry.saved ? 'unsave' : 'save', id: entry.item.id });
+		void postState(
+			entry.saved
+				? { action: 'unsave', id: entry.item.id }
+				: { action: 'save', id: entry.item.id, snapshot: snapshotFromEntry(entry) }
+		);
 	}
 
 	function markAllRead(): void {
@@ -452,12 +468,13 @@
 		</div>
 	{/if}
 
-	<div class="feed-container">
+	<div class="feed-container" class:view-ready={viewReady}>
 		<div
 			class="feed-layout"
 			class:bento={view === 'bento'}
 			class:completo-view={view === 'completo'}
 			class:compact-view={view === 'compact'}
+			class:motion-enabled={animationsEnabled}
 			use:masonry={{ enabled: view === 'bento', gap: 12 }}
 		>
 			{#each visible as entry (entry.item.id)}

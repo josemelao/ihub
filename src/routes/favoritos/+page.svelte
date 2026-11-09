@@ -2,12 +2,12 @@
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
-	import { buildFeedView } from '#lib/feed/view';
+	import { buildSavedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const hub = $derived(data.hub);
-	const entries = $derived(buildFeedView(hub, data.feed, data.state, { savedOnly: true }));
+	const entries = $derived(buildSavedView(hub, data.feed, data.state));
 </script>
 
 <svelte:head>

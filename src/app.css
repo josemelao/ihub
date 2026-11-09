@@ -983,6 +983,10 @@ h3 {
 	container-type: inline-size;
 }
 
+.feed-container:not(.view-ready) {
+	visibility: hidden;
+}
+
 /* Feed cards */
 .feed-layout {
 	display: flex;
@@ -1012,7 +1016,7 @@ h3 {
 	position: absolute;
 }
 
-.feed-layout.bento.masonry-ready .feed-slot {
+.feed-layout.bento.masonry-ready.motion-enabled .feed-slot {
 	transition:
 		left var(--motion) var(--ease-motion),
 		top var(--motion) var(--ease-motion),
@@ -1607,7 +1611,7 @@ h3 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.feed-layout.bento.masonry-ready .feed-slot,
+	.feed-layout.bento.masonry-ready.motion-enabled .feed-slot,
 	.feed-card {
 		transition: none;
 	}

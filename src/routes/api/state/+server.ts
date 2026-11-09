@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { getStorage } from '#lib/storage';
-import type { HubState } from '#lib/types';
+import type { HubState, SavedItemSnapshot } from '#lib/types';
 import type { RequestHandler } from './$types';
 
 type StateAction = 'read' | 'unread' | 'save' | 'unsave' | 'mark-all-read';
@@ -9,6 +9,7 @@ interface StatePayload {
 	action?: StateAction;
 	id?: string;
 	ids?: string[];
+	snapshot?: SavedItemSnapshot;
 }
 
 export const GET: RequestHandler = async () => {
@@ -42,11 +43,20 @@ export const POST: RequestHandler = async ({ request }) => {
 		case 'save':
 			if (!payload.id) return invalid('Informe o id do post.');
 			state.saved = [...new Set([...state.saved, payload.id])];
+			if (
+				payload.snapshot &&
+				payload.snapshot.item?.id === payload.id &&
+				typeof payload.snapshot.item.title === 'string' &&
+				typeof payload.snapshot.item.url === 'string'
+			) {
+				state.savedItems[payload.id] = { ...payload.snapshot, savedAt: now };
+			}
 			break;
 
 		case 'unsave':
 			if (!payload.id) return invalid('Informe o id do post.');
 			state.saved = state.saved.filter((id) => id !== payload.id);
+			delete state.savedItems[payload.id];
 			break;
 
 		case 'mark-all-read':

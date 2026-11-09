@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { HubValidationError, parseHub } from '../schema';
 import type { ExportBundle, FeedCache, HubData, HubState, HubStorage } from '../types';
 
-const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [] };
+const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [], savedItems: {} };
 const EMPTY_CACHE: FeedCache = {
 	version: 1,
 	updatedAt: new Date(0).toISOString(),
@@ -108,7 +108,12 @@ export class JsonFileStorage implements HubStorage {
 	async loadState(): Promise<HubState> {
 		try {
 			const value = (await this.readJson('estado.json')) as Partial<HubState>;
-			return { version: value.version ?? 1, read: value.read ?? {}, saved: value.saved ?? [] };
+			return {
+				version: value.version ?? 1,
+				read: value.read ?? {},
+				saved: value.saved ?? [],
+				savedItems: value.savedItems ?? {}
+			};
 		} catch (error) {
 			if (isMissingFile(error)) {
 				return structuredClone(EMPTY_STATE);
@@ -151,7 +156,7 @@ export class JsonFileStorage implements HubStorage {
 
 		if (mode === 'replace') {
 			await this.saveHub(incoming);
-			if (bundle.state) await this.saveState(bundle.state);
+			if (bundle.state) await this.saveState(normalizeState(bundle.state));
 			return;
 		}
 
@@ -179,13 +184,30 @@ export class JsonFileStorage implements HubStorage {
 
 		if (bundle.state) {
 			const state = await this.loadState();
+			const incomingState = normalizeState(bundle.state);
+			const mergedSaved = [...new Set([...state.saved, ...incomingState.saved])];
+			const savedItems = { ...state.savedItems, ...incomingState.savedItems };
+			for (const id of Object.keys(savedItems)) {
+				if (!mergedSaved.includes(id)) delete savedItems[id];
+			}
+
 			await this.saveState({
 				version: 1,
-				read: { ...state.read, ...bundle.state.read },
-				saved: [...new Set([...state.saved, ...bundle.state.saved])]
+				read: { ...state.read, ...incomingState.read },
+				saved: mergedSaved,
+				savedItems
 			});
 		}
 	}
+}
+
+function normalizeState(state: HubState): HubState {
+	return {
+		version: state.version ?? 1,
+		read: state.read ?? {},
+		saved: state.saved ?? [],
+		savedItems: state.savedItems ?? {}
+	};
 }
 
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {

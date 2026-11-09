@@ -46,7 +46,7 @@ Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrit
 
 - `data/hub.example.json` — seed de exemplo versionado (mockups).
 - `data/hub.json` — seus dados reais: categorias, grupos, itens (links/apps), fontes do feed e filtros salvos. **Não entra no Git.**
-- `data/estado.json` — lidos/salvos (criado quando necessário; não entra no Git).
+- `data/estado.json` — lidos/salvos, incluindo um snapshot dos posts salvos (criado quando necessário; não entra no Git).
 - `data/feed-cache.json` — posts já buscados e status por fonte (regenerável; não entra no Git).
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
@@ -61,10 +61,10 @@ O schema e as referências (categoria/grupo inexistente, id duplicado, URL invá
 - Filtro ao vivo no **Feed completo** e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria, "Não lidos" e destaque do trecho encontrado.
 - **+ Salvar filtro** captura a busca atual num formulário em linha com **Nome, Incluir, Excluir e Modo (qualquer/todas)**. Os filtros podem ser editados/removidos em Gerenciar → Regras.
 - A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
-- Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido**. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos.
+- Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido**. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Favoritos mesmo se a fonte for removida ou o cache expirar.
 - **Visualizações**: **Bento** (masonry em colunas iguais: 2 colunas, 3 quando o feed está largo, imagens 3:2 e retrato adaptativo), **Compacto** (lista, 2–3 linhas) e **Completo** (lista com imagem lateral maior e texto expansível). A escolha fica salva no navegador.
 - No Bento o texto flui naturalmente (sem corte de linhas) e o masonry posiciona cada card na coluna mais curta, sem buracos.
-- Cards filtrados/marcados como lidos desaparecem com fade e os restantes deslizam para a nova posição. Respeita `prefers-reduced-motion`.
+- Cards filtrados/marcados como lidos desaparecem com fade e os restantes deslizam para a nova posição. **Ao entrar ou trocar de página não há animação**; ela só é ativada após o feed assentar (~400ms) e passa a valer para filtros, busca, lidos e “Carregar mais”. Respeita `prefers-reduced-motion`.
 - A **home é um painel geral**: faixa de 3 cards (Acesso rápido, Resumo do dia, Ações rápidas), só as **5 últimas notícias** e o botão “Ver feed completo”. Os filtros ficam no Feed completo.
 - A barra direita é fixa/sticky e mostra Fontes do feed, Filtros salvos, Salvos recentemente e Nota rápida. A sidebar esquerda é fixa, com rodapé fixo e engrenagem no topo.
 - Imagens vêm de `media:*`, `enclosure`, do primeiro `<img>` do conteúdo e, para YouTube, do ID do vídeo.

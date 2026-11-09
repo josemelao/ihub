@@ -84,7 +84,7 @@ src/
 data/
   hub.example.json             # seed versionado
   hub.json                     # dados reais (ignorado pelo Git)
-  estado.json                  # lidos/salvos (ignorado)
+  estado.json                  # lidos/salvos + snapshot dos salvos (ignorado)
   feed-cache.json              # posts + status por fonte (ignorado)
 ```
 
@@ -109,7 +109,7 @@ data/
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Apps do PC e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
-- **Favoritos**: atalhos fixados, filtros salvos e posts salvos; estado vazio contextual (“Nenhum post salvo ainda”).
+- **Favoritos**: atalhos fixados, filtros salvos e posts salvos; estado vazio contextual (“Nenhum post salvo ainda”). Os salvos guardam um **snapshot**, então permanecem mesmo sem fonte/cache.
 - **Apps do PC**: grade de apps por categoria, mostrando o protocolo e ação de abrir.
 
 ### Acesso rápido
@@ -152,7 +152,7 @@ data/
 - **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** para ler o texto inteiro (até 700 caracteres).
 - A escolha fica em `localStorage` (`meu-hub:feed-view`); `grid` antigo migra para `completo`.
 - A barra direita da home é **fixa/sticky, sem recolher**, com Fontes do feed, Filtros salvos (com contagem e link para `/feed?filtro=id`), Salvos recentemente e Nota rápida.
-- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo). Respeita `prefers-reduced-motion`.
+- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo). **Não anima ao entrar/trocar de página**: `viewReady` evita o salto de visualização e `animationsEnabled` só liga após ~400ms; depois vale para filtros, busca, lidos e “Carregar mais”. Respeita `prefers-reduced-motion`.
 
 > Histórico: tentamos Bento com larguras mistas (1/3, 1/2, 2/3). Foi abandonado porque masonry com spans variados abre buracos e os spans mudavam ao filtrar/marcar como lido. Colunas iguais resolveram.
 

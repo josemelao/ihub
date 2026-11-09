@@ -76,10 +76,21 @@ export interface HubData {
 	savedFilters: SavedFilter[];
 }
 
+export interface SavedItemSnapshot {
+	item: FeedItem;
+	sourceId: string;
+	sourceName: string;
+	categoryId?: string;
+	categoryName?: string;
+	color?: string;
+	savedAt: string;
+}
+
 export interface HubState {
 	version: number;
 	read: Record<string, string>;
 	saved: string[];
+	savedItems: Record<string, SavedItemSnapshot>;
 }
 
 export interface FeedItem {

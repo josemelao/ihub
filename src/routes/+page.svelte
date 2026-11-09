@@ -6,7 +6,7 @@
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { relativeTime } from '#lib/display';
 	import { matchesFilter } from '#lib/feed/filter';
-	import { buildFeedView } from '#lib/feed/view';
+	import { buildFeedView, buildSavedView } from '#lib/feed/view';
 	import type { SavedFilter } from '#lib/types';
 	import type { PageProps } from './$types';
 
@@ -16,9 +16,7 @@
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const sources = $derived(hub.feedSources.filter((source) => source.enabled));
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
-	const savedRecent = $derived(
-		entries.filter((entry) => data.state.saved.includes(entry.item.id)).slice(0, 3)
-	);
+	const savedRecent = $derived(buildSavedView(hub, data.feed, data.state).slice(0, 3));
 
 	let note = $state('');
 

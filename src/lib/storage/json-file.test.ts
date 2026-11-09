@@ -99,7 +99,7 @@ describe('JsonFileStorage', () => {
 	it('retorna estado vazio quando estado.json ainda não existe', async () => {
 		await storage.saveHub(hub('Jogos'));
 		const state = await storage.loadState();
-		expect(state).toEqual({ version: 1, read: {}, saved: [] });
+		expect(state).toEqual({ version: 1, read: {}, saved: [], savedItems: {} });
 	});
 
 	it('retorna cache vazio quando feed-cache.json ainda não existe', async () => {
@@ -114,7 +114,8 @@ describe('JsonFileStorage', () => {
 		await storage.saveState({
 			version: 1,
 			read: { post: '2026-11-09T12:00:00Z' },
-			saved: ['post']
+			saved: ['post'],
+			savedItems: {}
 		});
 
 		const bundle = await storage.exportBundle();
@@ -122,7 +123,8 @@ describe('JsonFileStorage', () => {
 		expect(bundle.state).toEqual({
 			version: 1,
 			read: { post: '2026-11-09T12:00:00Z' },
-			saved: ['post']
+			saved: ['post'],
+			savedItems: {}
 		});
 	});
 
@@ -134,7 +136,12 @@ describe('JsonFileStorage', () => {
 		await storage.importBundle(
 			{
 				hub: incoming,
-				state: { version: 1, read: { novo: '2026-11-09T12:00:00Z' }, saved: ['novo'] }
+				state: {
+					version: 1,
+					read: { novo: '2026-11-09T12:00:00Z' },
+					saved: ['novo'],
+					savedItems: {}
+				}
 			},
 			'replace'
 		);
@@ -147,17 +154,61 @@ describe('JsonFileStorage', () => {
 
 	it('mescla o estado no modo merge', async () => {
 		await storage.saveHub(hub('Original'));
-		await storage.saveState({ version: 1, read: { a: 't1' }, saved: ['a'] });
+		await storage.saveState({ version: 1, read: { a: 't1' }, saved: ['a'], savedItems: {} });
 
 		const incoming = hub('Novo');
 		incoming.categories[0].id = 'ferramentas';
 		await storage.importBundle(
-			{ hub: incoming, state: { version: 1, read: { b: 't2' }, saved: ['b'] } },
+			{ hub: incoming, state: { version: 1, read: { b: 't2' }, saved: ['b'], savedItems: {} } },
 			'merge'
 		);
 
 		const state = await storage.loadState();
 		expect(Object.keys(state.read).sort()).toEqual(['a', 'b']);
 		expect(state.saved.sort()).toEqual(['a', 'b']);
+	});
+
+	it('persiste o snapshot dos posts salvos', async () => {
+		const state = {
+			version: 1,
+			read: {},
+			saved: ['post-1'],
+			savedItems: {
+				'post-1': {
+					item: {
+						id: 'post-1',
+						sourceId: 'fonte',
+						title: 'Salvo',
+						summary: '',
+						url: 'https://example.com/1',
+						publishedAt: '2026-11-09T12:00:00Z',
+						thumbnail: null
+					},
+					sourceId: 'fonte',
+					sourceName: 'Fonte',
+					categoryId: 'jogos',
+					categoryName: 'Jogos',
+					color: '#8AA4FF',
+					savedAt: '2026-11-09T12:00:00Z'
+				}
+			}
+		};
+
+		await storage.saveState(state);
+		const loaded = await storage.loadState();
+		expect(loaded.savedItems['post-1'].sourceName).toBe('Fonte');
+		expect(loaded.savedItems['post-1'].item.title).toBe('Salvo');
+	});
+
+	it('completa savedItems vazio ao ler estado antigo', async () => {
+		await storage.saveHub(hub('Jogos'));
+		await writeFile(
+			join(dir, 'estado.json'),
+			JSON.stringify({ version: 1, read: { a: 't' }, saved: ['a'] }),
+			'utf-8'
+		);
+
+		const loaded = await storage.loadState();
+		expect(loaded.savedItems).toEqual({});
 	});
 });
