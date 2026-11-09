@@ -4,9 +4,8 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)** e **M3 (feed)**: concluídos.
-- **M4 (painel de edição)** e **M5 (acabamento)**: próximos marcos.
-- O painel de edição e as ações de escrita de links/fontes aparecem desabilitados com aviso, sem quebrar o layout.
+- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)**, **M3 (feed)** e **M4 (painel de edição)**: concluídos.
+- **M5 (acabamento)**: próximo marco.
 - Os dados iniciais vêm dos mockups de referência (categorias, grupos, atalhos fixados, fontes e filtros salvos).
 
 ## Stack
@@ -69,6 +68,17 @@ Na tela **Gerenciar**:
 - **Exportar dados** baixa um `hub-export-AAAA-MM-DD.json` com o hub e o estado.
 - **Importar dados** lê o arquivo, valida e mostra um resumo antes de confirmar. Escolha **substituir tudo** ou **mesclar por id**. Um backup do `hub.json` atual é criado automaticamente.
 
+### Editar pela interface (M4)
+
+Em **Gerenciar**, as abas são funcionais:
+
+- **Fontes do feed**: adicionar, editar, remover e ligar/desligar; status de cada fonte.
+- **Links** e **Apps do PC**: adicionar, editar, remover e reordenar (↑/↓).
+- **Categorias**: adicionar e remover (bloqueia se estiver em uso).
+- **Regras do feed**: adicionar/remover filtros salvos.
+
+O botão **Adicionar** abre um painel lateral com formulário específico. Para fontes RSS, o botão **Detectar** procura automaticamente o feed na página informada. Toda alteração é validada pelo Zod e gravada no `hub.json` de forma atômica, com backup `.bak`.
+
 ### Sincronizar entre dois PCs (Google Drive / OneDrive)
 
 Não há integração com a API do Drive. A sincronização é feita pela **pasta sincronizada** do Drive/OneDrive:
@@ -84,20 +94,21 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 
 ## Telas
 
-| Rota           | Tela                                                                          |
-| -------------- | ----------------------------------------------------------------------------- |
-| `/`            | Início: busca (Ctrl K), acesso rápido, feed com filtros, fontes e nota rápida |
-| `/c/[slug]`    | Categoria: grupos, links/apps e feed restrito à categoria                     |
-| `/feed`        | Feed completo com filtros e fontes cadastradas                                |
-| `/favoritos`   | Atalhos fixados, filtros salvos e posts salvos                                |
-| `/apps`        | Apps do PC por categoria (abrem por protocolo)                                |
-| `/gerenciar`   | Fontes e links, status do feed, exportar/importar dados                       |
-| `/api/hub`     | JSON do hub validado                                                          |
-| `/api/export`  | Download do bundle (hub + estado)                                             |
-| `/api/import`  | Importação validada (substituir/mesclar)                                      |
-| `/api/feed`    | Cache do feed com status por fonte                                            |
-| `/api/refresh` | Dispara a atualização de todas as fontes                                      |
-| `/api/state`   | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                |
+| Rota                 | Tela                                                                          |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `/`                  | Início: busca (Ctrl K), acesso rápido, feed com filtros, fontes e nota rápida |
+| `/c/[slug]`          | Categoria: grupos, links/apps e feed restrito à categoria                     |
+| `/feed`              | Feed completo com filtros e fontes cadastradas                                |
+| `/favoritos`         | Atalhos fixados, filtros salvos e posts salvos                                |
+| `/apps`              | Apps do PC por categoria (abrem por protocolo)                                |
+| `/gerenciar`         | Fontes/links/apps, edição, status do feed, exportar/importar                  |
+| `/api/hub`           | JSON do hub validado (GET) e mutações validadas (POST)                        |
+| `/api/export`        | Download do bundle (hub + estado)                                             |
+| `/api/import`        | Importação validada (substituir/mesclar)                                      |
+| `/api/feed`          | Cache do feed com status por fonte                                            |
+| `/api/refresh`       | Dispara a atualização de todas as fontes                                      |
+| `/api/state`         | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                |
+| `/api/discover-feed` | Descobre o feed RSS/Atom de uma página (POST)                                 |
 
 ## Estrutura
 
@@ -143,4 +154,4 @@ Eles não fazem parte do build do app.
 - Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
 - O feed só busca as fontes cadastradas no `hub.json`, com timeout, User-Agent identificado e limite de tamanho.
 - Sem login, sem versão online, sem tema claro.
-- Escrita de links/fontes pela interface (painel "Adicionar") entra no M4.
+- Escrita de links/fontes pela interface é validada e restrita ao `hub.json`; renomear/reordenar categorias fica para o M5.
