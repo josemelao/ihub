@@ -92,10 +92,17 @@ export interface FeedItem {
 	thumbnail: string | null;
 }
 
+export interface FeedSourceStatus {
+	lastFetchedAt: string;
+	error: string | null;
+	count: number;
+}
+
 export interface FeedCache {
 	version: number;
 	updatedAt: string;
 	items: FeedItem[];
+	sources: Record<string, FeedSourceStatus>;
 }
 
 export interface ExportBundle {

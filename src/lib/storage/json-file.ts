@@ -4,7 +4,12 @@ import { HubValidationError, parseHub } from '../schema';
 import type { ExportBundle, FeedCache, HubData, HubState, HubStorage } from '../types';
 
 const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [] };
-const EMPTY_CACHE: FeedCache = { version: 1, updatedAt: new Date(0).toISOString(), items: [] };
+const EMPTY_CACHE: FeedCache = {
+	version: 1,
+	updatedAt: new Date(0).toISOString(),
+	items: [],
+	sources: {}
+};
 
 function isMissingFile(error: unknown): boolean {
 	return (
@@ -122,7 +127,8 @@ export class JsonFileStorage implements HubStorage {
 			return {
 				version: value.version ?? 1,
 				updatedAt: value.updatedAt ?? EMPTY_CACHE.updatedAt,
-				items: value.items ?? []
+				items: value.items ?? [],
+				sources: value.sources ?? {}
 			};
 		} catch (error) {
 			if (isMissingFile(error)) {
