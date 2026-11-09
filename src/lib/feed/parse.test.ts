@@ -79,4 +79,34 @@ describe('parseFeed', () => {
 	it('devolve lista vazia para XML inválido', () => {
 		expect(parseFeed('isso não é xml', 'x')).toEqual([]);
 	});
+
+	it('extrai imagem de media:group', () => {
+		const withMedia = `<rss version="2.0"><channel><item>
+			<title>Vídeo</title>
+			<link>https://www.youtube.com/watch?v=abc123def45</link>
+			<description>Resumo</description>
+			<media:group><media:thumbnail url="https://img.example/yt.jpg" /></media:group>
+		</item></channel></rss>`;
+		expect(parseFeed(withMedia, 'yt')[0].thumbnail).toBe('https://img.example/yt.jpg');
+	});
+
+	it('extrai a primeira imagem do HTML do conteúdo', () => {
+		const withImg = `<rss version="2.0"><channel><item>
+			<title>Post com imagem</title>
+			<link>https://example.com/post</link>
+			<description><![CDATA[<p>Texto</p><img src="https://example.com/foto.jpg" alt="" />]]></description>
+		</item></channel></rss>`;
+		expect(parseFeed(withImg, 'blog')[0].thumbnail).toBe('https://example.com/foto.jpg');
+	});
+
+	it('deriva thumbnail de link do YouTube', () => {
+		const yt = `<rss version="2.0"><channel><item>
+			<title>Vídeo</title>
+			<link>https://www.youtube.com/watch?v=abc123def45</link>
+			<description>Resumo</description>
+		</item></channel></rss>`;
+		expect(parseFeed(yt, 'yt')[0].thumbnail).toBe(
+			'https://i.ytimg.com/vi/abc123def45/hqdefault.jpg'
+		);
+	});
 });

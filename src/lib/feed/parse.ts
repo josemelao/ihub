@@ -60,18 +60,39 @@ function linkOf(value: unknown): string {
 	return '';
 }
 
-function thumbnailOf(item: Record<string, unknown>): string | null {
-	const enclosure = item.enclosure;
-	const media = item['media:content'] ?? item['media:thumbnail'];
-
-	for (const candidate of [enclosure, media]) {
-		for (const entry of asArray(candidate)) {
-			if (entry && typeof entry === 'object') {
-				const url = (entry as Record<string, unknown>)['@_url'];
-				if (typeof url === 'string' && url) return url;
+function thumbnailOf(item: Record<string, unknown>, link: string): string | null {
+	function mediaUrl(value: unknown): string | null {
+		for (const entry of asArray(value)) {
+			if (!entry || typeof entry !== 'object') continue;
+			const object = entry as Record<string, unknown>;
+			const url = object['@_url'];
+			if (typeof url === 'string' && url) return url;
+			for (const nested of Object.values(object)) {
+				const found = mediaUrl(nested);
+				if (found) return found;
 			}
 		}
+		return null;
 	}
+
+	const media = mediaUrl([
+		item.enclosure,
+		item['media:content'],
+		item['media:thumbnail'],
+		item['media:group']
+	]);
+	if (media) return media;
+
+	const html = textOf(
+		item['content:encoded'] ?? item.description ?? item.content ?? item.summary
+	);
+	const image = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(html);
+	if (image) return image[1];
+
+	const youtube = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i.exec(
+		link
+	);
+	if (youtube) return `https://i.ytimg.com/vi/${youtube[1]}/hqdefault.jpg`;
 
 	return null;
 }
@@ -143,7 +164,7 @@ export function parseFeed(xml: string, sourceId: string): FeedItem[] {
 			summary,
 			url,
 			publishedAt,
-			thumbnail: thumbnailOf(item)
+			thumbnail: thumbnailOf(item, url)
 		});
 	}
 
