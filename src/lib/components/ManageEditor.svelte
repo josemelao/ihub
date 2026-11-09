@@ -110,7 +110,7 @@
 	let issues = $state<ValidationIssue[]>([]);
 	let notice = $state('');
 	let detecting = $state(false);
-	let panelEl = $state<HTMLElement | null>(null);
+	let dialogEl = $state<HTMLDialogElement | null>(null);
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
 	const kindLabel = $derived(
@@ -127,40 +127,22 @@
 	const title = $derived(`${isEdit ? 'Editar' : 'Adicionar'} ${kindLabel}`);
 
 	onMount(() => {
-		document.querySelector('.app-shell')?.setAttribute('inert', '');
-		const field = panelEl?.querySelector<HTMLElement>('input:not([type="hidden"]), select');
-		(field ?? panelEl)?.focus();
+		dialogEl?.showModal();
+		const field = dialogEl?.querySelector<HTMLElement>('input:not([type="hidden"]), select');
+		(field ?? dialogEl)?.focus();
 	});
 
 	onDestroy(() => {
-		document.querySelector('.app-shell')?.removeAttribute('inert');
+		dialogEl?.close();
 	});
 
-	function onKeydown(event: KeyboardEvent): void {
-		if (event.key === 'Escape') {
-			event.preventDefault();
-			onclose();
-			return;
-		}
-		if (event.key !== 'Tab' || !panelEl) return;
+	function handleCancel(event: Event): void {
+		event.preventDefault();
+		onclose();
+	}
 
-		const focusable = [
-			...panelEl.querySelectorAll<HTMLElement>(
-				'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-			)
-		].filter((element) => element.offsetParent !== null);
-
-		if (focusable.length === 0) return;
-		const first = focusable[0];
-		const last = focusable[focusable.length - 1];
-
-		if (event.shiftKey && document.activeElement === first) {
-			event.preventDefault();
-			last.focus();
-		} else if (!event.shiftKey && document.activeElement === last) {
-			event.preventDefault();
-			first.focus();
-		}
+	function handleBackdropClick(event: MouseEvent): void {
+		if (event.target === dialogEl) onclose();
 	}
 
 	function onCategoryChange(): void {
@@ -309,17 +291,13 @@
 	}
 </script>
 
-<svelte:window onkeydown={onKeydown} />
-
-<div class="editor-backdrop"></div>
-
-<div
-	bind:this={panelEl}
+<dialog
+	bind:this={dialogEl}
 	class="editor-panel"
-	role="dialog"
-	aria-modal="true"
 	aria-label={title}
 	tabindex="-1"
+	oncancel={handleCancel}
+	onclick={handleBackdropClick}
 >
 	<div class="editor-head">
 		<h2>{title}</h2>
@@ -533,4 +511,4 @@
 			</button>
 		</div>
 	</form>
-</div>
+</dialog>
