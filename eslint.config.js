@@ -37,7 +37,11 @@ export default defineConfig(
 	{
 		// Estes componentes apontam para URLs externas e protocolos de app,
 		// então o resolve() de rotas internas não se aplica.
-		files: ['src/lib/components/ItemRow.svelte', 'src/lib/components/QuickAccess.svelte'],
+		files: [
+			'src/lib/components/ItemRow.svelte',
+			'src/lib/components/QuickAccess.svelte',
+			'src/lib/components/FeedCard.svelte'
+		],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	},
 	{

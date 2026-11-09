@@ -106,14 +106,11 @@ export function parseFeed(xml: string, sourceId: string): FeedItem[] {
 	const feed = root.feed as Record<string, unknown> | undefined;
 	const rawItems = asArray(
 		(channel?.channel as Record<string, unknown> | undefined)?.item as
-			| Record<string, unknown>
-			| Record<string, unknown>[]
-			| undefined
+			Record<string, unknown> | Record<string, unknown>[] | undefined
 	).length
 		? asArray(
 				(channel?.channel as Record<string, unknown>).item as
-					| Record<string, unknown>
-					| Record<string, unknown>[]
+					Record<string, unknown> | Record<string, unknown>[]
 			)
 		: asArray(feed?.entry as Record<string, unknown> | Record<string, unknown>[] | undefined);
 

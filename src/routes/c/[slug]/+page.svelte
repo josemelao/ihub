@@ -1,7 +1,8 @@
 <script lang="ts">
-	import FeedPlaceholder from '#lib/components/FeedPlaceholder.svelte';
+	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import GroupCard from '#lib/components/GroupCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { buildFeedView } from '#lib/feed/view';
 	import type { HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
 
@@ -19,6 +20,9 @@
 	);
 	const itemCount = $derived(items.length);
 	const sourceCount = $derived(data.sources.length);
+	const entries = $derived(
+		buildFeedView(data.hub, data.feed, data.state, { categoryId: category.id })
+	);
 
 	function itemsFor(groupId: string, isUngrouped: boolean): HubItem[] {
 		return items.filter((item) =>
@@ -84,9 +88,9 @@
 	{/if}
 </section>
 
-<FeedPlaceholder
+<FeedBoard
+	{entries}
 	title={`Feed de ${category.name}`}
 	savedFilters={data.hub.savedFilters}
-	categories={[]}
-	counter={`0 de 0 posts · ${sourceCount} fontes desta categoria`}
+	contextNote={`Só fontes desta categoria · ${sourceCount} fontes`}
 />

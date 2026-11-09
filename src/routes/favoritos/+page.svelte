@@ -1,10 +1,13 @@
 <script lang="ts">
+	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { buildFeedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const hub = $derived(data.hub);
+	const entries = $derived(buildFeedView(hub, data.feed, data.state, { savedOnly: true }));
 </script>
 
 <svelte:head>
@@ -33,8 +36,10 @@
 </section>
 
 <div class="placeholder-panel">
-	<span class="placeholder-title">Posts salvos chegam na V2</span>
+	<span class="placeholder-title">Posts salvos</span>
 	<span class="muted">
-		Quando o feed estiver ativo, os posts marcados com "Salvar para depois" aparecem aqui.
+		Use "Salvar para depois" nos cards do feed. Os posts salvos aparecem abaixo.
 	</span>
 </div>
+
+<FeedBoard {entries} title="Salvos para depois" />

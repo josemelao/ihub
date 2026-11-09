@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-	matchesFilter,
-	matchesSourceRules,
-	normalize,
-	splitHighlights
-} from './filter';
+import { matchesFilter, matchesSourceRules, normalize, splitHighlights } from './filter';
 import type { FeedItem, FeedSource } from '../types';
 
 const item = (title: string, summary = ''): FeedItem => ({

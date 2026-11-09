@@ -54,8 +54,8 @@ describe('feedUrlFor', () => {
 	});
 
 	it('explica quando o alvo do YouTube é inválido', () => {
-		expect(() => feedUrlFor(source({ type: 'youtube', target: 'https://youtube.com/@canal' }))).toThrow(
-			/ID do canal/i
-		);
+		expect(() =>
+			feedUrlFor(source({ type: 'youtube', target: 'https://youtube.com/@canal' }))
+		).toThrow(/ID do canal/i);
 	});
 });

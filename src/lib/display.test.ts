@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initials, tint, categoryItemCounts } from './display';
+import { initials, tint, categoryItemCounts, relativeTime } from './display';
 import type { HubData } from './types';
 
 describe('initials', () => {
@@ -17,6 +17,30 @@ describe('initials', () => {
 describe('tint', () => {
 	it('converte hex para rgba com transparência', () => {
 		expect(tint('#8AA4FF', 0.15)).toBe('rgba(138, 164, 255, 0.15)');
+	});
+});
+
+describe('relativeTime', () => {
+	const now = new Date('2026-11-09T12:00:00.000Z').getTime();
+
+	it('mostra minutos', () => {
+		expect(relativeTime('2026-11-09T11:35:00.000Z', now)).toBe('há 25 min');
+	});
+
+	it('mostra horas', () => {
+		expect(relativeTime('2026-11-09T11:00:00.000Z', now)).toBe('há 1 h');
+	});
+
+	it('mostra ontem', () => {
+		expect(relativeTime('2026-11-08T10:00:00.000Z', now)).toBe('ontem');
+	});
+
+	it('mostra dias', () => {
+		expect(relativeTime('2026-11-06T12:00:00.000Z', now)).toBe('há 3 dias');
+	});
+
+	it('lida com data ausente', () => {
+		expect(relativeTime('', now)).toBe('sem data');
 	});
 });
 

@@ -66,7 +66,13 @@ describe('parseFeed', () => {
 
 	it('remove itens duplicados pela URL', () => {
 		const duplicated = rss.replace('steam-2', 'steam-3');
-		const items = parseFeed(duplicated.replace(/<link>https:\/\/example.com\/sale<\/link>/, '<link>https://example.com/patch-1-2</link>'), 'steam');
+		const items = parseFeed(
+			duplicated.replace(
+				/<link>https:\/\/example.com\/sale<\/link>/,
+				'<link>https://example.com/patch-1-2</link>'
+			),
+			'steam'
+		);
 		expect(items).toHaveLength(1);
 	});
 

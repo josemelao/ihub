@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
-	import FeedPlaceholder from '#lib/components/FeedPlaceholder.svelte';
+	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { buildFeedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -11,6 +12,7 @@
 	const hub = $derived(data.hub);
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const sources = $derived(hub.feedSources.filter((source) => source.enabled));
+	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 
 	let note = $state('');
 
@@ -20,6 +22,11 @@
 
 	function saveNote() {
 		localStorage.setItem('meu-hub:nota', note);
+	}
+
+	function unreadFor(sourceId: string): number {
+		return data.feed.items.filter((item) => item.sourceId === sourceId && !data.state.read[item.id])
+			.length;
 	}
 </script>
 
@@ -35,7 +42,13 @@
 
 <div class="home-columns">
 	<div class="home-main">
-		<FeedPlaceholder savedFilters={hub.savedFilters} categories={hub.categories} />
+		<FeedBoard
+			{entries}
+			savedFilters={hub.savedFilters}
+			categories={hub.categories}
+			title="Seu feed"
+			showCategoryChips
+		/>
 	</div>
 
 	<aside class="home-aside" aria-label="Painel lateral">
@@ -48,7 +61,7 @@
 						style="background: {colors[source.categoryId] ?? '#8AA4FF'}; border-radius: 50%"
 					></span>
 					<span class="soft">{source.name}</span>
-					<span class="count" title="Posts chegam na V2">—</span>
+					<span class="count" title="Posts não lidos">{unreadFor(source.id)}</span>
 				</div>
 			{/each}
 			{#if sources.length === 0}

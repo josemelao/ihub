@@ -1,12 +1,15 @@
 <script lang="ts">
-	import FeedPlaceholder from '#lib/components/FeedPlaceholder.svelte';
+	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { relativeTime } from '#lib/display';
+	import { buildFeedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const hub = $derived(data.hub);
 	const catName = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.name])));
 	const sources = $derived(hub.feedSources);
+	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 </script>
 
 <svelte:head>
@@ -20,16 +23,18 @@
 	<span class="muted small">Todos os posts das fontes ativas, em um só lugar</span>
 </div>
 
-<FeedPlaceholder
+<FeedBoard
+	{entries}
 	title="Todos os posts"
 	savedFilters={hub.savedFilters}
 	categories={hub.categories}
-	counter={`0 de 0 posts · ${sources.filter((s) => s.enabled).length} fontes ativas`}
+	showCategoryChips
 />
 
 <section class="panel section" aria-labelledby="t-todas-fontes">
 	<h2 id="t-todas-fontes" style="font-size: 15px">Fontes cadastradas</h2>
 	{#each sources as source (source.id)}
+		{@const status = data.feed.sources[source.id]}
 		<div class="source-row">
 			<span
 				class="dot"
@@ -38,7 +43,13 @@
 			></span>
 			<span class="soft">{source.name}</span>
 			<span class="muted small">{catName[source.categoryId] ?? source.categoryId}</span>
-			<span class="count">{source.enabled ? 'ativa' : 'desligada'}</span>
+			<span class="count" title={status?.error ?? 'Última atualização'}>
+				{status?.error
+					? 'falhou'
+					: status?.lastFetchedAt
+						? relativeTime(status.lastFetchedAt)
+						: '—'}
+			</span>
 		</div>
 	{/each}
 </section>

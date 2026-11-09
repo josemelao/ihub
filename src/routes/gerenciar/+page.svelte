@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
+	import { relativeTime } from '#lib/display';
 	import { HubValidationError, parseHub } from '#lib/schema';
 	import type { ExportBundle, HubState, ValidationIssue } from '#lib/types';
 	import type { PageProps } from './$types';
@@ -29,6 +30,42 @@
 	let issues = $state<ValidationIssue[]>([]);
 	let message = $state('');
 	let busy = $state(false);
+	let refreshing = $state(false);
+	let refreshMessage = $state('');
+	let refreshFailed = $state(false);
+
+	async function refreshNow(): Promise<void> {
+		refreshing = true;
+		refreshMessage = '';
+		refreshFailed = false;
+
+		try {
+			const response = await fetch('/api/refresh', { method: 'POST' });
+			const result = (await response.json()) as {
+				ok?: boolean;
+				error?: string;
+				results?: { ok: boolean; name: string }[];
+			};
+
+			if (!result.ok) {
+				refreshMessage = result.error ?? 'Falha ao atualizar o feed.';
+				refreshFailed = true;
+			} else {
+				const failed = (result.results ?? []).filter((entry) => !entry.ok);
+				refreshFailed = failed.length > 0;
+				refreshMessage =
+					failed.length > 0
+						? `Atualizado com falha em: ${failed.map((entry) => entry.name).join(', ')}`
+						: 'Feed atualizado.';
+			}
+			await invalidateAll();
+		} catch {
+			refreshMessage = 'Falha de rede ao atualizar o feed.';
+			refreshFailed = true;
+		} finally {
+			refreshing = false;
+		}
+	}
 
 	function resetFeedback(): void {
 		error = '';
@@ -128,6 +165,9 @@
 <div class="chips">
 	<a class="btn" href={resolve('/api/export')} download>Exportar dados</a>
 	<button class="btn" type="button" onclick={() => fileInput?.click()}>Importar dados</button>
+	<button class="btn" type="button" onclick={refreshNow} disabled={refreshing}>
+		{refreshing ? 'Atualizando...' : 'Atualizar agora'}
+	</button>
 	<input
 		bind:this={fileInput}
 		type="file"
@@ -136,6 +176,12 @@
 		hidden
 	/>
 </div>
+
+{#if refreshMessage}
+	<div class:alert={refreshFailed} class:notice={!refreshFailed} role="status">
+		{refreshMessage}
+	</div>
+{/if}
 
 {#if error}
 	<div class="alert" role="alert">
@@ -217,6 +263,7 @@
 		</div>
 
 		{#each hub.feedSources as source (source.id)}
+			{@const status = data.feed.sources[source.id]}
 			<div class="table-row">
 				<div class="col-source">
 					<span
@@ -234,6 +281,15 @@
 							style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
 						>
 							{source.target}
+						</span>
+						<span class="muted small">
+							{#if status?.error}
+								<span style="color: #f2c7c7">falhou: {status.error}</span>
+							{:else if status?.lastFetchedAt}
+								atualizado {relativeTime(status.lastFetchedAt)} · {status.count} posts
+							{:else}
+								nunca atualizada
+							{/if}
 						</span>
 					</span>
 				</div>

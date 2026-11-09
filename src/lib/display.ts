@@ -47,3 +47,23 @@ export function itemHref(item: HubItem): string {
 export function itemTarget(item: HubItem): string | undefined {
 	return item.type === 'link' && !item.url.startsWith('http') ? undefined : '_blank';
 }
+
+export function relativeTime(iso: string, now: number = Date.now()): string {
+	if (!iso) return 'sem data';
+	const timestamp = Date.parse(iso);
+	if (Number.isNaN(timestamp)) return 'sem data';
+
+	const diff = Math.max(0, now - timestamp);
+	const minutes = Math.floor(diff / 60_000);
+	if (minutes < 1) return 'agora';
+	if (minutes < 60) return `há ${minutes} min`;
+
+	const hours = Math.floor(minutes / 60);
+	if (hours < 24) return `há ${hours} h`;
+
+	const days = Math.floor(hours / 24);
+	if (days === 1) return 'ontem';
+	if (days < 30) return `há ${days} dias`;
+
+	return new Date(timestamp).toLocaleDateString('pt-BR');
+}
