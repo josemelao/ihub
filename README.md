@@ -18,6 +18,7 @@ Requisitos: Node.js 24+ e npm.
 
 ```powershell
 npm install
+Copy-Item data\hub.example.json data\hub.json   # só na primeira vez
 npm run dev
 ```
 
@@ -42,7 +43,8 @@ npm start
 
 Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrita atômica e backup `.bak`.
 
-- `data/hub.json` — configuração portátil: categorias, grupos, itens (links/apps), fontes do feed e filtros salvos.
+- `data/hub.example.json` — seed de exemplo versionado (mockups).
+- `data/hub.json` — seus dados reais: categorias, grupos, itens (links/apps), fontes do feed e filtros salvos. **Não entra no Git.**
 - `data/estado.json` — lidos/salvos (criado quando necessário; não entra no Git).
 - `data/feed-cache.json` — posts já buscados e status por fonte (regenerável; não entra no Git).
 
@@ -122,7 +124,8 @@ src/
     feed/                 # parser RSS/Atom, refresh, filtros, view e scheduler
     components/           # Sidebar, TopBar, QuickAccess, FeedBoard, cards...
   routes/                 # páginas e APIs
-data/hub.json             # dados temporários vindos dos mockups
+data/hub.example.json     # seed versionado
+data/hub.json             # seus dados (ignorado pelo Git)
 mockups/                  # referências visuais (.dc.html) — não é o app
 PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
 ```
@@ -130,10 +133,12 @@ PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
 ## Qualidade
 
 ```powershell
-npm test        # Vitest (schema, storage, helpers, feed e seed)
+npm test        # Vitest (schema, storage, helpers, edição, feed e seed)
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 ```
+
+`npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
 ## Mockups
 
