@@ -81,7 +81,11 @@ function thumbnailOf(item: Record<string, unknown>, link: string): string | null
 		item['media:thumbnail'],
 		item['media:group']
 	]);
-	if (media) return media;
+	if (media) {
+		const youtubeMedia = /youtube\.com\/(?:v|vi)\/([\w-]{11})/i.exec(media);
+		if (youtubeMedia) return `https://i.ytimg.com/vi/${youtubeMedia[1]}/hqdefault.jpg`;
+		return media;
+	}
 
 	const html = textOf(item['content:encoded'] ?? item.description ?? item.content ?? item.summary);
 	const image = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(html);

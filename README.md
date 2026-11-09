@@ -58,6 +58,9 @@ O schema e as referências (categoria/grupo inexistente, id duplicado, URL invá
 - Regras por fonte: `include`/`exclude` e `matchMode` (`any`/`all`), aplicadas sobre título + resumo, sem diferenciar maiúsculas nem acentos. Uma fonte com erro não derruba as outras; o status aparece em **Gerenciar** e em **Feed completo**.
 - Filtro ao vivo na home e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria, "Não lidos" e destaque do trecho encontrado.
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido**. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos.
+- **Visualizações**: **Bento** (2 colunas, cards com imagem ocupam a largura toda e os de texto se encaixam), **Compacto** (lista) e **Grade** (cards uniformes). A escolha fica salva no navegador.
+- Na home, o painel **Fontes do feed / Nota rápida** pode ser recolhido para dar mais largura ao feed.
+- Imagens vêm de `media:*`, `enclosure`, do primeiro `<img>` do conteúdo e, para YouTube, do ID do vídeo.
 - Cache: até 30 posts por fonte, retenção de 30 dias, deduplicação por URL/guid. Requisições com timeout de 10 s, User-Agent identificado e limite de 5 MB por resposta.
 
 > Observações: o feed RSS do Reddit pode sofrer rate limit (429) — o erro fica visível e a fonte tenta de novo no próximo intervalo. Para YouTube, é necessário o ID do canal; URLs `@handle` não são resolvidas automaticamente nesta versão.

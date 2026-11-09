@@ -109,4 +109,16 @@ describe('parseFeed', () => {
 			'https://i.ytimg.com/vi/abc123def45/hqdefault.jpg'
 		);
 	});
+
+	it('normaliza thumbnail antigo do YouTube vindo do feed', () => {
+		const yt = `<rss version="2.0"><channel><item>
+			<title>Vídeo</title>
+			<link>https://www.youtube.com/watch?v=abc123def45</link>
+			<description>Resumo</description>
+			<media:thumbnail url="https://www.youtube.com/v/abc123def45?version=3" />
+		</item></channel></rss>`;
+		expect(parseFeed(yt, 'yt')[0].thumbnail).toBe(
+			'https://i.ytimg.com/vi/abc123def45/hqdefault.jpg'
+		);
+	});
 });
