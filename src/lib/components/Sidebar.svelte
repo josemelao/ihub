@@ -17,50 +17,62 @@
 </script>
 
 <nav class="sidebar" aria-label="Menu principal">
-	<a class="brand" href={resolve('/')}>
-		<span class="brand-mark">H</span>
-		<span>Meu Hub</span>
-	</a>
-
-	<div class="nav">
-		<a class="nav-link" class:active={active('/')} href={resolve('/')}>
-			<Icon name="home" />
-			Início
-		</a>
-		<a class="nav-link" class:active={active('/feed')} href={resolve('/feed')}>
-			<Icon name="rss" />
-			Feed completo
-			{#if unread > 0}
-				<span class="badge">{unread}</span>
-			{/if}
-		</a>
-		<a class="nav-link" class:active={active('/favoritos')} href={resolve('/favoritos')}>
-			<Icon name="star" />
-			Favoritos
-		</a>
-		<a class="nav-link" class:active={active('/apps')} href={resolve('/apps')}>
-			<Icon name="monitor" />
-			Apps do PC
-		</a>
-	</div>
-
-	<div class="nav-section">
-		<div class="section-title">Categorias</div>
-		{#each categories as cat (cat.id)}
-			<a
-				class="cat-link"
-				class:active={path === `/c/${cat.id}`}
-				href={resolve('/c/[slug]', { slug: cat.id })}
-			>
-				<span class="dot" style="background: {cat.color}"></span>
-				<span>{cat.name}</span>
-				<span class="cat-count">{counts[cat.id] ?? 0}</span>
+	<div class="sidebar-scroll">
+		<div class="brand-row">
+			<a class="brand" href={resolve('/')}>
+				<span class="brand-mark">H</span>
+				<span>Meu Hub</span>
 			</a>
-		{/each}
-		<a class="nav-link" href={resolve('/gerenciar')} title="Adicione categorias em Gerenciar">
-			<Icon name="plus" size={16} />
-			Nova categoria
-		</a>
+			<a
+				class="brand-gear"
+				href={resolve('/gerenciar')}
+				aria-label="Gerenciar fontes e links"
+				title="Gerenciar fontes e links"
+			>
+				<Icon name="settings" size={18} />
+			</a>
+		</div>
+
+		<div class="nav">
+			<a class="nav-link" class:active={active('/')} href={resolve('/')}>
+				<Icon name="home" />
+				Início
+			</a>
+			<a class="nav-link" class:active={active('/feed')} href={resolve('/feed')}>
+				<Icon name="rss" />
+				Feed completo
+				{#if unread > 0}
+					<span class="badge">{unread}</span>
+				{/if}
+			</a>
+			<a class="nav-link" class:active={active('/favoritos')} href={resolve('/favoritos')}>
+				<Icon name="star" />
+				Favoritos
+			</a>
+			<a class="nav-link" class:active={active('/apps')} href={resolve('/apps')}>
+				<Icon name="monitor" />
+				Apps do PC
+			</a>
+		</div>
+
+		<div class="nav-section">
+			<div class="section-title">Categorias</div>
+			{#each categories as cat (cat.id)}
+				<a
+					class="cat-link"
+					class:active={path === `/c/${cat.id}`}
+					href={resolve('/c/[slug]', { slug: cat.id })}
+				>
+					<span class="dot" style="background: {cat.color}"></span>
+					<span>{cat.name}</span>
+					<span class="cat-count">{counts[cat.id] ?? 0}</span>
+				</a>
+			{/each}
+			<a class="nav-link" href={resolve('/gerenciar')} title="Adicione categorias em Gerenciar">
+				<Icon name="plus" size={16} />
+				Nova categoria
+			</a>
+		</div>
 	</div>
 
 	<div class="sidebar-footer">

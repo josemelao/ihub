@@ -104,8 +104,8 @@ data/
 
 ### Navegação e layout
 
-- Sidebar fixa com categorias e contadores, responsiva.
-- Início: busca Ctrl K, feed e painel direito com Acesso rápido, Fontes do feed e Nota rápida.
+- Sidebar esquerda **sticky** (100vh, rolagem interna), rodapé fixo com Gerenciar e engrenagem no cabeçalho; responsiva.
+- Início: **painel geral** com 3 cards (Acesso rápido, Resumo do dia, Ações rápidas), só as **5 últimas notícias** e “Ver feed completo”; barra direita fixa com Fontes, Filtros salvos, Salvos recentemente e Nota rápida.
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Apps do PC e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
@@ -116,7 +116,7 @@ data/
 
 - É **manual**: itens com `pinned: true`.
 - Definido em Gerenciar → Links/Apps → Editar → “Fixar no acesso rápido da home”.
-- Na home, aparece **empilhado no painel direito**, acima de “Fontes do feed”; some quando o painel é recolhido.
+- Na home, aparece no **card “Acesso rápido”** no topo (grade compacta de 2 colunas, até 6 itens), não mais na barra direita.
 - Não há rastreamento de uso.
 
 ### Busca Ctrl K
@@ -151,8 +151,8 @@ data/
 - **Compacto**: lista, texto primeiro, sem placeholder; imagem opcional em miniatura, resumo em 2–3 linhas.
 - **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** para ler o texto inteiro (até 700 caracteres).
 - A escolha fica em `localStorage` (`meu-hub:feed-view`); `grid` antigo migra para `completo`.
-- O painel direito da home é recolhível por uma **aba lateral (`<`/`>`)** presa à borda do feed, sem ocupar linha (`meu-hub:panel-open`).
-- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo); painel desliza ao recolher. Respeita `prefers-reduced-motion`.
+- A barra direita da home é **fixa/sticky, sem recolher**, com Fontes do feed, Filtros salvos (com contagem e link para `/feed?filtro=id`), Salvos recentemente e Nota rápida.
+- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo). Respeita `prefers-reduced-motion`.
 
 > Histórico: tentamos Bento com larguras mistas (1/3, 1/2, 2/3). Foi abandonado porque masonry com spans variados abre buracos e os spans mudavam ao filtrar/marcar como lido. Colunas iguais resolveram.
 

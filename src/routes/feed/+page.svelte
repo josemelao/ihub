@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { page } from '$app/state';
 	import { relativeTime } from '#lib/display';
 	import { buildFeedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
@@ -11,6 +12,7 @@
 	const sources = $derived(hub.feedSources);
 	const enabledCount = $derived(sources.filter((source) => source.enabled).length);
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
+	const initialFilterId = $derived(page.url.searchParams.get('filtro'));
 	const updatedLabel = $derived(
 		data.feed.items.length > 0
 			? `atualizado ${relativeTime(data.feed.updatedAt)}`
@@ -37,6 +39,7 @@
 	savedFilters={hub.savedFilters}
 	categories={hub.categories}
 	showCategoryChips
+	{initialFilterId}
 />
 
 <section class="panel section" aria-labelledby="t-todas-fontes">

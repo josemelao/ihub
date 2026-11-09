@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
-	import QuickAccess from '#lib/components/QuickAccess.svelte';
+	import HomeDashboard from '#lib/components/HomeDashboard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { relativeTime } from '#lib/display';
+	import { matchesFilter } from '#lib/feed/filter';
 	import { buildFeedView } from '#lib/feed/view';
+	import type { SavedFilter } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -13,44 +16,34 @@
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const sources = $derived(hub.feedSources.filter((source) => source.enabled));
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
+	const savedRecent = $derived(
+		entries.filter((entry) => data.state.saved.includes(entry.item.id)).slice(0, 3)
+	);
 
 	let note = $state('');
-	let panelOpen = $state(true);
-	let panelAnimating = $state(false);
-	let uiReady = $state(false);
-	let panelTimer: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
 		note = localStorage.getItem('meu-hub:nota') ?? '';
-		panelOpen = localStorage.getItem('meu-hub:panel-open') !== '0';
-		requestAnimationFrame(() => {
-			requestAnimationFrame(() => {
-				uiReady = true;
-			});
-		});
-	});
-
-	onDestroy(() => {
-		clearTimeout(panelTimer);
 	});
 
 	function saveNote() {
 		localStorage.setItem('meu-hub:nota', note);
 	}
 
-	function togglePanel(): void {
-		panelOpen = !panelOpen;
-		localStorage.setItem('meu-hub:panel-open', panelOpen ? '1' : '0');
-		panelAnimating = true;
-		clearTimeout(panelTimer);
-		panelTimer = setTimeout(() => {
-			panelAnimating = false;
-		}, 320);
-	}
-
 	function unreadFor(sourceId: string): number {
 		return data.feed.items.filter((item) => item.sourceId === sourceId && !data.state.read[item.id])
 			.length;
+	}
+
+	function countForFilter(filter: SavedFilter): number {
+		return entries.filter((entry) =>
+			matchesFilter(
+				`${entry.item.title}\n${entry.item.summary}`,
+				filter.include,
+				filter.exclude,
+				filter.matchMode
+			)
+		).length;
 	}
 </script>
 
@@ -62,36 +55,13 @@
 
 <TopBar />
 
-<div
-	class="home-columns"
-	class:panel-closed={!panelOpen}
-	class:ui-ready={uiReady}
-	class:panel-animating={panelAnimating}
->
-	<div class="home-main has-ear">
-		<button
-			class="panel-ear"
-			type="button"
-			aria-label={panelOpen ? 'Recolher painel lateral' : 'Mostrar painel lateral'}
-			aria-expanded={panelOpen}
-			title={panelOpen ? 'Recolher painel' : 'Mostrar painel'}
-			onclick={togglePanel}
-		>
-			{panelOpen ? '>' : '<'}
-		</button>
-		<FeedBoard
-			{entries}
-			savedFilters={hub.savedFilters}
-			categories={hub.categories}
-			title="Seu feed"
-			showCategoryChips
-		/>
+<div class="home-columns">
+	<div class="home-main">
+		<HomeDashboard hub={data.hub} feed={data.feed} hubState={data.state} />
+		<FeedBoard {entries} title="Últimas notícias" overview />
 	</div>
 
-	<aside class="home-aside" aria-label="Painel lateral" aria-hidden={!panelOpen} inert={!panelOpen}>
-		<div class="panel">
-			<QuickAccess {hub} stacked />
-		</div>
+	<aside class="home-aside" aria-label="Painel lateral">
 		<section class="panel section" aria-labelledby="t-fontes">
 			<h2 id="t-fontes" style="font-size: 15px">Fontes do feed</h2>
 			{#each sources as source (source.id)}
@@ -108,6 +78,51 @@
 				<p class="muted small">Nenhuma fonte ativa no hub.json.</p>
 			{/if}
 			<a class="chip link" href={resolve('/gerenciar')}>Ver fontes</a>
+		</section>
+
+		<section class="panel section" aria-labelledby="t-filtros">
+			<div class="section-head">
+				<h2 id="t-filtros" style="font-size: 15px">Filtros salvos</h2>
+				<a class="muted small" href={resolve('/feed')}>Ver feed</a>
+			</div>
+			<div class="chips">
+				{#each hub.savedFilters as filter (filter.id)}
+					<a class="chip" href={resolve('/feed') + '?filtro=' + filter.id}>
+						{filter.label} · {countForFilter(filter)}
+					</a>
+				{/each}
+				{#if hub.savedFilters.length === 0}
+					<span class="muted small">Nenhum filtro salvo.</span>
+				{/if}
+			</div>
+		</section>
+
+		<section class="panel section" aria-labelledby="t-salvos">
+			<div class="section-head">
+				<h2 id="t-salvos" style="font-size: 15px">Salvos recentemente</h2>
+				<a class="muted small" href={resolve('/favoritos')}>Ver todos</a>
+			</div>
+			{#each savedRecent as entry (entry.item.id)}
+				<a
+					class="source-row"
+					href={entry.item.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					title={entry.item.title}
+				>
+					<span
+						class="dot"
+						style="background: {entry.category?.color ?? '#8AA4FF'}; border-radius: 50%"
+					></span>
+					<span class="soft" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+						{entry.item.title}
+					</span>
+					<span class="count">{relativeTime(entry.item.publishedAt)}</span>
+				</a>
+			{/each}
+			{#if savedRecent.length === 0}
+				<span class="muted small">Nenhum post salvo ainda.</span>
+			{/if}
 		</section>
 
 		<section class="panel section" aria-labelledby="t-nota">

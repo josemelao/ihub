@@ -41,5 +41,8 @@
 		<path d="M6 6l12 12M18 6L6 18" />
 	{:else if name === 'filter'}
 		<path d="M3 5h18l-7 8v6l-4-2v-4z" />
+	{:else if name === 'download'}
+		<path d="M12 3v12M7 10l5 5 5-5" />
+		<path d="M5 21h14" />
 	{/if}
 </svg>
