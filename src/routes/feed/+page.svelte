@@ -9,7 +9,13 @@
 	const hub = $derived(data.hub);
 	const catName = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.name])));
 	const sources = $derived(hub.feedSources);
+	const enabledCount = $derived(sources.filter((source) => source.enabled).length);
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
+	const updatedLabel = $derived(
+		data.feed.items.length > 0
+			? `atualizado ${relativeTime(data.feed.updatedAt)}`
+			: 'nunca atualizado'
+	);
 </script>
 
 <svelte:head>
@@ -20,7 +26,9 @@
 
 <div class="section-head">
 	<h1>Feed completo</h1>
-	<span class="muted small">Todos os posts das fontes ativas, em um só lugar</span>
+	<span class="muted small">
+		{data.feed.items.length} posts no cache · {enabledCount} fontes ativas · {updatedLabel}
+	</span>
 </div>
 
 <FeedBoard
@@ -32,7 +40,7 @@
 />
 
 <section class="panel section" aria-labelledby="t-todas-fontes">
-	<h2 id="t-todas-fontes" style="font-size: 15px">Fontes cadastradas</h2>
+	<h2 id="t-todas-fontes" style="font-size: 15px">Fontes do feed</h2>
 	{#each sources as source (source.id)}
 		{@const status = data.feed.sources[source.id]}
 		<div class="source-row">
@@ -42,6 +50,7 @@
 					'#8AA4FF'}; border-radius: 50%"
 			></span>
 			<span class="soft">{source.name}</span>
+			<span class="tag">{source.enabled ? 'ativa' : 'desligada'}</span>
 			<span class="muted small">{catName[source.categoryId] ?? source.categoryId}</span>
 			<span class="count" title={status?.error ?? 'Última atualização'}>
 				{status?.error
@@ -52,4 +61,7 @@
 			</span>
 		</div>
 	{/each}
+	{#if sources.length === 0}
+		<p class="muted small">Nenhuma fonte cadastrada.</p>
+	{/if}
 </section>

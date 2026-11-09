@@ -18,10 +18,10 @@
 
 <div class="section-head">
 	<h1>Favoritos</h1>
-	<span class="muted small">Atalhos fixados e filtros salvos</span>
+	<span class="muted small">Atalhos fixados, filtros salvos e posts salvos para depois</span>
 </div>
 
-<QuickAccess {hub} />
+<QuickAccess {hub} title="Atalhos fixados" />
 
 <section class="panel section" aria-labelledby="t-filtros">
 	<h2 id="t-filtros" style="font-size: 15px">Filtros salvos</h2>
@@ -35,11 +35,9 @@
 	</div>
 </section>
 
-<div class="placeholder-panel">
-	<span class="placeholder-title">Posts salvos</span>
-	<span class="muted">
-		Use "Salvar para depois" nos cards do feed. Os posts salvos aparecem abaixo.
-	</span>
-</div>
-
-<FeedBoard {entries} title="Salvos para depois" />
+<FeedBoard
+	{entries}
+	title="Salvos para depois"
+	emptyTitle="Nenhum post salvo ainda"
+	emptyHint="Use 'Salvar para depois' nos cards do feed para guardar posts aqui."
+/>

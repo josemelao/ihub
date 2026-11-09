@@ -108,6 +108,9 @@ data/
 - Início: busca Ctrl K, acesso rápido, feed, fontes e nota rápida.
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Apps do PC e Gerenciar.
+- **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
+- **Favoritos**: atalhos fixados, filtros salvos e posts salvos; estado vazio contextual (“Nenhum post salvo ainda”).
+- **Apps do PC**: grade de apps por categoria, mostrando o protocolo e ação de abrir.
 
 ### Acesso rápido
 
@@ -128,8 +131,9 @@ data/
 - Scheduler a cada ~60 s (só fontes vencidas) + “Atualizar agora”.
 - Falha de uma fonte não afeta as outras; status e erro aparecem em Gerenciar/Feed.
 - Regras por fonte (`include`/`exclude`/`matchMode`) aplicadas sobre título+resumo, sem acento/caixa.
-- Filtro ao vivo: palavra-chave, qualquer/todas, filtros salvos com contagem, chips de categoria, “Não lidos”, destaque do termo.
-- Ações: abrir, salvar para depois, marcar como lido; “marcar tudo como lido” respeita o filtro.
+  - Filtro ao vivo: palavra-chave, qualquer/todas, filtros salvos com contagem, chips de categoria, “Não lidos”, destaque do termo.
+  - **+ Salvar filtro** captura a busca atual (e o modo) num diálogo, pede um nome e grava no `hub.json`.
+  - Ações: abrir, salvar para depois, marcar como lido; “marcar tudo como lido” respeita o filtro.
 - Contadores de não lidos na sidebar e nas fontes.
 - Imagens: `enclosure`, `media:content`, `media:thumbnail`, `media:group`, primeiro `<img>` do HTML e thumbnail do YouTube (normaliza URLs antigas).
 - Resumos: até 700 caracteres, entidades numéricas decodificadas e boilerplate do Reddit removido.
@@ -243,7 +247,6 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 10. Limitações conhecidas / pendências
 
-- **“+ Salvar filtro”** no feed apenas leva ao Gerenciar; não captura a busca atual num diálogo. Os filtros são criados em Gerenciar → Regras.
 - Não há UI para **criar/editar grupos**; categoria com grupos não pode ser removida (a mensagem orienta mover, mas não há ferramenta).
 - **Concorrência**: duas escritas simultâneas usam “última vence”; não há fila/otimistic lock.
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
@@ -256,13 +259,13 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-1. Diálogo “Salvar filtro” capturando a busca atual.
-2. Gerenciamento de grupos (criar/editar/mover) para liberar remoção de categorias.
-3. Fila de escrita/otimistic lock no storage.
-4. Validar `bundle.state` antes de importar.
-5. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
-6. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
-7. Testes de componente/e2e para as visualizações.
+1. Gerenciamento de grupos (criar/editar/mover) para liberar remoção de categorias.
+2. Fila de escrita/otimistic lock no storage.
+3. Validar `bundle.state` antes de importar.
+4. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
+5. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
+6. Testes de componente/e2e para as visualizações.
+7. Edição de filtros salvos (hoje só criar/remover).
 
 ## 12. Notas para o próximo agente
 

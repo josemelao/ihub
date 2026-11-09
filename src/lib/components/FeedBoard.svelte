@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { flip } from 'svelte/animate';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
@@ -19,7 +18,9 @@
 		categories = [],
 		title,
 		showCategoryChips = false,
-		contextNote = ''
+		contextNote = '',
+		emptyTitle = '',
+		emptyHint = ''
 	}: {
 		entries: FeedViewItem[];
 		savedFilters?: SavedFilter[];
@@ -27,6 +28,8 @@
 		title: string;
 		showCategoryChips?: boolean;
 		contextNote?: string;
+		emptyTitle?: string;
+		emptyHint?: string;
 	} = $props();
 
 	const viewOptions: { id: FeedView; label: string }[] = [
@@ -46,6 +49,10 @@
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
 	let reduceMotion = $state(false);
+	let showFilterForm = $state(false);
+	let filterLabel = $state('');
+	let filterError = $state('');
+	let filterBusy = $state(false);
 
 	onMount(() => {
 		const saved = localStorage.getItem('meu-hub:feed-view');
@@ -102,6 +109,58 @@
 	function selectFilter(id: string): void {
 		activeFilterId = activeFilterId === id ? null : id;
 		resetLimit();
+	}
+
+	function openFilterForm(): void {
+		filterLabel = activeFilter?.label ?? query.trim();
+		filterError = '';
+		showFilterForm = true;
+	}
+
+	async function saveFilter(): Promise<void> {
+		const includeTerms = terms.map((term) => term.trim()).filter(Boolean);
+		const excludeTerms = exclude.map((term) => term.trim()).filter(Boolean);
+
+		if (includeTerms.length === 0 && excludeTerms.length === 0) {
+			filterError = 'Digite uma palavra-chave ou selecione um filtro antes de salvar.';
+			return;
+		}
+		if (!filterLabel.trim()) {
+			filterError = 'Informe um nome para o filtro.';
+			return;
+		}
+
+		filterBusy = true;
+		filterError = '';
+
+		try {
+			const response = await fetch('/api/hub', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					action: 'add-filter',
+					filter: {
+						label: filterLabel.trim(),
+						include: includeTerms,
+						exclude: excludeTerms,
+						matchMode: mode
+					}
+				})
+			});
+			const result = (await response.json()) as { ok?: boolean; error?: string };
+
+			if (!response.ok || !result.ok) {
+				filterError = result.error ?? 'Não foi possível salvar o filtro.';
+				return;
+			}
+
+			showFilterForm = false;
+			await invalidateAll();
+		} catch {
+			filterError = 'Falha de rede ao salvar o filtro.';
+		} finally {
+			filterBusy = false;
+		}
 	}
 
 	async function postState(body: unknown): Promise<void> {
@@ -243,8 +302,8 @@
 			</div>
 		</div>
 
-		{#if savedFilters.length > 0}
-			<div class="chips">
+		<div class="chips">
+			{#if savedFilters.length > 0}
 				<span class="muted small">Filtros salvos</span>
 				{#each savedFilters as filter (filter.id)}
 					<button
@@ -257,7 +316,42 @@
 						{filter.label} · {countFor(filter)}
 					</button>
 				{/each}
-				<a class="chip link" href={resolve('/gerenciar')}>+ Salvar filtro</a>
+			{/if}
+			<button class="chip link" type="button" onclick={openFilterForm}>+ Salvar filtro</button>
+		</div>
+
+		{#if showFilterForm}
+			<div class="filter-save">
+				<div class="field">
+					<label for="filter-label">Nome do filtro</label>
+					<input
+						id="filter-label"
+						bind:value={filterLabel}
+						placeholder="ex.: patch notes"
+						maxlength="80"
+					/>
+				</div>
+				<span class="muted small">
+					Inclui: {terms.join(', ') || '—'} · Exclui: {exclude.join(', ') || '—'} · {mode === 'any'
+						? 'qualquer palavra'
+						: 'todas as palavras'}
+				</span>
+				{#if filterError}
+					<span class="error-text" role="alert">{filterError}</span>
+				{/if}
+				<div class="chips">
+					<button class="btn btn-primary" type="button" onclick={saveFilter} disabled={filterBusy}>
+						{filterBusy ? 'Salvando...' : 'Salvar filtro'}
+					</button>
+					<button
+						class="btn"
+						type="button"
+						onclick={() => (showFilterForm = false)}
+						disabled={filterBusy}
+					>
+						Cancelar
+					</button>
+				</div>
 			</div>
 		{/if}
 
@@ -338,12 +432,14 @@
 	{#if filtered.length === 0}
 		<div class="placeholder-panel">
 			<span class="placeholder-title">
-				{entries.length === 0 ? 'Nenhum post no cache ainda' : 'Nenhum post com esse filtro'}
+				{emptyTitle ||
+					(entries.length === 0 ? 'Nenhum post no cache ainda' : 'Nenhum post com esse filtro')}
 			</span>
 			<span class="muted">
-				{entries.length === 0
-					? 'Clique em "Atualizar agora" para buscar as fontes cadastradas.'
-					: 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
+				{emptyHint ||
+					(entries.length === 0
+						? 'Clique em "Atualizar agora" para buscar as fontes cadastradas.'
+						: 'Ajuste a palavra-chave, o modo ou os filtros salvos.')}
 			</span>
 		</div>
 	{/if}
