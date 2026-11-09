@@ -1,5 +1,6 @@
 import { EMPTY_HUB } from '#lib/defaults';
 import { startScheduler } from '#lib/feed/scheduler';
+import { backfillSavedSnapshots } from '#lib/feed/view';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
 import type { HubData, ValidationIssue } from '#lib/types';
@@ -30,7 +31,11 @@ export const load: LayoutServerLoad = async () => {
 		};
 	}
 
-	const [state, feed] = await Promise.all([storage.loadState(), storage.loadFeedCache()]);
+	const [loadedState, feed] = await Promise.all([storage.loadState(), storage.loadFeedCache()]);
+	const state = backfillSavedSnapshots(hub, feed, loadedState);
+	if (state !== loadedState) {
+		await storage.saveState(state);
+	}
 
 	return { hub, dataError, state, feed };
 };

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFeedView, buildSavedView } from './view';
+import { backfillSavedSnapshots, buildFeedView, buildSavedView } from './view';
 import type { FeedCache, FeedItem, HubData, HubState } from '../types';
 
 const item: FeedItem = {
@@ -110,5 +110,19 @@ describe('buildSavedView', () => {
 		const disabled = structuredClone(hub);
 		disabled.feedSources[0].enabled = false;
 		expect(buildSavedView(disabled, cache, state(['post-1']))).toHaveLength(1);
+	});
+});
+
+describe('backfillSavedSnapshots', () => {
+	it('cria snapshot para salvo antigo que ainda está no cache', () => {
+		const original = state(['post-1']);
+		const filled = backfillSavedSnapshots(hub, cache, original);
+		expect(filled.savedItems['post-1'].sourceName).toBe('r/Darktide (patch)');
+		expect(filled).not.toBe(original);
+	});
+
+	it('não altera o estado quando não há item para snapshot', () => {
+		const original = state(['fantasma']);
+		expect(backfillSavedSnapshots(hub, cache, original)).toBe(original);
 	});
 });

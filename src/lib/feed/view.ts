@@ -114,3 +114,34 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 
 	return result.sort((a, b) => (b.item.publishedAt || '').localeCompare(a.item.publishedAt || ''));
 }
+
+export function backfillSavedSnapshots(hub: HubData, cache: FeedCache, state: HubState): HubState {
+	const missing = state.saved.filter((id) => !state.savedItems[id]);
+	if (missing.length === 0) return state;
+
+	const sourceById = new Map(hub.feedSources.map((source) => [source.id, source]));
+	const categoryById = new Map(hub.categories.map((category) => [category.id, category]));
+	const itemById = new Map(cache.items.map((item) => [item.id, item]));
+	const savedItems = { ...state.savedItems };
+	let changed = false;
+
+	for (const id of missing) {
+		const item = itemById.get(id);
+		if (!item) continue;
+		const source = sourceById.get(item.sourceId);
+		if (!source) continue;
+		const category = categoryById.get(source.categoryId);
+		savedItems[id] = {
+			item,
+			sourceId: source.id,
+			sourceName: source.name,
+			categoryId: source.categoryId,
+			categoryName: category?.name,
+			color: category?.color,
+			savedAt: new Date().toISOString()
+		};
+		changed = true;
+	}
+
+	return changed ? { ...state, savedItems } : state;
+}
