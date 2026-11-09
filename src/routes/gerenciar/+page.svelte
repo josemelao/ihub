@@ -599,6 +599,9 @@
 					</span>
 				</span>
 				<div class="manage-actions">
+					<button class="mini-btn" type="button" onclick={() => openEditor('filter', filter)}>
+						Editar
+					</button>
 					<button
 						class="mini-btn danger"
 						type="button"

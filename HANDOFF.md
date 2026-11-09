@@ -9,7 +9,7 @@ Hub pessoal local que roda no navegador como página inicial:
 
 - Links e apps do PC organizados em categorias/grupos.
 - Feed de RSS/Atom, Reddit e YouTube com filtro por palavra-chave.
-- Busca rápida (Ctrl K), leitura/salvamento de posts e visualizações Bento/Compacto/Grade.
+- Busca rápida (Ctrl K), leitura/salvamento de posts e visualizações Bento/Compacto/Completo.
 - Dados em JSON local, com exportar/importar e possibilidade de pasta sincronizada (Drive/OneDrive).
 
 Sem login, sem versão online, tema escuro único, servidor apenas em `127.0.0.1`.
@@ -105,7 +105,7 @@ data/
 ### Navegação e layout
 
 - Sidebar fixa com categorias e contadores, responsiva.
-- Início: busca Ctrl K, acesso rápido, feed, fontes e nota rápida.
+- Início: busca Ctrl K, feed e painel direito com Acesso rápido, Fontes do feed e Nota rápida.
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Apps do PC e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
@@ -116,6 +116,7 @@ data/
 
 - É **manual**: itens com `pinned: true`.
 - Definido em Gerenciar → Links/Apps → Editar → “Fixar no acesso rápido da home”.
+- Na home, aparece **empilhado no painel direito**, acima de “Fontes do feed”; some quando o painel é recolhido.
 - Não há rastreamento de uso.
 
 ### Busca Ctrl K
@@ -132,7 +133,7 @@ data/
 - Falha de uma fonte não afeta as outras; status e erro aparecem em Gerenciar/Feed.
 - Regras por fonte (`include`/`exclude`/`matchMode`) aplicadas sobre título+resumo, sem acento/caixa.
   - Filtro ao vivo: palavra-chave, qualquer/todas, filtros salvos com contagem, chips de categoria, “Não lidos”, destaque do termo.
-  - **+ Salvar filtro** captura a busca atual (e o modo) num diálogo, pede um nome e grava no `hub.json`.
+  - **+ Salvar filtro** abre um formulário em linha com **Nome, Incluir, Excluir e Modo**, já preenchido com a busca/filtro atual, e grava no `hub.json`.
   - Ações: abrir, salvar para depois, marcar como lido; “marcar tudo como lido” respeita o filtro.
 - Contadores de não lidos na sidebar e nas fontes.
 - Imagens: `enclosure`, `media:content`, `media:thumbnail`, `media:group`, primeiro `<img>` do HTML e thumbnail do YouTube (normaliza URLs antigas).
@@ -147,11 +148,11 @@ data/
   - Imagens 3:2; se a imagem for retrato, proporção real limitada entre 0,7 e 1,6.
   - Altura natural; texto sem corte de linhas.
   - Recalcula com ResizeObserver (imagens/filtros) e MutationObserver (novos cards).
-- **Compacto**: lista, texto primeiro, sem placeholder; imagem opcional em miniatura.
-- **Grade**: 2 colunas, imagens 16:9, altura natural (cards curtos não esticam).
-- A escolha fica em `localStorage` (`meu-hub:feed-view`).
-- Painel direito da home é recolhível (`meu-hub:panel-open`), com largura/opacidade animadas.
-- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Grade); painel desliza ao recolher. Respeita `prefers-reduced-motion`.
+- **Compacto**: lista, texto primeiro, sem placeholder; imagem opcional em miniatura, resumo em 2–3 linhas.
+- **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** para ler o texto inteiro (até 700 caracteres).
+- A escolha fica em `localStorage` (`meu-hub:feed-view`); `grid` antigo migra para `completo`.
+- O painel direito da home é recolhível por uma **aba lateral (`<`/`>`)** presa à borda do feed, sem ocupar linha (`meu-hub:panel-open`).
+- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo); painel desliza ao recolher. Respeita `prefers-reduced-motion`.
 
 > Histórico: tentamos Bento com larguras mistas (1/3, 1/2, 2/3). Foi abandonado porque masonry com spans variados abre buracos e os spans mudavam ao filtrar/marcar como lido. Colunas iguais resolveram.
 
@@ -163,7 +164,7 @@ data/
   - Links e apps (com checkbox de acesso rápido).
   - Fontes (tipo, alvo, categoria, grupo, intervalo, include/exclude, liga/desliga).
   - Categorias (nome/cor, remover se não estiver em uso).
-  - Filtros salvos (adicionar/remover).
+  - Filtros salvos (adicionar/editar/remover), com Incluir, Excluir e Modo.
 - Reordenar itens e categorias com ↑/↓.
 - Detecção automática de RSS pela URL da página.
 - Toda mutação passa por `hub-actions.ts` → mutação pura → `parseHub` → `saveHub`.
@@ -252,7 +253,6 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
 - YouTube exige ID do canal (`UC...`) ou URL de feed; `@handle` não é resolvido.
-- Filtros salvos não podem ser editados, só removidos.
 - Fontes de feed não têm reordenação (modelo não tem `order`).
 - `npm audit` completo tem avisos em dependências de desenvolvimento (ESLint).
 - O feed é sempre por data; não há ordenação alternativa.
@@ -265,7 +265,6 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 4. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
 5. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
 6. Testes de componente/e2e para as visualizações.
-7. Edição de filtros salvos (hoje só criar/remover).
 
 ## 12. Notas para o próximo agente
 

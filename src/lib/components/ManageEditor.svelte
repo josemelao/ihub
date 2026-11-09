@@ -252,15 +252,15 @@
 					}
 				: { action: 'add-category', category: { name, color } };
 		} else {
-			payload = {
-				action: 'add-filter',
-				filter: {
-					label: filterLabel,
-					include: parseList(filterInclude),
-					exclude: parseList(filterExclude),
-					matchMode
-				}
+			const filter = {
+				label: filterLabel,
+				include: parseList(filterInclude),
+				exclude: parseList(filterExclude),
+				matchMode
 			};
+			payload = isEdit
+				? { action: 'update-filter', id: (initial as SavedFilter).id, filter }
+				: { action: 'add-filter', filter };
 		}
 
 		try {

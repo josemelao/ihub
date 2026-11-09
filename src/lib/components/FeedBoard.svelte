@@ -10,7 +10,7 @@
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
 
-	type FeedView = 'bento' | 'compact' | 'grid';
+	type FeedView = 'bento' | 'compact' | 'completo';
 
 	let {
 		entries,
@@ -35,7 +35,7 @@
 	const viewOptions: { id: FeedView; label: string }[] = [
 		{ id: 'bento', label: 'Bento' },
 		{ id: 'compact', label: 'Compacto' },
-		{ id: 'grid', label: 'Grade' }
+		{ id: 'completo', label: 'Completo' }
 	];
 
 	let view = $state<FeedView>('bento');
@@ -51,13 +51,19 @@
 	let reduceMotion = $state(false);
 	let showFilterForm = $state(false);
 	let filterLabel = $state('');
+	let filterInclude = $state('');
+	let filterExclude = $state('');
+	let filterMode = $state<'any' | 'all'>('any');
 	let filterError = $state('');
 	let filterBusy = $state(false);
 
 	onMount(() => {
 		const saved = localStorage.getItem('meu-hub:feed-view');
-		if (saved === 'bento' || saved === 'compact' || saved === 'grid') {
+		if (saved === 'bento' || saved === 'compact' || saved === 'completo') {
 			view = saved;
+		} else if (saved === 'grid') {
+			view = 'completo';
+			localStorage.setItem('meu-hub:feed-view', 'completo');
 		}
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	});
@@ -112,17 +118,26 @@
 	}
 
 	function openFilterForm(): void {
-		filterLabel = activeFilter?.label ?? query.trim();
+		filterLabel = activeFilter?.label ?? '';
+		filterInclude = (activeFilter?.include ?? queryTerms).join(', ');
+		filterExclude = (activeFilter?.exclude ?? []).join(', ');
+		filterMode = activeFilter?.matchMode ?? modeChoice;
 		filterError = '';
 		showFilterForm = true;
 	}
 
 	async function saveFilter(): Promise<void> {
-		const includeTerms = terms.map((term) => term.trim()).filter(Boolean);
-		const excludeTerms = exclude.map((term) => term.trim()).filter(Boolean);
+		const includeTerms = filterInclude
+			.split(',')
+			.map((term) => term.trim())
+			.filter(Boolean);
+		const excludeTerms = filterExclude
+			.split(',')
+			.map((term) => term.trim())
+			.filter(Boolean);
 
 		if (includeTerms.length === 0 && excludeTerms.length === 0) {
-			filterError = 'Digite uma palavra-chave ou selecione um filtro antes de salvar.';
+			filterError = 'Preencha Incluir ou Excluir antes de salvar.';
 			return;
 		}
 		if (!filterLabel.trim()) {
@@ -143,7 +158,7 @@
 						label: filterLabel.trim(),
 						include: includeTerms,
 						exclude: excludeTerms,
-						matchMode: mode
+						matchMode: filterMode
 					}
 				})
 			});
@@ -322,8 +337,8 @@
 
 		{#if showFilterForm}
 			<div class="filter-save">
-				<div class="field">
-					<label for="filter-label">Nome do filtro</label>
+				<div class="field filter-save-name">
+					<label for="filter-label">Nome</label>
 					<input
 						id="filter-label"
 						bind:value={filterLabel}
@@ -331,17 +346,24 @@
 						maxlength="80"
 					/>
 				</div>
-				<span class="muted small">
-					Inclui: {terms.join(', ') || '—'} · Exclui: {exclude.join(', ') || '—'} · {mode === 'any'
-						? 'qualquer palavra'
-						: 'todas as palavras'}
-				</span>
-				{#if filterError}
-					<span class="error-text" role="alert">{filterError}</span>
-				{/if}
-				<div class="chips">
+				<div class="field">
+					<label for="filter-include">Incluir</label>
+					<input id="filter-include" bind:value={filterInclude} placeholder="patch, hotfix" />
+				</div>
+				<div class="field">
+					<label for="filter-exclude">Excluir</label>
+					<input id="filter-exclude" bind:value={filterExclude} placeholder="promoção" />
+				</div>
+				<div class="field filter-save-mode">
+					<label for="filter-mode">Modo</label>
+					<select id="filter-mode" bind:value={filterMode}>
+						<option value="any">Qualquer</option>
+						<option value="all">Todas</option>
+					</select>
+				</div>
+				<div class="chips filter-save-actions">
 					<button class="btn btn-primary" type="button" onclick={saveFilter} disabled={filterBusy}>
-						{filterBusy ? 'Salvando...' : 'Salvar filtro'}
+						{filterBusy ? 'Salvando...' : 'Salvar'}
 					</button>
 					<button
 						class="btn"
@@ -352,6 +374,9 @@
 						Cancelar
 					</button>
 				</div>
+				{#if filterError}
+					<span class="error-text" role="alert">{filterError}</span>
+				{/if}
 			</div>
 		{/if}
 
@@ -406,7 +431,7 @@
 		<div
 			class="feed-layout"
 			class:bento={view === 'bento'}
-			class:grid-view={view === 'grid'}
+			class:completo-view={view === 'completo'}
 			class:compact-view={view === 'compact'}
 			use:masonry={{ enabled: view === 'bento', gap: 12 }}
 		>

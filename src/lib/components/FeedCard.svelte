@@ -12,7 +12,7 @@
 	}: {
 		entry: FeedViewItem;
 		terms?: string[];
-		variant?: 'bento' | 'compact' | 'grid';
+		variant?: 'bento' | 'compact' | 'completo';
 		onread: () => void;
 		onsave: () => void;
 	} = $props();
@@ -20,7 +20,9 @@
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
 	let imageFailed = $state(false);
 	let naturalAspect = $state<number | null>(null);
+	let expanded = $state(false);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
+	const canExpand = $derived(variant === 'completo' && entry.item.summary.length > 220);
 
 	const thumbAspect = $derived.by(() => {
 		if (!naturalAspect) return 1.5;
@@ -89,7 +91,17 @@
 		</h3>
 
 		{#if entry.item.summary}
-			<p class="feed-summary">{entry.item.summary}</p>
+			<p class="feed-summary" class:clamped={canExpand && !expanded}>{entry.item.summary}</p>
+			{#if canExpand}
+				<button
+					class="expand-btn"
+					type="button"
+					aria-expanded={expanded}
+					onclick={() => (expanded = !expanded)}
+				>
+					{expanded ? 'Recolher' : 'Expandir'}
+				</button>
+			{/if}
 		{/if}
 
 		<div class="feed-actions">

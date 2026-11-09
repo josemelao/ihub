@@ -3,7 +3,11 @@
 	import { initials, itemHref, itemKind, tint } from '#lib/display';
 	import type { HubData } from '#lib/types';
 
-	let { hub, title = 'Acesso rápido' }: { hub: HubData; title?: string } = $props();
+	let {
+		hub,
+		title = 'Acesso rápido',
+		stacked = false
+	}: { hub: HubData; title?: string; stacked?: boolean } = $props();
 
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const quick = $derived(hub.items.filter((item) => item.pinned).sort((a, b) => a.order - b.order));
@@ -14,7 +18,7 @@
 		<h2 id="t-rapido">{title}</h2>
 		<a class="muted small" href={resolve('/gerenciar')}>Editar atalhos</a>
 	</div>
-	<div class="quick-grid">
+	<div class="quick-grid" class:stacked>
 		{#each quick as item (item.id)}
 			{@const color = colors[item.categoryId] ?? '#8AA4FF'}
 			<a

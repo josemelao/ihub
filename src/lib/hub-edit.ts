@@ -330,3 +330,24 @@ export function addSavedFilter(hub: HubData, input: SavedFilterInput): HubData {
 export function removeSavedFilter(hub: HubData, id: string): HubData {
 	return { ...hub, savedFilters: hub.savedFilters.filter((filter) => filter.id !== id) };
 }
+
+export function updateSavedFilter(
+	hub: HubData,
+	id: string,
+	patch: Partial<SavedFilterInput>
+): HubData {
+	return {
+		...hub,
+		savedFilters: hub.savedFilters.map((filter) =>
+			filter.id === id
+				? {
+						id: filter.id,
+						label: patch.label ?? filter.label,
+						include: patch.include ?? filter.include,
+						exclude: patch.exclude ?? filter.exclude,
+						matchMode: patch.matchMode ?? filter.matchMode
+					}
+				: filter
+		)
+	};
+}

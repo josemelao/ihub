@@ -14,6 +14,7 @@ import {
 	updateCategory,
 	updateItem,
 	updateSource,
+	updateSavedFilter,
 	type AppInput,
 	type CategoryInput,
 	type ItemPatch,
@@ -95,6 +96,10 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 		case 'add-filter':
 			if (!payload.filter) throw new Error('Informe o filtro.');
 			return addSavedFilter(hub, payload.filter);
+
+		case 'update-filter':
+			if (!payload.filter) throw new Error('Informe o filtro.');
+			return updateSavedFilter(hub, requireId(payload), payload.filter);
 
 		case 'delete-filter':
 			return removeSavedFilter(hub, requireId(payload));

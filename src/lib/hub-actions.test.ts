@@ -90,6 +90,23 @@ describe('applyHubAction', () => {
 		).toThrow(/Direção inválida/);
 	});
 
+	it('atualiza filtro salvo', () => {
+		const withFilter = applyHubAction(base(), {
+			action: 'add-filter',
+			filter: { label: 'beta', include: ['beta'], exclude: [], matchMode: 'any' }
+		});
+		const result = applyHubAction(withFilter, {
+			action: 'update-filter',
+			id: 'beta',
+			filter: { label: 'beta novo', include: ['beta'], exclude: ['alpha'], matchMode: 'all' }
+		});
+		expect(result.savedFilters[0]).toMatchObject({
+			label: 'beta novo',
+			exclude: ['alpha'],
+			matchMode: 'all'
+		});
+	});
+
 	it('rejeita ação desconhecida', () => {
 		expect(() => applyHubAction(base(), { action: 'explodir' })).toThrow(/Ação inválida/);
 	});

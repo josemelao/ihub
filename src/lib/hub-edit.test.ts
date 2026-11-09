@@ -14,6 +14,7 @@ import {
 	updateCategory,
 	updateItem,
 	updateSource,
+	updateSavedFilter,
 	moveCategory,
 	type CategoryInput,
 	type SavedFilterInput,
@@ -217,17 +218,37 @@ describe('categorias e filtros', () => {
 		expect(unchanged.categories.find((category) => category.id === 'jogos')?.order).toBe(1);
 	});
 
-	it('adiciona e remove filtro salvo', () => {
+	it('remove filtro salvo', () => {
 		const hub = addSavedFilter(base(), {
-			label: 'hotfix',
-			include: ['hotfix'],
+			label: 'beta',
+			include: ['beta'],
 			exclude: [],
 			matchMode: 'any'
 		});
-		expect(hub.savedFilters.map((filter) => filter.id)).toContain('hotfix');
-
-		const removed = removeSavedFilter(hub, 'hotfix');
+		const removed = removeSavedFilter(hub, 'beta');
 		expect(removed.savedFilters).toHaveLength(0);
+	});
+
+	it('edita um filtro salvo sem trocar o id', () => {
+		const created = addSavedFilter(base(), {
+			label: 'patch',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any'
+		});
+		const updated = updateSavedFilter(created, 'patch', {
+			label: 'patch notes',
+			include: ['patch', 'notes'],
+			exclude: ['promoção'],
+			matchMode: 'all'
+		});
+		expect(updated.savedFilters[0]).toEqual({
+			id: 'patch',
+			label: 'patch notes',
+			include: ['patch', 'notes'],
+			exclude: ['promoção'],
+			matchMode: 'all'
+		});
 	});
 
 	it('ignora id e order injetados ao criar categoria', () => {

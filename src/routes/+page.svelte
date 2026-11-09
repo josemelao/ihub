@@ -62,20 +62,23 @@
 
 <TopBar />
 
-<QuickAccess {hub} />
-
 <div
 	class="home-columns"
 	class:panel-closed={!panelOpen}
 	class:ui-ready={uiReady}
 	class:panel-animating={panelAnimating}
 >
-	<div class="home-main">
-		<div class="home-columns-toolbar">
-			<button class="chip" type="button" aria-pressed={panelOpen} onclick={togglePanel}>
-				{panelOpen ? 'Recolher painel' : 'Mostrar painel'}
-			</button>
-		</div>
+	<div class="home-main has-ear">
+		<button
+			class="panel-ear"
+			type="button"
+			aria-label={panelOpen ? 'Recolher painel lateral' : 'Mostrar painel lateral'}
+			aria-expanded={panelOpen}
+			title={panelOpen ? 'Recolher painel' : 'Mostrar painel'}
+			onclick={togglePanel}
+		>
+			{panelOpen ? '>' : '<'}
+		</button>
 		<FeedBoard
 			{entries}
 			savedFilters={hub.savedFilters}
@@ -86,6 +89,9 @@
 	</div>
 
 	<aside class="home-aside" aria-label="Painel lateral" aria-hidden={!panelOpen} inert={!panelOpen}>
+		<div class="panel">
+			<QuickAccess {hub} stacked />
+		</div>
 		<section class="panel section" aria-labelledby="t-fontes">
 			<h2 id="t-fontes" style="font-size: 15px">Fontes do feed</h2>
 			{#each sources as source (source.id)}
