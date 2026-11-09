@@ -146,7 +146,8 @@ data/
 - **Compacto**: lista, texto primeiro, sem placeholder; imagem opcional em miniatura.
 - **Grade**: 2 colunas, imagens 16:9, altura natural (cards curtos não esticam).
 - A escolha fica em `localStorage` (`meu-hub:feed-view`).
-- Painel direito da home é recolhível (`meu-hub:panel-open`).
+- Painel direito da home é recolhível (`meu-hub:panel-open`), com largura/opacidade animadas.
+- **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Grade); painel desliza ao recolher. Respeita `prefers-reduced-motion`.
 
 > Histórico: tentamos Bento com larguras mistas (1/3, 1/2, 2/3). Foi abandonado porque masonry com spans variados abre buracos e os spans mudavam ao filtrar/marcar como lido. Colunas iguais resolveram.
 

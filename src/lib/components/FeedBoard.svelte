@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { flip } from 'svelte/animate';
 	import { onMount } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
 	import { matchesFilter } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
@@ -43,13 +45,18 @@
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
+	let reduceMotion = $state(false);
 
 	onMount(() => {
 		const saved = localStorage.getItem('meu-hub:feed-view');
 		if (saved === 'bento' || saved === 'compact' || saved === 'grid') {
 			view = saved;
 		}
+		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 	});
+
+	const motionDuration = $derived(reduceMotion ? 0 : 300);
+	const fadeDuration = $derived(reduceMotion ? 0 : 160);
 
 	function setView(next: FeedView): void {
 		view = next;
@@ -310,13 +317,20 @@
 			use:masonry={{ enabled: view === 'bento', gap: 12 }}
 		>
 			{#each visible as entry (entry.item.id)}
-				<FeedCard
-					{entry}
-					{terms}
-					variant={view}
-					onread={() => toggleRead(entry)}
-					onsave={() => toggleSave(entry)}
-				/>
+				<div
+					class="feed-slot"
+					in:fade={{ duration: fadeDuration }}
+					out:fade={{ duration: fadeDuration }}
+					animate:flip={{ duration: motionDuration }}
+				>
+					<FeedCard
+						{entry}
+						{terms}
+						variant={view}
+						onread={() => toggleRead(entry)}
+						onsave={() => toggleSave(entry)}
+					/>
+				</div>
 			{/each}
 		</div>
 	</div>
