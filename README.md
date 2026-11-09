@@ -62,6 +62,7 @@ O schema e as referências (categoria/grupo inexistente, id duplicado, URL invá
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido**. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos.
 - **Visualizações**: **Bento** (masonry em colunas iguais: 2 colunas, 3 quando o feed está largo, imagens 3:2 e retrato adaptativo), **Compacto** (lista) e **Grade** (cards uniformes). A escolha fica salva no navegador.
 - No Bento o texto flui naturalmente (sem corte de linhas) e o masonry posiciona cada card na coluna mais curta, sem buracos.
+- O painel direito desliza ao recolher; cards filtrados/marcados como lidos desaparecem com fade e os restantes deslizam para a nova posição. Respeita `prefers-reduced-motion`.
 - Na home, o painel **Fontes do feed / Nota rápida** pode ser recolhido para dar mais largura ao feed.
 - Imagens vêm de `media:*`, `enclosure`, do primeiro `<img>` do conteúdo e, para YouTube, do ID do vídeo.
 - Cache: até 30 posts por fonte, retenção de 30 dias, deduplicação por URL/guid. Requisições com timeout de 10 s, User-Agent identificado e limite de 5 MB por resposta.
