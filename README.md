@@ -2,6 +2,8 @@
 
 Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed por palavra-chave. Roda apenas no seu computador, em `localhost`.
 
+> Handoff técnico (o que foi feito, como e pendências): [HANDOFF.md](HANDOFF.md).
+
 ## Status
 
 - **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)**, **M3 (feed)**, **M4 (painel de edição)** e **M5 (acabamento)**: concluídos.
