@@ -27,6 +27,8 @@
 	<title>Início · Meu Hub</title>
 </svelte:head>
 
+<h1 class="sr-only">Início</h1>
+
 <TopBar />
 
 <QuickAccess {hub} />
@@ -52,7 +54,7 @@
 			{#if sources.length === 0}
 				<p class="muted small">Nenhuma fonte ativa no hub.json.</p>
 			{/if}
-			<a class="chip link" href={resolve('/gerenciar')}>+ Adicionar fonte</a>
+			<a class="chip link" href={resolve('/gerenciar')}>Ver fontes</a>
 		</section>
 
 		<section class="panel section" aria-labelledby="t-nota">

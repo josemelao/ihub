@@ -6,6 +6,13 @@ import type { ExportBundle, FeedCache, HubData, HubState, HubStorage } from '../
 const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [] };
 const EMPTY_CACHE: FeedCache = { version: 1, updatedAt: new Date(0).toISOString(), items: [] };
 
+function isMissingFile(error: unknown): boolean {
+	return (
+		error instanceof HubValidationError &&
+		error.issues.some((issue) => issue.message.startsWith('Arquivo não encontrado:'))
+	);
+}
+
 export class JsonFileStorage implements HubStorage {
 	private readonly dataDir: string;
 
@@ -98,7 +105,7 @@ export class JsonFileStorage implements HubStorage {
 			const value = (await this.readJson('estado.json')) as Partial<HubState>;
 			return { version: value.version ?? 1, read: value.read ?? {}, saved: value.saved ?? [] };
 		} catch (error) {
-			if (error instanceof HubValidationError && error.message.includes('não encontrado')) {
+			if (isMissingFile(error)) {
 				return structuredClone(EMPTY_STATE);
 			}
 			throw error;
@@ -118,7 +125,7 @@ export class JsonFileStorage implements HubStorage {
 				items: value.items ?? []
 			};
 		} catch (error) {
-			if (error instanceof HubValidationError && error.message.includes('não encontrado')) {
+			if (isMissingFile(error)) {
 				return structuredClone(EMPTY_CACHE);
 			}
 			throw error;

@@ -95,4 +95,17 @@ describe('JsonFileStorage', () => {
 		const loaded = await storage.loadHub();
 		expect(loaded.categories.map((c) => c.id)).toEqual(['jogos', 'ferramentas']);
 	});
+
+	it('retorna estado vazio quando estado.json ainda não existe', async () => {
+		await storage.saveHub(hub('Jogos'));
+		const state = await storage.loadState();
+		expect(state).toEqual({ version: 1, read: {}, saved: [] });
+	});
+
+	it('retorna cache vazio quando feed-cache.json ainda não existe', async () => {
+		await storage.saveHub(hub('Jogos'));
+		const cache = await storage.loadFeedCache();
+		expect(cache.items).toEqual([]);
+		expect(cache.version).toBe(1);
+	});
 });

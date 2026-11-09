@@ -52,6 +52,7 @@
 <div class="placeholder-panel">
 	<span class="placeholder-title">Abrir por comando chega na V2</span>
 	<span class="muted">
-		Por segurança, a V1 só abre apps por protocolo. Comandos locais exigirão lista permitida.
+		Por segurança, a V1 só abre apps por protocolo. Comandos locais exigirão lista permitida. Na
+		primeira vez, o navegador pode pedir confirmação para abrir o app.
 	</span>
 </div>

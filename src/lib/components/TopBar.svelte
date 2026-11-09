@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ui } from '#lib/ui.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -9,21 +10,16 @@
 </script>
 
 <header class="topbar">
-	<div class="search">
+	<button
+		class="search search-button"
+		type="button"
+		onclick={() => ui.openPalette()}
+		aria-label={`Abrir busca rápida (Ctrl K): ${placeholder}`}
+	>
 		<Icon name="search" />
-		<label class="sr-only" for="busca">{placeholder}</label>
-		<input
-			id="busca"
-			type="text"
-			{placeholder}
-			disabled
-			aria-describedby="busca-aviso"
-			title="A busca chega na V2"
-			autocomplete="off"
-		/>
+		<span class="search-text">{placeholder}</span>
 		<span class="kbd" aria-hidden="true">Ctrl K</span>
-		<span id="busca-aviso" class="sr-only">A busca Ctrl K chega na V2.</span>
-	</div>
+	</button>
 	<div class="topbar-actions">
 		<button class="btn" type="button" disabled title="Modo edição chega na V3">Modo edição</button>
 		<button class="btn btn-primary" type="button" disabled title={actionTitle}>

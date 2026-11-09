@@ -4,8 +4,8 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e, nas pr
 
 ## Status
 
-- **M0 (projeto)** e **M1 (dados e layout)**: concluídos.
-- **M2 (busca Ctrl K, apps, export/import)** e **M3 (feed)**: próximos marcos.
+- **M0 (projeto)**, **M1 (dados e layout)** e **M2 (busca Ctrl K, exportar/importar)**: concluídos.
+- **M3 (feed)**: próximo marco.
 - O feed, o painel de edição e as ações de escrita aparecem desabilitados com aviso, sem quebrar o layout.
 - Os dados iniciais vêm dos mockups de referência (categorias, grupos, atalhos fixados, fontes e filtros salvos).
 
@@ -49,19 +49,41 @@ Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrit
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
 
-O schema e as referências (categoria/grupo inexistente, ids duplicados, URL inválida) são validados por Zod em `src/lib/schema.ts`.
+O schema e as referências (categoria/grupo inexistente, id duplicado, URL inválida, protocolo inseguro) são validados por Zod em `src/lib/schema.ts`.
+
+### Exportar e importar
+
+Na tela **Gerenciar**:
+
+- **Exportar dados** baixa um `hub-export-AAAA-MM-DD.json` com o hub e o estado.
+- **Importar dados** lê o arquivo, valida e mostra um resumo antes de confirmar. Escolha **substituir tudo** ou **mesclar por id**. Um backup do `hub.json` atual é criado automaticamente.
+
+### Sincronizar entre dois PCs (Google Drive / OneDrive)
+
+Não há integração com a API do Drive. A sincronização é feita pela **pasta sincronizada** do Drive/OneDrive:
+
+1. Instale o Drive/OneDrive nos dois PCs e deixe a pasta sincronizando.
+2. Crie um `.env` em cada PC apontando `HUB_DATA_DIR` para essa pasta, por exemplo:
+   ```env
+   HUB_DATA_DIR=C:\Users\SeuUsuario\Google Drive\MeuHub
+   ```
+3. Coloque o `hub.json` nessa pasta (ou exporte de um PC e importe no outro).
+
+O servidor relê o `hub.json` a cada requisição, então basta recarregar a página para ver mudanças vindas do outro PC. **Evite editar ao mesmo tempo nos dois PCs**: a última gravação vence. Para trocas pontuais, prefira exportar/importar.
 
 ## Telas
 
-| Rota         | Tela                                                                                |
-| ------------ | ----------------------------------------------------------------------------------- |
-| `/`          | Início: busca, acesso rápido, feed (placeholder na V1), fontes ativas e nota rápida |
-| `/c/[slug]`  | Categoria: grupos, links/apps e feed da categoria                                   |
-| `/feed`      | Feed completo (placeholder até a V2)                                                |
-| `/favoritos` | Atalhos fixados e filtros salvos                                                    |
-| `/apps`      | Apps do PC por categoria (abrem por protocolo)                                      |
-| `/gerenciar` | Fontes e links em modo somente leitura                                              |
-| `/api/hub`   | JSON do hub validado                                                                |
+| Rota          | Tela                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `/`           | Início: busca (Ctrl K), acesso rápido, feed (placeholder na V1), fontes e nota rápida |
+| `/c/[slug]`   | Categoria: grupos, links/apps e feed da categoria                                     |
+| `/feed`       | Feed completo (placeholder até a V2)                                                  |
+| `/favoritos`  | Atalhos fixados e filtros salvos                                                      |
+| `/apps`       | Apps do PC por categoria (abrem por protocolo)                                        |
+| `/gerenciar`  | Fontes e links, exportar/importar dados                                               |
+| `/api/hub`    | JSON do hub validado                                                                  |
+| `/api/export` | Download do bundle (hub + estado)                                                     |
+| `/api/import` | Importação validada (substituir/mesclar)                                              |
 
 ## Estrutura
 
@@ -102,7 +124,7 @@ Eles não fazem parte do build do app.
 
 ## Segurança e limites da V1
 
-- Servidor só em `127.0.0.1`.
-- Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Execução de comandos fica para a V2, com lista permitida.
+- Servidor só em `127.0.0.1`, com allowlist de Host/Origin.
+- Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
 - Sem login, sem versão online, sem tema claro.
-- Busca Ctrl K, escrita na interface, export/import e feed entram nos próximos marcos.
+- Feed e escrita na interface entram nos próximos marcos.
