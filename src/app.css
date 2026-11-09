@@ -1182,25 +1182,45 @@ h3 {
 .feed-actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 14px;
+	align-items: center;
+	gap: 6px;
 	margin-top: 2px;
 }
 
-.feed-actions a,
-.feed-actions button {
+.icon-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 8px;
+	border: 1px solid transparent;
 	background: none;
-	border: 0;
-	padding: 0;
 	color: var(--soft);
-	font: inherit;
-	font-size: 13px;
 	cursor: pointer;
 	text-decoration: none;
+	transition:
+		background var(--motion-fast) ease,
+		color var(--motion-fast) ease,
+		border-color var(--motion-fast) ease;
 }
 
-.feed-actions a:hover,
-.feed-actions button:hover {
-	color: #ffffff;
+.icon-action:hover {
+	background: var(--panel2);
+	border-color: var(--line);
+	color: var(--tx);
+}
+
+.icon-action.saved {
+	color: var(--accent);
+}
+
+.icon-action.saved svg path {
+	fill: currentColor;
+}
+
+.icon-action.read {
+	color: var(--accent);
 }
 
 .tag {

@@ -44,5 +44,16 @@
 	{:else if name === 'download'}
 		<path d="M12 3v12M7 10l5 5 5-5" />
 		<path d="M5 21h14" />
+	{:else if name === 'external'}
+		<path d="M14 3h7v7" />
+		<path d="M10 14L21 3" />
+		<path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+	{:else if name === 'bookmark'}
+		<path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+	{:else if name === 'circle'}
+		<circle cx="12" cy="12" r="7" />
+	{:else if name === 'check-circle'}
+		<circle cx="12" cy="12" r="9" />
+		<path d="M8 12l3 3 5-6" />
 	{/if}
 </svg>

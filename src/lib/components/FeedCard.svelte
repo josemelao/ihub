@@ -2,6 +2,7 @@
 	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
 	import type { FeedViewItem } from '#lib/feed/view';
+	import Icon from './Icon.svelte';
 
 	let {
 		entry,
@@ -21,8 +22,35 @@
 	let imageFailed = $state(false);
 	let naturalAspect = $state<number | null>(null);
 	let expanded = $state(false);
+	let summaryEl = $state<HTMLElement | null>(null);
+	let overflowing = $state(false);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
-	const canExpand = $derived(variant === 'completo' && entry.item.summary.length > 220);
+	const canExpand = $derived(variant === 'completo' && (overflowing || expanded));
+
+	$effect(() => {
+		if (!summaryEl || variant !== 'completo') {
+			overflowing = false;
+			return;
+		}
+
+		const measure = () => {
+			if (!summaryEl || expanded) return;
+			const next = summaryEl.scrollHeight > summaryEl.clientHeight + 1;
+			if (next !== overflowing) overflowing = next;
+		};
+
+		const frame = requestAnimationFrame(measure);
+		if (typeof ResizeObserver === 'undefined') {
+			return () => cancelAnimationFrame(frame);
+		}
+
+		const observer = new ResizeObserver(measure);
+		observer.observe(summaryEl);
+		return () => {
+			cancelAnimationFrame(frame);
+			observer.disconnect();
+		};
+	});
 
 	const thumbAspect = $derived.by(() => {
 		if (!naturalAspect) return 1.5;
@@ -91,7 +119,13 @@
 		</h3>
 
 		{#if entry.item.summary}
-			<p class="feed-summary" class:clamped={canExpand && !expanded}>{entry.item.summary}</p>
+			<p
+				bind:this={summaryEl}
+				class="feed-summary"
+				class:clamped={variant === 'completo' && !expanded}
+			>
+				{entry.item.summary}
+			</p>
 			{#if canExpand}
 				<button
 					class="expand-btn"
@@ -105,12 +139,37 @@
 		{/if}
 
 		<div class="feed-actions">
-			<a href={entry.item.url} target="_blank" rel="noopener noreferrer">Abrir</a>
-			<button type="button" onclick={onsave}>
-				{entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
+			<a
+				class="icon-action"
+				href={entry.item.url}
+				target="_blank"
+				rel="noopener noreferrer"
+				aria-label="Abrir"
+				title="Abrir"
+			>
+				<Icon name="external" size={18} />
+			</a>
+			<button
+				class="icon-action"
+				class:saved={entry.saved}
+				type="button"
+				aria-pressed={entry.saved}
+				aria-label={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
+				title={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
+				onclick={onsave}
+			>
+				<Icon name="bookmark" size={18} />
 			</button>
-			<button type="button" onclick={onread}>
-				{entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
+			<button
+				class="icon-action"
+				class:read={entry.read}
+				type="button"
+				aria-pressed={entry.read}
+				aria-label={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
+				title={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
+				onclick={onread}
+			>
+				<Icon name={entry.read ? 'check-circle' : 'circle'} size={18} />
 			</button>
 		</div>
 	</div>

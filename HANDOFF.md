@@ -134,7 +134,7 @@ data/
 - Regras por fonte (`include`/`exclude`/`matchMode`) aplicadas sobre título+resumo, sem acento/caixa.
   - Filtro ao vivo: palavra-chave, qualquer/todas, filtros salvos com contagem, chips de categoria, “Não lidos”, destaque do termo.
   - **+ Salvar filtro** abre um formulário em linha com **Nome, Incluir, Excluir e Modo**, já preenchido com a busca/filtro atual, e grava no `hub.json`.
-  - Ações: abrir, salvar para depois, marcar como lido; “marcar tudo como lido” respeita o filtro.
+  - Ações: abrir, salvar para depois, marcar como lido — ícones (link externo, bookmark, check) com tooltip/`aria-label`; “marcar tudo como lido” respeita o filtro.
 - Contadores de não lidos na sidebar e nas fontes.
 - Imagens: `enclosure`, `media:content`, `media:thumbnail`, `media:group`, primeiro `<img>` do HTML e thumbnail do YouTube (normaliza URLs antigas).
 - Resumos: até 700 caracteres, entidades numéricas decodificadas e boilerplate do Reddit removido.
@@ -149,7 +149,7 @@ data/
   - Altura natural; texto sem corte de linhas.
   - Recalcula com ResizeObserver (imagens/filtros) e MutationObserver (novos cards).
 - **Compacto**: lista, texto primeiro, sem placeholder; imagem opcional em miniatura, resumo em 2–3 linhas.
-- **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** para ler o texto inteiro (até 700 caracteres).
+- **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** apenas quando o texto realmente transborda (medido via `scrollHeight`/`clientHeight`).
 - A escolha fica em `localStorage` (`meu-hub:feed-view`); `grid` antigo migra para `completo`.
 - A barra direita da home é **fixa/sticky, sem recolher**, com Fontes do feed, Filtros salvos (com contagem e link para `/feed?filtro=id`), Salvos recentemente e Nota rápida.
 - **Animações**: cards saem com fade, os restantes deslizam para a nova posição (CSS `left/top/width` no Bento e FLIP no Compacto/Completo). **Não anima ao entrar/trocar de página**: `viewReady` evita o salto de visualização e `animationsEnabled` só liga após ~400ms; depois vale para filtros, busca, lidos e “Carregar mais”. Respeita `prefers-reduced-motion`.
