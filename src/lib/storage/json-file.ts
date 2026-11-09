@@ -3,16 +3,6 @@ import { join } from 'node:path';
 import { HubValidationError, parseHub } from '../schema';
 import type { ExportBundle, FeedCache, HubData, HubState, HubStorage } from '../types';
 
-const EMPTY_HUB: HubData = {
-	version: 1,
-	settings: { accent: '#8AA4FF' },
-	categories: [],
-	groups: [],
-	items: [],
-	feedSources: [],
-	savedFilters: []
-};
-
 const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [] };
 const EMPTY_CACHE: FeedCache = { version: 1, updatedAt: new Date(0).toISOString(), items: [] };
 
@@ -56,7 +46,11 @@ export class JsonFileStorage implements HubStorage {
 		}
 	}
 
-	private async writeJsonAtomic(file: string, value: unknown): Promise<void> {
+	private async writeJsonAtomic(
+		file: string,
+		value: unknown,
+		validateBackup?: (value: unknown) => boolean
+	): Promise<void> {
 		await mkdir(this.dataDir, { recursive: true });
 		const fullPath = this.path(file);
 		const tempPath = `${fullPath}.tmp-${process.pid}-${Date.now()}`;
@@ -64,9 +58,14 @@ export class JsonFileStorage implements HubStorage {
 
 		await writeFile(tempPath, `${JSON.stringify(value, null, 2)}\n`, 'utf-8');
 		try {
-			await copyFile(fullPath, backupPath);
+			const current = JSON.parse(await readFile(fullPath, 'utf-8'));
+			if (!validateBackup || validateBackup(current)) {
+				await copyFile(fullPath, backupPath);
+			}
 		} catch (error) {
-			if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+			if ((error as NodeJS.ErrnoException).code !== 'ENOENT' && !(error instanceof SyntaxError)) {
+				throw error;
+			}
 		}
 		await rename(tempPath, fullPath);
 	}
@@ -84,7 +83,14 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async saveHub(data: HubData): Promise<void> {
-		await this.writeJsonAtomic('hub.json', parseHub(data));
+		await this.writeJsonAtomic('hub.json', parseHub(data), (value) => {
+			try {
+				parseHub(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
 	}
 
 	async loadState(): Promise<HubState> {
@@ -140,8 +146,20 @@ export class JsonFileStorage implements HubStorage {
 		try {
 			current = await this.loadHub();
 		} catch (error) {
-			if (error instanceof HubValidationError) current = structuredClone(EMPTY_HUB);
-			else throw error;
+			if (!(error instanceof HubValidationError)) throw error;
+
+			const backup = await this.loadHubFromBackup();
+			if (!backup) {
+				throw new HubValidationError([
+					...error.issues,
+					{
+						path: [],
+						message:
+							'Importação mesclada cancelada: o hub.json atual é inválido e não há backup válido.'
+					}
+				]);
+			}
+			current = backup;
 		}
 
 		await this.saveHub(mergeByIdAll(current, incoming));

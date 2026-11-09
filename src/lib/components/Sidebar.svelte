@@ -10,7 +10,6 @@
 	const path = $derived(page.url.pathname);
 	const categories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
 	const counts = $derived(categoryItemCounts(hub));
-	const enabledSources = $derived(hub.feedSources.filter((source) => source.enabled).length);
 
 	function active(href: string): boolean {
 		return href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`);
@@ -31,9 +30,6 @@
 		<a class="nav-link" class:active={active('/feed')} href={resolve('/feed')}>
 			<Icon name="rss" />
 			Feed completo
-			{#if enabledSources > 0}
-				<span class="badge">{enabledSources}</span>
-			{/if}
 		</a>
 		<a class="nav-link" class:active={active('/favoritos')} href={resolve('/favoritos')}>
 			<Icon name="star" />

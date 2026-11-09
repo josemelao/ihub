@@ -61,4 +61,53 @@ describe('parseHub', () => {
 
 		expect(() => parseHub(invalid)).toThrow(HubValidationError);
 	});
+
+	it('rejeita item cujo grupo pertence a outra categoria', () => {
+		const invalid = {
+			...structuredClone(base),
+			categories: [
+				...structuredClone(base).categories,
+				{ id: 'leitura', name: 'Leitura', color: '#E58BC0', order: 2 }
+			],
+			groups: [
+				...structuredClone(base).groups,
+				{ id: 'leitura-geral', categoryId: 'leitura', name: 'Leitura', order: 1 }
+			],
+			items: [{ ...structuredClone(base).items[0], groupId: 'leitura-geral' }]
+		};
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+		try {
+			parseHub(invalid);
+		} catch (error) {
+			const issues = (error as HubValidationError).issues;
+			expect(issues.some((i) => i.path.join('.') === 'items.0.groupId')).toBe(true);
+			expect(issues.some((i) => i.message.includes('pertence'))).toBe(true);
+		}
+	});
+
+	it('rejeita app com protocolo perigoso', () => {
+		const invalid = {
+			version: 1,
+			settings: { accent: '#8AA4FF' },
+			categories: base.categories,
+			groups: base.groups,
+			items: [
+				{
+					id: 'app-perigoso',
+					type: 'app',
+					name: 'App perigoso',
+					launch: { kind: 'protocol', value: 'javascript:alert(1)' },
+					categoryId: 'jogos',
+					tags: [],
+					pinned: false,
+					order: 0
+				}
+			],
+			feedSources: [],
+			savedFilters: []
+		};
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+	});
 });

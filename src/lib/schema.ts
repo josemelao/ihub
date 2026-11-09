@@ -64,7 +64,17 @@ const appItemSchema = z.object({
 	type: z.literal('app'),
 	launch: z.object({
 		kind: z.enum(['protocol', 'command']),
-		value: z.string().min(1)
+		value: z
+			.string()
+			.min(1)
+			.refine(
+				(value) => {
+					const match = /^([a-z][a-z0-9+.-]*):/i.exec(value);
+					if (!match) return false;
+					return !['javascript', 'data', 'vbscript', 'file'].includes(match[1].toLowerCase());
+				},
+				{ message: 'Protocolo inválido: use um esquema seguro (ex.: steam://, discord://)' }
+			)
 	})
 });
 
@@ -101,7 +111,7 @@ function checkReferences(
 	entries: { id: string; categoryId?: string; groupId?: string }[],
 	collection: string,
 	categoryIds: Set<string>,
-	groupIds: Set<string>
+	groupCategories: Map<string, string>
 ): void {
 	entries.forEach((entry, index) => {
 		if (entry.categoryId !== undefined && !categoryIds.has(entry.categoryId)) {
@@ -111,12 +121,21 @@ function checkReferences(
 				`Referência quebrada: categoria '${entry.categoryId}' não existe`
 			);
 		}
-		if (entry.groupId !== undefined && !groupIds.has(entry.groupId)) {
-			addIssue(
-				ctx,
-				[collection, index, 'groupId'],
-				`Referência quebrada: grupo '${entry.groupId}' não existe`
-			);
+		if (entry.groupId !== undefined) {
+			const groupCategory = groupCategories.get(entry.groupId);
+			if (groupCategory === undefined) {
+				addIssue(
+					ctx,
+					[collection, index, 'groupId'],
+					`Referência quebrada: grupo '${entry.groupId}' não existe`
+				);
+			} else if (entry.categoryId !== undefined && groupCategory !== entry.categoryId) {
+				addIssue(
+					ctx,
+					[collection, index, 'groupId'],
+					`Referência inconsistente: o grupo '${entry.groupId}' pertence à categoria '${groupCategory}', não a '${entry.categoryId}'`
+				);
+			}
 		}
 	});
 }
@@ -147,7 +166,7 @@ export const hubSchema = z
 	})
 	.superRefine((hub, ctx) => {
 		const categoryIds = new Set(hub.categories.map((c) => c.id));
-		const groupIds = new Set(hub.groups.map((g) => g.id));
+		const groupCategories = new Map(hub.groups.map((g) => [g.id, g.categoryId]));
 
 		checkDuplicateIds(ctx, hub.categories, 'categories');
 		checkDuplicateIds(ctx, hub.groups, 'groups');
@@ -155,9 +174,9 @@ export const hubSchema = z
 		checkDuplicateIds(ctx, hub.feedSources, 'feedSources');
 		checkDuplicateIds(ctx, hub.savedFilters, 'savedFilters');
 
-		checkReferences(ctx, hub.groups, 'groups', categoryIds, new Set());
-		checkReferences(ctx, hub.items, 'items', categoryIds, groupIds);
-		checkReferences(ctx, hub.feedSources, 'feedSources', categoryIds, groupIds);
+		checkReferences(ctx, hub.groups, 'groups', categoryIds, new Map());
+		checkReferences(ctx, hub.items, 'items', categoryIds, groupCategories);
+		checkReferences(ctx, hub.feedSources, 'feedSources', categoryIds, groupCategories);
 	});
 
 export function parseHub(input: unknown): HubData {

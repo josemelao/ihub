@@ -16,10 +16,13 @@
 			id="busca"
 			type="text"
 			{placeholder}
-			title="A busca Ctrl K chega na próxima etapa"
+			disabled
+			aria-describedby="busca-aviso"
+			title="A busca chega na V2"
 			autocomplete="off"
 		/>
-		<span class="kbd">Ctrl K</span>
+		<span class="kbd" aria-hidden="true">Ctrl K</span>
+		<span id="busca-aviso" class="sr-only">A busca Ctrl K chega na V2.</span>
 	</div>
 	<div class="topbar-actions">
 		<button class="btn" type="button" disabled title="Modo edição chega na V3">Modo edição</button>

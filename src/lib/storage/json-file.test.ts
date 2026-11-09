@@ -62,4 +62,37 @@ describe('JsonFileStorage', () => {
 
 		expect(loaded.categories.map((c) => c.id)).toEqual(['jogos', 'ferramentas']);
 	});
+
+	it('não sobrescreve o backup válido quando o hub atual está corrompido', async () => {
+		await storage.saveHub(hub('Primeiro'));
+		await storage.saveHub(hub('Segundo'));
+
+		await writeFile(join(dir, 'hub.json'), '{ isso não é json }', 'utf-8');
+		await storage.saveHub(hub('Terceiro'));
+
+		const backup = JSON.parse(await readFile(join(dir, 'hub.json.bak'), 'utf-8'));
+		expect(backup.categories[0].name).toBe('Primeiro');
+	});
+
+	it('aborta merge quando o hub atual é inválido e não há backup', async () => {
+		await writeFile(join(dir, 'hub.json'), '{ isso não é json }', 'utf-8');
+
+		await expect(storage.importBundle({ hub: hub('Novo') }, 'merge')).rejects.toThrow(
+			HubValidationError
+		);
+	});
+
+	it('usa o backup no merge quando o hub atual está corrompido', async () => {
+		await storage.saveHub(hub('Original'));
+		await storage.saveHub(hub('Segundo'));
+
+		await writeFile(join(dir, 'hub.json'), '{ isso não é json }', 'utf-8');
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+		await storage.importBundle({ hub: incoming }, 'merge');
+
+		const loaded = await storage.loadHub();
+		expect(loaded.categories.map((c) => c.id)).toEqual(['jogos', 'ferramentas']);
+	});
 });

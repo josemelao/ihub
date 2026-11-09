@@ -1,6 +1,9 @@
+import { existsSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
+
+if (existsSync('.env')) process.loadEnvFile('.env');
 
 export default defineConfig({
 	plugins: [
