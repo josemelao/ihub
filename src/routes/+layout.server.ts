@@ -1,3 +1,4 @@
+import { startScheduler } from '#lib/feed/scheduler';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
 import type { HubData, ValidationIssue } from '#lib/types';
@@ -15,22 +16,30 @@ const EMPTY_HUB: HubData = {
 
 export const load: LayoutServerLoad = async () => {
 	const storage = getStorage();
+	startScheduler();
+
+	let hub: HubData;
+	let dataError: {
+		message: string;
+		issues: ValidationIssue[];
+		usingBackup: boolean;
+	} | null = null;
 
 	try {
-		return { hub: await storage.loadHub(), dataError: null };
+		hub = await storage.loadHub();
 	} catch (error) {
 		if (!(error instanceof HubValidationError)) throw error;
 
 		const backup = await storage.loadHubFromBackup();
-		const issues: ValidationIssue[] = error.issues;
-
-		return {
-			hub: backup ?? EMPTY_HUB,
-			dataError: {
-				message: error.message,
-				issues,
-				usingBackup: backup !== null
-			}
+		hub = backup ?? EMPTY_HUB;
+		dataError = {
+			message: error.message,
+			issues: error.issues,
+			usingBackup: backup !== null
 		};
 	}
+
+	const [state, feed] = await Promise.all([storage.loadState(), storage.loadFeedCache()]);
+
+	return { hub, dataError, state, feed };
 };

@@ -7,6 +7,8 @@
 
 	let { data, children }: LayoutProps = $props();
 
+	const unread = $derived(data.feed.items.filter((item) => !data.state.read[item.id]).length);
+
 	function onKeydown(event: KeyboardEvent): void {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
 			event.preventDefault();
@@ -27,7 +29,7 @@
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
 <div class="app-shell" style="--accent: {data.hub.settings.accent}">
-	<Sidebar hub={data.hub} />
+	<Sidebar hub={data.hub} {unread} />
 
 	<main class="main" id="conteudo">
 		{#if data.dataError}
