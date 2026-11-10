@@ -37,23 +37,25 @@ async function rotateBackups(
 	backupPath: string,
 	deps: AtomicFileDeps,
 	generations: number
-): Promise<void> {
-	if (generations <= 1) return;
+): Promise<boolean> {
+	if (generations <= 1) return true;
 
 	// Desloca da geração mais antiga para a mais nova, sobrescrevendo a última.
 	for (let index = generations - 2; index >= 1; index -= 1) {
 		try {
 			await deps.copyFile(`${backupPath}.${index}`, `${backupPath}.${index + 1}`);
 		} catch (error) {
-			if (codeOf(error) !== 'ENOENT') return;
+			if (codeOf(error) !== 'ENOENT') return false;
 		}
 	}
 
 	try {
 		await deps.copyFile(backupPath, `${backupPath}.1`);
 	} catch (error) {
-		if (codeOf(error) !== 'ENOENT') return;
+		if (codeOf(error) !== 'ENOENT') return false;
 	}
+
+	return true;
 }
 
 async function renameWithRetry(
@@ -98,6 +100,8 @@ export async function writeFileAtomically(
 	deps: AtomicFileDeps,
 	options: AtomicWriteOptions = {}
 ): Promise<void> {
+	// O rename é atômico; o fallback copyFile do Windows sobrescreve in-place e
+	// não protege contra queda de energia no meio da cópia — o .bak cobre isso.
 	const tempPath = `${finalPath}.tmp-${deps.uniqueSuffix()}`;
 
 	try {
@@ -112,8 +116,16 @@ export async function writeFileAtomically(
 			}
 
 			if (current !== null && (!options.keepBackup || options.keepBackup(current))) {
-				await rotateBackups(options.backupPath, deps, options.backupGenerations ?? 1);
-				await deps.copyFile(finalPath, options.backupPath);
+				// Backup é best-effort: um .bak bloqueado pelo OneDrive não pode
+				// impedir a gravação do arquivo principal.
+				const rotated = await rotateBackups(
+					options.backupPath,
+					deps,
+					options.backupGenerations ?? 1
+				);
+				if (rotated) {
+					await deps.copyFile(finalPath, options.backupPath).catch(() => undefined);
+				}
 			}
 		}
 

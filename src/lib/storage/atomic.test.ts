@@ -213,4 +213,33 @@ describe('rotação de backups', () => {
 		expect(files.get('dados/hub.json.bak')).toBe('{"v":1}');
 		expect(files.has('dados/hub.json.bak.1')).toBe(false);
 	});
+
+	it('grava mesmo quando o backup está bloqueado', async () => {
+		const { deps, files } = setup({ copyError: 'EPERM' });
+		files.set('dados/hub.json', '{"antigo":true}');
+
+		await writeFileAtomically('dados/hub.json', '{"novo":true}', deps, {
+			backupPath: 'dados/hub.json.bak',
+			keepBackup: () => true,
+			backupGenerations: 7
+		});
+
+		expect(files.get('dados/hub.json')).toBe('{"novo":true}');
+		expect(files.has('dados/hub.json.bak')).toBe(false);
+	});
+
+	it('preserva o backup mais novo quando a rotação falha', async () => {
+		const { deps, files } = setup({ copyError: 'EPERM' });
+		files.set('dados/hub.json', '{"atual":true}');
+		files.set('dados/hub.json.bak', '{"mais-novo":true}');
+
+		await writeFileAtomically('dados/hub.json', '{"novo":true}', deps, {
+			backupPath: 'dados/hub.json.bak',
+			keepBackup: () => true,
+			backupGenerations: 3
+		});
+
+		expect(files.get('dados/hub.json.bak')).toBe('{"mais-novo":true}');
+		expect(files.get('dados/hub.json')).toBe('{"novo":true}');
+	});
 });

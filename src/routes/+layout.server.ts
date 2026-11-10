@@ -62,7 +62,7 @@ export const load: LayoutServerLoad = async () => {
 	if (pruned.changed || backfilled !== loadedState) {
 		// Reaplica sobre o estado mais recente para não sobrescrever uma ação
 		// que chegou entre o load e a gravação.
-		state = await storage.updateState((current) => {
+		state = await storage.updateStateWithFallback((current) => {
 			const merged = backfillSavedSnapshots(hub, feed, current);
 			return pruneState(merged).state;
 		});

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JsonFileStorage } from './json-file';
@@ -534,7 +534,9 @@ describe('JsonFileStorage', () => {
 		const backup = await storage.backupNow();
 
 		expect(backup.directory).toContain('backups');
-		expect(backup.files).toEqual(expect.arrayContaining(['hub.json', 'estado.json']));
+		expect(backup.files).toEqual(
+			expect.arrayContaining(['hub.json', 'hub.json.bak', 'estado.json'])
+		);
 
 		const copied = JSON.parse(await readFile(join(backup.directory, 'hub.json'), 'utf-8'));
 		expect(copied.categories[0].name).toBe('Atual');
@@ -575,5 +577,65 @@ describe('JsonFileStorage', () => {
 
 		expect(result.hub.categories).toEqual([]);
 		expect(result.error?.usingBackup).toBe(false);
+	});
+
+	it('recupera estado inválido usando o backup ao atualizar', async () => {
+		const valid = {
+			version: 1,
+			read: { antigo: '2026-11-09T12:00:00Z' },
+			saved: [],
+			savedItems: {}
+		};
+		await storage.saveState(valid);
+		await storage.saveState(valid);
+		await writeFile(join(dir, 'estado.json'), '{ quebrado', 'utf-8');
+
+		const next = await storage.updateStateWithFallback((current) => ({
+			...current,
+			read: { ...current.read, novo: '2026-11-10T12:00:00Z' }
+		}));
+
+		expect(next.read.antigo).toBe('2026-11-09T12:00:00Z');
+		expect(next.read.novo).toBe('2026-11-10T12:00:00Z');
+		expect((await storage.loadState()).read.antigo).toBe('2026-11-09T12:00:00Z');
+	});
+
+	it('usa estado vazio quando não há backup ao atualizar', async () => {
+		await writeFile(join(dir, 'estado.json'), '{ quebrado', 'utf-8');
+
+		const next = await storage.updateStateWithFallback((current) => ({
+			...current,
+			read: { ...current.read, novo: '2026-11-10T12:00:00Z' }
+		}));
+
+		expect(next.read).toEqual({ novo: '2026-11-10T12:00:00Z' });
+		expect((await storage.loadState()).read.novo).toBe('2026-11-10T12:00:00Z');
+	});
+
+	it('não altera o hub no merge quando o estado atual é inválido', async () => {
+		await storage.saveHub(hub('Original'));
+		await writeFile(join(dir, 'estado.json'), '{ quebrado', 'utf-8');
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+
+		await expect(
+			storage.importBundle(
+				{
+					hub: incoming,
+					state: { version: 1, read: { a: 't' }, saved: [], savedItems: {} }
+				},
+				'merge'
+			)
+		).rejects.toThrow(HubValidationError);
+
+		const loaded = await storage.loadHub();
+		expect(loaded.categories.map((category) => category.id)).toEqual(['jogos']);
+	});
+
+	it('propaga erro de leitura de backup que não seja conteúdo inválido', async () => {
+		await mkdir(join(dir, 'hub.json.bak'));
+
+		await expect(storage.loadHubFromBackup()).rejects.toThrow();
 	});
 });

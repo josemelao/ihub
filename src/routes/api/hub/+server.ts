@@ -40,25 +40,24 @@ export const POST: RequestHandler = async ({ request }) => {
 		const touchesSourceCache =
 			payload.action === 'delete-source' || payload.action === 'update-source';
 
-		const { hub: validated } = await storage.updateHubAndCache(
-			(hub) => {
-				previousSource = sourceId
-					? hub.feedSources.find((source) => source.id === sourceId)
-					: undefined;
-				const next = parseHub(applyHubAction(hub, payload));
-				nextSource = sourceId
-					? next.feedSources.find((source) => source.id === sourceId)
-					: undefined;
-				return next;
-			},
+		const mutateHub = (hub: HubData): HubData => {
+			previousSource = sourceId
+				? hub.feedSources.find((source) => source.id === sourceId)
+				: undefined;
+			const next = parseHub(applyHubAction(hub, payload));
+			nextSource = sourceId ? next.feedSources.find((source) => source.id === sourceId) : undefined;
+			return next;
+		};
+
+		const result: { hub: HubData } =
 			sourceId && touchesSourceCache
-				? (cache) => {
+				? await storage.updateHubAndCache(mutateHub, (cache) => {
 						const stale = sourceCacheIsStale(previousSource, nextSource);
 						const removed = payload.action === 'delete-source';
 						return stale || removed ? removeSourceFromCache(cache, sourceId) : cache;
-					}
-				: null
-		);
+					})
+				: { hub: await storage.updateHub(mutateHub) };
+		const validated = result.hub;
 
 		return json({ ok: true, hub: validated });
 	} catch (error) {

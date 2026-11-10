@@ -3,6 +3,9 @@
  *
  * O lock é por processo: protege requisições concorrentes do mesmo servidor
  * Node, mas não dois processos abrindo o mesmo arquivo (ver PLAT-04).
+ *
+ * Não é reentrante: nunca chame `updateHub`/`updateFeedCache` de dentro de um
+ * callback que já está rodando sob o lock da mesma chave.
  */
 export class Mutex {
 	private tail: Promise<unknown> = Promise.resolve();

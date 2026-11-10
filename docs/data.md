@@ -16,6 +16,7 @@
   - `updateHubAndCache(hubFn, cacheFn)`.
 - `JsonFileStorage` lê, aplica, valida e grava **dentro** do lock. O lock é por processo: dois processos Node no mesmo arquivo exigem PLAT-04.
 - `/api/hub` e `/api/state` passaram a usar updates transacionais.
+- `updateStateWithFallback` repara `estado.json` inválido com o backup/estado vazio; layout e `/api/state` usam esse caminho para não derrubar o app.
 - Testes de concorrência:
   - 10 `read` simultâneos no endpoint → 10 presentes;
   - 10 filtros criados simultaneamente → 10 presentes;
@@ -35,8 +36,9 @@
   - retry de `rename` em `EPERM`/`EBUSY`/`EACCES` com backoff 50/100/200/400/800 ms;
   - fallback `copyFile` + `unlink`;
   - remoção do temporário em `finally`;
+  - backup best-effort: se a cópia do `.bak` estiver bloqueada, a gravação principal continua e o `.bak` anterior é preservado;
   - erro final com caminho e código (`Não foi possível gravar … (EPERM)`).
-- `writeJsonAtomic` usa o helper; nenhum `.tmp-*` fica para trás.
+- `writeJsonAtomic` usa o helper; nenhum `.tmp-*` fica para trás em erros tratados. Uma queda de energia durante o fallback `copyFile` pode deixar o arquivo parcial; o `.bak` cobre a recuperação.
 
 ### DATA-05 — Poda do estado
 
@@ -55,15 +57,17 @@
 - `src/lib/import-preview.ts`: diff por id (novos, atualizados, removidos) para cada coleção, contagem do estado e conflito de settings.
 - `POST /api/import/preview` valida o bundle e devolve o preview; hub atual inválido cai para o backup.
 - Gerenciar → Importar mostra “novos / atualizados / removidos” e, no modo mesclar, a escolha **Manter atual** ou **Usar do arquivo**.
+- O preview descarta respostas fora de ordem ao trocar de modo; “Confirmar importação” só habilita com preview válido.
 - `importBundle` aceita `settingsPolicy`; o padrão do merge agora é **manter** as settings atuais.
+- Import roda sob os locks de hub/estado, lê e valida tudo antes de gravar e faz rollback do hub se a gravação do estado falhar.
 
 ### DATA-09 — Rotação de backups e “Backup agora”
 
 - Cada gravação mantém `.bak` + `.bak.1` … `.bak.6` (7 gerações); a mais antiga é sobrescrita, nunca a mais nova.
 - `load*FromBackup` tenta as gerações em ordem até achar uma válida.
-- `POST /api/backup` cria `data/backups/manual-<timestamp>/` com `hub.json`, `estado.json`, `feed-cache.json` e o `.bak` mais recente.
+- `POST /api/backup` cria `data/backups/manual-<timestamp>/` com `hub.json`, `estado.json`, `feed-cache.json` e **todas** as gerações `.bak` disponíveis, sob lock.
 - `GET /api/backup` informa idade do backup automático, último manual, gerações e retenção.
-- Gerenciar mostra “Backup automático: há X” e o botão **Backup agora**.
+- Gerenciar mostra “Último backup automático: há X” e o botão **Backup agora**.
 
 ### DATA-10 — Fallback na interface
 
@@ -72,7 +76,7 @@
 
 ## Verificação
 
-- `npm test`: **259/259** em 32 arquivos.
+- `npm test`: **266/266** em 32 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
@@ -83,6 +87,7 @@
   - fonte temporária criada e removida com cache consistente;
   - 3 gerações de backup após as escritas;
   - nenhum `.tmp-*` em `data/`.
+- Revisão final apontou 1 crítico (estado inválido derrubava o layout) e 5 importantes; todos corrigidos com testes.
 
 ## Fora desta fase
 

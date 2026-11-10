@@ -172,11 +172,12 @@ export interface HubStorage {
 	loadState(): Promise<HubState>;
 	loadStateFromBackup(): Promise<HubState | null>;
 	updateState(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState>;
+	updateStateWithFallback(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState>;
 	saveState(state: HubState): Promise<void>;
 	loadFeedCache(): Promise<FeedCache>;
 	loadFeedCacheFromBackup(): Promise<FeedCache | null>;
 	updateFeedCache(fn: (cache: FeedCache) => FeedCache | Promise<FeedCache>): Promise<FeedCache>;
-	/** Mantém hub e cache sob o mesmo lock, na ordem hub → cache. */
+	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */
 	updateHubAndCache(
 		hubFn: (hub: HubData) => HubData | Promise<HubData>,
 		cacheFn: ((cache: FeedCache) => FeedCache | Promise<FeedCache>) | null

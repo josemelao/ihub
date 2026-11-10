@@ -67,12 +67,15 @@ export class JsonFileStorage implements HubStorage {
 			raw = await readFile(fullPath, 'utf-8');
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-				throw new HubValidationError([
-					{
-						path: [],
-						message: `Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.`
-					}
-				]);
+				throw new HubValidationError(
+					[
+						{
+							path: [],
+							message: `Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.`
+						}
+					],
+					file
+				);
 			}
 			throw error;
 		}
@@ -80,12 +83,15 @@ export class JsonFileStorage implements HubStorage {
 		try {
 			return JSON.parse(raw);
 		} catch (error) {
-			throw new HubValidationError([
-				{
-					path: [],
-					message: `JSON inválido em ${fullPath}: ${(error as Error).message}`
-				}
-			]);
+			throw new HubValidationError(
+				[
+					{
+						path: [],
+						message: `JSON inválido em ${fullPath}: ${(error as Error).message}`
+					}
+				],
+				file
+			);
 		}
 	}
 
@@ -94,8 +100,10 @@ export class JsonFileStorage implements HubStorage {
 			const suffix = index === 0 ? '' : `.${index}`;
 			try {
 				return parse(await this.readJson(`${file}.bak${suffix}`));
-			} catch {
-				// tenta a geração seguinte
+			} catch (error) {
+				// Conteúdo inválido/ausente: tenta a geração seguinte. Erros de I/O
+				// (permissão, diretório no lugar do arquivo) devem aparecer.
+				if (!(error instanceof HubValidationError)) throw error;
 			}
 		}
 		return null;
@@ -168,6 +176,25 @@ export class JsonFileStorage implements HubStorage {
 	async updateState(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState> {
 		return fileLocks.withLock(this.lockKey('estado.json'), async () => {
 			const next = parseHubState(await fn(await this.loadState()));
+			await this.persistState(next);
+			return next;
+		});
+	}
+
+	/** Como `updateState`, mas repara um estado inválido usando o backup/estado vazio. */
+	async updateStateWithFallback(
+		fn: (state: HubState) => HubState | Promise<HubState>
+	): Promise<HubState> {
+		return fileLocks.withLock(this.lockKey('estado.json'), async () => {
+			let current: HubState;
+			try {
+				current = await this.loadState();
+			} catch (error) {
+				if (!(error instanceof HubValidationError)) throw error;
+				current = (await this.loadStateFromBackup()) ?? structuredClone(EMPTY_STATE);
+			}
+
+			const next = parseHubState(await fn(current));
 			await this.persistState(next);
 			return next;
 		});
@@ -292,76 +319,125 @@ export class JsonFileStorage implements HubStorage {
 		const incoming = parseHub(bundle.hub);
 		const incomingState = bundle.state ? parseHubState(bundle.state) : null;
 
-		if (mode === 'replace') {
-			await this.saveHub(incoming);
-			if (incomingState) await this.saveState(incomingState);
-			return;
-		}
+		await fileLocks.withLocks([this.lockKey('hub.json'), this.lockKey('estado.json')], async () => {
+			// Lê e valida tudo antes de gravar: estado inválido não pode deixar
+			// o hub já importado no disco.
+			let previousHub: HubData | null = null;
+			try {
+				previousHub = await this.loadHub();
+			} catch (error) {
+				if (!(error instanceof HubValidationError)) throw error;
+				if (mode === 'merge') {
+					previousHub = await this.loadHubFromBackup();
+					if (!previousHub) {
+						throw new HubValidationError([
+							...error.issues,
+							{
+								path: [],
+								message:
+									'Importação mesclada cancelada: o hub.json atual é inválido e não há backup válido.'
+							}
+						]);
+					}
+				}
+			}
 
-		let current: HubData;
-		try {
-			current = await this.loadHub();
-		} catch (error) {
-			if (!(error instanceof HubValidationError)) throw error;
+			const currentState = incomingState ? await this.loadState() : null;
 
-			const backup = await this.loadHubFromBackup();
-			if (!backup) {
+			if (mode === 'replace') {
+				await this.persistHub(incoming);
+				if (incomingState) {
+					try {
+						await this.persistState(incomingState);
+					} catch (error) {
+						if (previousHub) await this.persistHub(previousHub).catch(() => undefined);
+						throw error;
+					}
+				}
+				return;
+			}
+
+			if (!previousHub) {
 				throw new HubValidationError([
-					...error.issues,
 					{
 						path: [],
-						message:
-							'Importação mesclada cancelada: o hub.json atual é inválido e não há backup válido.'
+						message: 'Importação mesclada cancelada: não foi possível ler o hub atual.'
 					}
 				]);
 			}
-			current = backup;
-		}
 
-		await this.saveHub(mergeByIdAll(current, incoming, options.settingsPolicy ?? 'keep'));
+			const mergedHub = mergeByIdAll(previousHub, incoming, options.settingsPolicy ?? 'keep');
+			let mergedState: HubState | null = null;
 
-		if (incomingState) {
-			const state = await this.loadState();
-			const mergedSaved = [...new Set([...state.saved, ...incomingState.saved])];
-			const savedItems = { ...state.savedItems, ...incomingState.savedItems };
-			for (const id of Object.keys(savedItems)) {
-				if (!mergedSaved.includes(id)) delete savedItems[id];
+			if (incomingState && currentState) {
+				const mergedSaved = [...new Set([...currentState.saved, ...incomingState.saved])];
+				const savedItems = { ...currentState.savedItems, ...incomingState.savedItems };
+				for (const id of Object.keys(savedItems)) {
+					if (!mergedSaved.includes(id)) delete savedItems[id];
+				}
+
+				mergedState = {
+					version: 1,
+					read: { ...currentState.read, ...incomingState.read },
+					saved: mergedSaved,
+					savedItems
+				};
 			}
 
-			await this.saveState({
-				version: 1,
-				read: { ...state.read, ...incomingState.read },
-				saved: mergedSaved,
-				savedItems
-			});
-		}
+			await this.persistHub(mergedHub);
+
+			if (mergedState) {
+				try {
+					await this.persistState(mergedState);
+				} catch (error) {
+					await this.persistHub(previousHub).catch(() => undefined);
+					throw error;
+				}
+			}
+		});
 	}
 
 	async backupNow(): Promise<BackupCreated> {
 		const createdAt = new Date();
 		const stamp = createdAt.toISOString().replace(/[:.]/g, '-');
 		const directory = join(this.dataDir, 'backups', `manual-${stamp}`);
-		await mkdir(directory, { recursive: true });
 
-		const files: string[] = [];
-		for (const file of ['hub.json', 'estado.json', 'feed-cache.json']) {
-			for (const suffix of ['', '.bak']) {
+		return fileLocks.withLocks(
+			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
+			async () => {
+				await mkdir(directory, { recursive: true });
+
+				let entries: string[];
 				try {
-					await copyFile(this.path(file + suffix), join(directory, file + suffix));
-					files.push(file + suffix);
-				} catch (error) {
-					if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+					entries = await readdir(this.dataDir);
+				} catch {
+					entries = [];
 				}
+
+				const files: string[] = [];
+				for (const base of ['hub.json', 'estado.json', 'feed-cache.json']) {
+					const candidates = entries
+						.filter((name) => name === base || name.startsWith(`${base}.bak`))
+						.sort();
+					for (const name of candidates) {
+						try {
+							await copyFile(this.path(name), join(directory, name));
+							files.push(name);
+						} catch (error) {
+							if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+						}
+					}
+				}
+
+				await writeFile(
+					join(directory, 'backup-info.txt'),
+					`Backup manual\nData: ${createdAt.toISOString()}\nArquivos: ${files.join(', ')}\n`,
+					'utf-8'
+				);
+
+				return { directory, createdAt: createdAt.toISOString(), files };
 			}
-		}
-
-		await writeFile(
-			join(directory, 'backup-info.txt'),
-			`Backup manual\nData: ${createdAt.toISOString()}\nArquivos: ${files.join(', ')}\n`,
-			'utf-8'
 		);
-
-		return { directory, createdAt: createdAt.toISOString(), files };
 	}
 
 	async backupInfo(): Promise<BackupInfo> {

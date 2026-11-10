@@ -131,4 +131,28 @@ describe('createRefreshRunner', () => {
 		await expect(second).rejects.toThrow('rede caiu');
 		expect(refresh).toHaveBeenCalledTimes(1);
 	});
+
+	it('lê o hub dentro do lock do cache', async () => {
+		const events: string[] = [];
+		const runner = createRefreshRunner({
+			loadHub: async () => {
+				events.push('hub');
+				return hub;
+			},
+			updateFeedCache: async (fn) => {
+				events.push('lock');
+				const result = await fn(cache());
+				events.push('unlock');
+				return result;
+			},
+			refresh: async () => {
+				events.push('refresh');
+				return { cache: cache(), results: [] };
+			}
+		});
+
+		await runner.run();
+
+		expect(events).toEqual(['lock', 'hub', 'refresh', 'unlock']);
+	});
 });

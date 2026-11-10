@@ -348,6 +348,7 @@
 	let preview = $state<ImportPreview | null>(null);
 	let previewError = $state('');
 	let previewBusy = $state(false);
+	let previewRequest = 0;
 	let fileName = $state('');
 	let importError = $state('');
 	let importIssues = $state<ValidationIssue[]>([]);
@@ -429,9 +430,13 @@
 	}
 
 	async function loadPreview(): Promise<void> {
+		const request = ++previewRequest;
 		preview = null;
 		previewError = '';
-		if (!pending) return;
+		if (!pending) {
+			previewBusy = false;
+			return;
+		}
 
 		previewBusy = true;
 		try {
@@ -446,15 +451,17 @@
 				preview?: ImportPreview;
 			};
 
+			if (request !== previewRequest) return;
 			if (!response.ok || !result.ok || !result.preview) {
 				previewError = result.error ?? 'Falha ao analisar a importação.';
 				return;
 			}
 			preview = result.preview;
 		} catch (caught) {
+			if (request !== previewRequest) return;
 			previewError = `Falha de rede ao analisar: ${(caught as Error).message}`;
 		} finally {
-			previewBusy = false;
+			if (request === previewRequest) previewBusy = false;
 		}
 	}
 
@@ -468,6 +475,8 @@
 		const file = input.files?.[0];
 		pending = null;
 		preview = null;
+		previewRequest += 1;
+		settingsPolicy = 'keep';
 		resetFeedback();
 		if (!file) return;
 
@@ -533,6 +542,10 @@
 
 	function cancelImport(): void {
 		pending = null;
+		preview = null;
+		previewError = '';
+		previewRequest += 1;
+		settingsPolicy = 'keep';
 		fileName = '';
 		if (fileInput) fileInput.value = '';
 	}
@@ -661,7 +674,7 @@
 	</button>
 	{#if backupInfo?.lastAutomaticAt}
 		<span class="muted small">
-			Backup automático: {relativeTime(backupInfo.lastAutomaticAt)}
+			Último backup automático: {relativeTime(backupInfo.lastAutomaticAt)}
 			{#if backupInfo.generations > 1}
 				· {backupInfo.generations} gerações
 			{/if}
@@ -760,7 +773,7 @@
 		</div>
 
 		{#if previewBusy}
-			<span class="muted small">Analisando o que vai mudar…</span>
+			<span class="muted small" role="status">Analisando o que vai mudar…</span>
 		{/if}
 
 		{#if previewError}
@@ -768,7 +781,7 @@
 		{/if}
 
 		{#if preview}
-			<div class="chips" aria-label="Resumo das mudanças">
+			<div class="chips" role="group" aria-label="Resumo das mudanças" aria-live="polite">
 				<span class="chip">{diffTotals.added} novos</span>
 				<span class="chip">{diffTotals.updated} atualizados</span>
 				<span class="chip">{diffTotals.removed} removidos</span>
@@ -782,7 +795,7 @@
 
 			{#if mode === 'merge' && preview.settingsConflict}
 				<div class="chips" role="group" aria-label="Configurações do arquivo">
-					<span class="muted small">A cor de destaque do arquivo difere da atual:</span>
+					<span class="muted small">As configurações do arquivo diferem das atuais:</span>
 					<button
 						class="chip"
 						class:active={settingsPolicy === 'keep'}
@@ -810,7 +823,7 @@
 				class="btn btn-primary"
 				type="button"
 				onclick={confirmImport}
-				disabled={busy || previewBusy}
+				disabled={busy || previewBusy || !preview}
 			>
 				{busy ? 'Importando...' : 'Confirmar importação'}
 			</button>

@@ -29,10 +29,12 @@ export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 	const inFlight = new Map<string, Promise<RefreshOutcome>>();
 
 	async function execute(request: { force: boolean; sourceId?: string }): Promise<RefreshOutcome> {
-		const hub = await deps.loadHub();
 		let outcome: RefreshOutcome | null = null;
 
 		await deps.updateFeedCache(async (cache) => {
+			// O hub é lido sob o lock do cache: uma remoção/troca de fonte precisa
+			// do mesmo lock, então o refresh nunca ressuscita itens de fonte removida.
+			const hub = await deps.loadHub();
 			outcome = await deps.refresh(hub, cache, {
 				force: request.force,
 				sourceId: request.sourceId
