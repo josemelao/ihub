@@ -26,6 +26,7 @@ vite.config.ts.timestamp-*
 .superpowers/
 
 # Backups locais do storage
+data/backups/
 data/*.bak
 data/estado.json
 data/feed-cache.json

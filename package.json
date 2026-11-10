@@ -21,7 +21,8 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"verify": "npm run check && npm run lint && npm test && npm run build"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
