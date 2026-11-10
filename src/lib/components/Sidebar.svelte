@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { categoryItemCounts } from '#lib/display';
+	import { categoryItemCounts, categorySourceCounts } from '#lib/display';
 	import type { HubData } from '#lib/types';
 	import Icon from './Icon.svelte';
 
@@ -14,6 +14,7 @@
 	const path = $derived(page.url.pathname);
 	const categories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
 	const counts = $derived(categoryItemCounts(hub));
+	const sourceCounts = $derived(categorySourceCounts(hub));
 
 	function active(href: string): boolean {
 		return href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`);
@@ -69,10 +70,21 @@
 					class="cat-link"
 					class:active={path === `/c/${cat.id}`}
 					href={resolve('/c/[slug]', { slug: cat.id })}
+					aria-label={`${cat.name}: ${counts[cat.id] ?? 0} itens e ${
+						sourceCounts[cat.id] ?? 0
+					} fontes de feed`}
 				>
 					<span class="dot" style="background: {cat.color}"></span>
 					<span>{cat.name}</span>
-					<span class="cat-count">{counts[cat.id] ?? 0}</span>
+					<span
+						class="cat-count"
+						title="{counts[cat.id] ?? 0} itens · {sourceCounts[cat.id] ?? 0} fontes de feed"
+					>
+						{counts[cat.id] ?? 0}
+						{#if sourceCounts[cat.id]}
+							<span class="cat-feed-count">· {sourceCounts[cat.id]}</span>
+						{/if}
+					</span>
 				</a>
 			{/each}
 			<a class="nav-link" href={resolve('/gerenciar')} title="Adicione categorias em Gerenciar">

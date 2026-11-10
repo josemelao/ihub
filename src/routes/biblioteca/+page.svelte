@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
 	import LibraryCard from '#lib/components/LibraryCard.svelte';
@@ -13,6 +15,30 @@
 	type Tab = 'todos' | 'app' | 'link';
 	let tab = $state<Tab>('todos');
 	let query = $state('');
+
+	const STORAGE_KEY = 'meu-hub:library-collapsed';
+
+	let collapsed = $state<Record<string, boolean>>({});
+	let reduceMotion = $state(false);
+	let motionEnabled = $state(false);
+	let searchSnapshot: Record<string, boolean> | null = null;
+	let wasSearching = false;
+
+	onMount(() => {
+		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		try {
+			const raw = localStorage.getItem(STORAGE_KEY);
+			if (raw) collapsed = JSON.parse(raw) as Record<string, boolean>;
+		} catch {
+			collapsed = {};
+		}
+		const timer = setTimeout(() => {
+			motionEnabled = true;
+		}, 300);
+		return () => clearTimeout(timer);
+	});
+
+	const motionDuration = $derived(reduceMotion || !motionEnabled ? 0 : 220);
 
 	const appCount = $derived(hub.items.filter((item) => item.type === 'app').length);
 	const linkCount = $derived(hub.items.filter((item) => item.type === 'link').length);
@@ -86,6 +112,48 @@
 	});
 
 	const visibleCount = $derived(sections.reduce((sum, section) => sum + section.total, 0));
+	const allCollapsed = $derived(
+		sections.length > 0 && sections.every((section) => collapsed[section.category.id])
+	);
+
+	function persistCollapse(): void {
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(collapsed));
+		} catch {
+			// localStorage indisponível: o estado vale só nesta sessão
+		}
+	}
+
+	function toggleCategory(id: string): void {
+		collapsed = { ...collapsed, [id]: !collapsed[id] };
+		if (terms.length === 0) persistCollapse();
+	}
+
+	function toggleAll(): void {
+		if (allCollapsed) {
+			collapsed = {};
+		} else {
+			const next = { ...collapsed };
+			for (const section of sections) next[section.category.id] = true;
+			collapsed = next;
+		}
+		if (terms.length === 0) persistCollapse();
+	}
+
+	// Ao buscar, expande tudo; ao limpar, restaura o estado anterior.
+	$effect(() => {
+		const searching = terms.length > 0;
+		if (searching === wasSearching) return;
+		wasSearching = searching;
+
+		if (searching) {
+			searchSnapshot = { ...collapsed };
+			collapsed = {};
+		} else if (searchSnapshot) {
+			collapsed = searchSnapshot;
+			searchSnapshot = null;
+		}
+	});
 </script>
 
 <svelte:head>
@@ -149,6 +217,11 @@
 			{visibleCount}
 			{visibleCount === 1 ? 'item' : 'itens'} encontrados
 		</span>
+		{#if sections.length > 0}
+			<button class="chip" type="button" onclick={toggleAll}>
+				{allCollapsed ? 'Expandir tudo' : 'Recolher tudo'}
+			</button>
+		{/if}
 		{#if query}
 			<button class="chip" type="button" onclick={() => (query = '')}>Limpar busca</button>
 		{/if}
@@ -156,35 +229,53 @@
 </div>
 
 {#each sections as section (section.category.id)}
+	{@const isCollapsed = Boolean(collapsed[section.category.id])}
 	<section class="library-category" aria-labelledby={`library-cat-${section.category.id}`}>
 		<div class="section-head">
 			<h2 id={`library-cat-${section.category.id}`} class="library-category-title">
-				<span class="dot" style="background: {section.category.color}"></span>
-				{section.category.name}
+				<button
+					class="library-category-toggle"
+					type="button"
+					aria-expanded={!isCollapsed}
+					aria-controls={isCollapsed ? undefined : `library-cat-body-${section.category.id}`}
+					onclick={() => toggleCategory(section.category.id)}
+				>
+					<Icon name={isCollapsed ? 'chevron-right' : 'chevron-down'} size={16} />
+					<span class="dot" style="background: {section.category.color}"></span>
+					<span>{section.category.name}</span>
+				</button>
 			</h2>
-			<span class="muted small">{section.total} itens</span>
+			<span class="muted small">{section.total} itens · {section.groups.length} grupos</span>
 		</div>
 
-		{#each section.groups as group (group.id)}
-			<div class="library-group">
-				<div class="library-group-head">
-					<span class="library-group-name">{group.name}</span>
-					<span class="muted small">{group.items.length} serviços</span>
-					<a
-						class="library-group-edit"
-						href={resolve('/gerenciar')}
-						title="Gerenciar grupos e itens"
-					>
-						editar
-					</a>
-				</div>
-				<div class="library-grid">
-					{#each group.items as item (item.id)}
-						<LibraryCard {item} color={section.category.color} />
-					{/each}
-				</div>
+		{#if !isCollapsed}
+			<div
+				id={`library-cat-body-${section.category.id}`}
+				class="library-category-body"
+				transition:slide={{ duration: motionDuration }}
+			>
+				{#each section.groups as group (group.id)}
+					<div class="library-group">
+						<div class="library-group-head">
+							<span class="library-group-name">{group.name}</span>
+							<span class="muted small">{group.items.length} serviços</span>
+							<a
+								class="library-group-edit"
+								href={resolve('/gerenciar')}
+								title="Gerenciar grupos e itens"
+							>
+								editar
+							</a>
+						</div>
+						<div class="library-grid">
+							{#each group.items as item (item.id)}
+								<LibraryCard {item} color={section.category.color} />
+							{/each}
+						</div>
+					</div>
+				{/each}
 			</div>
-		{/each}
+		{/if}
 	</section>
 {/each}
 

@@ -36,6 +36,14 @@ export function categoryItemCounts(hub: HubData): Record<string, number> {
 	return counts;
 }
 
+export function categorySourceCounts(hub: HubData): Record<string, number> {
+	const counts: Record<string, number> = {};
+	for (const source of hub.feedSources) {
+		counts[source.categoryId] = (counts[source.categoryId] ?? 0) + 1;
+	}
+	return counts;
+}
+
 export function itemKind(item: HubItem): string {
 	return item.type === 'app' ? 'App do PC' : 'Site';
 }

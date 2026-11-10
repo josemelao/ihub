@@ -35,6 +35,10 @@
 		<path d="M21 21l-4.3-4.3" />
 	{:else if name === 'arrow-left'}
 		<path d="M15 18l-6-6 6-6" />
+	{:else if name === 'chevron-down'}
+		<path d="M6 9l6 6 6-6" />
+	{:else if name === 'chevron-right'}
+		<path d="M9 6l6 6-6 6" />
 	{:else if name === 'check'}
 		<path d="M5 12l5 5 9-10" />
 	{:else if name === 'x'}

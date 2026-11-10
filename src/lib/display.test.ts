@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	appIconUrl,
 	categoryItemCounts,
+	categorySourceCounts,
 	faviconUrl,
 	initials,
 	itemIconUrl,
@@ -99,6 +100,26 @@ describe('categoryItemCounts', () => {
 		} as HubData;
 
 		expect(categoryItemCounts(hub)).toEqual({ a: 2, b: 1 });
+	});
+});
+
+describe('categorySourceCounts', () => {
+	it('conta fontes de feed por categoria', () => {
+		const hub = {
+			version: 1,
+			settings: { accent: '#8AA4FF' },
+			categories: [],
+			groups: [],
+			items: [],
+			feedSources: [
+				{ id: 's1', type: 'rss', name: '1', target: 'x', categoryId: 'a' },
+				{ id: 's2', type: 'reddit', name: '2', target: 'y', categoryId: 'a' },
+				{ id: 's3', type: 'youtube', name: '3', target: 'z', categoryId: 'b' }
+			],
+			savedFilters: []
+		} as unknown as HubData;
+
+		expect(categorySourceCounts(hub)).toEqual({ a: 2, b: 1 });
 	});
 });
 
