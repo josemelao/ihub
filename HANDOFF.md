@@ -128,7 +128,7 @@ data/
 ### Feed
 
 - Fontes: RSS/Atom (URL), Reddit (subreddit ou `.rss`), YouTube (ID `UC...` ou URL de feed).
-- Refresh: timeout 10 s, User-Agent, limite de 5 MB, 30 posts/fonte, retenção 30 dias, dedupe por URL/guid.
+- Refresh: timeout 10 s, User-Agent, limite de 5 MB, 30 posts/fonte por padrão (limite configurável por fonte), retenção 30 dias, dedupe por URL/guid.
 - Scheduler a cada ~60 s (só fontes vencidas) + “Atualizar agora”.
 - Falha de uma fonte não afeta as outras; status e erro aparecem em Gerenciar/Feed.
 - Regras por fonte (`include`/`exclude`/`matchMode`) aplicadas sobre título+resumo, sem acento/caixa.
@@ -158,15 +158,20 @@ data/
 
 ### Gerenciar / edição
 
-- Abas funcionais: Fontes, Links, Apps, Grupos, Categorias, Regras.
-- Painel lateral com `<dialog>` nativo (foco, Esc, backdrop).
+- Abas funcionais: Fontes, Itens, Grupos, Categorias, Filtros salvos, Aparência.
+- **Itens** unifica Links e Apps, com subchips Todos/Links/Apps, busca local e agrupamento por categoria → grupo.
+- Busca local em todas as listas (fontes, itens, grupos, categorias e filtros).
+- Painel lateral com `<dialog>` nativo (foco, Esc, backdrop), **cabeçalho/rodapé fixos**, formulário em seções compactas e preview do ícone.
 - Adicionar/editar/remover:
-  - Links e apps (com checkbox de acesso rápido e campo de ícone opcional).
-  - Grupos (nome + categoria; mudar de categoria move junto os itens e fontes do grupo; remover bloqueia se tiver itens).
-  - Fontes (tipo, alvo, categoria, grupo, intervalo, include/exclude, liga/desliga).
+  - Links e apps (descrição curta, ícone, tags e acesso rápido).
+  - Grupos (nome + categoria; mudar de categoria move junto os itens e fontes do grupo; remover bloqueia se tiver itens ou fontes).
+  - Fontes (tipo, alvo, categoria, grupo, intervalo, **limite de posts**, include/exclude, liga/desliga).
   - Categorias (nome/cor, remover se não estiver em uso).
   - Filtros salvos (adicionar/editar/remover), com Incluir, Excluir e Modo.
-- Reordenar itens, grupos e categorias com ↑/↓.
+  - Aparência: cor de destaque do tema.
+- **Atualizar esta fonte** por linha, sem esperar o scheduler nem atualizar as demais.
+- Reordenar itens, grupos e categorias com ↑/↓ (ícones).
+- Remoção com diálogo próprio no tema escuro.
 - Detecção automática de RSS pela URL da página.
 - Toda mutação passa por `hub-actions.ts` → mutação pura → `parseHub` → `saveHub`.
 

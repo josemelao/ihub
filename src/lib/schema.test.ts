@@ -133,4 +133,57 @@ describe('parseHub', () => {
 
 		expect(() => parseHub(invalid)).toThrow(HubValidationError);
 	});
+
+	it('aceita descrição curta e limite de posts por fonte', () => {
+		const hub = parseHub({
+			...structuredClone(base),
+			items: [{ ...structuredClone(base).items[0], description: 'Guia completo' }],
+			feedSources: [
+				{
+					id: 'feed',
+					type: 'rss',
+					name: 'Feed',
+					target: 'https://example.com/feed.xml',
+					categoryId: 'jogos',
+					intervalMinutes: 30,
+					maxItems: 50,
+					enabled: true,
+					include: [],
+					exclude: [],
+					matchMode: 'any'
+				}
+			]
+		});
+
+		expect(hub.items[0].description).toBe('Guia completo');
+		expect(hub.feedSources[0].maxItems).toBe(50);
+	});
+
+	it('rejeita descrição longa e limite de posts inválido', () => {
+		const longDescription = {
+			...structuredClone(base),
+			items: [{ ...structuredClone(base).items[0], description: 'x'.repeat(281) }]
+		};
+		const badLimit = {
+			...structuredClone(base),
+			feedSources: [
+				{
+					id: 'feed',
+					type: 'rss',
+					name: 'Feed',
+					target: 'https://example.com/feed.xml',
+					categoryId: 'jogos',
+					intervalMinutes: 30,
+					maxItems: 0,
+					enabled: true,
+					include: [],
+					exclude: [],
+					matchMode: 'any'
+				}
+			]
+		};
+
+		expect(() => parseHub(longDescription)).toThrow(HubValidationError);
+		expect(() => parseHub(badLimit)).toThrow(HubValidationError);
+	});
 });

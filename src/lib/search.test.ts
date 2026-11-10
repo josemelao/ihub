@@ -37,6 +37,7 @@ const hub: HubData = {
 			id: 'ferramentas-github',
 			type: 'link',
 			name: 'GitHub',
+			description: 'repositórios e código',
 			url: 'https://github.com/',
 			categoryId: 'noticias',
 			tags: ['código'],
@@ -74,6 +75,11 @@ describe('searchHub', () => {
 	it('tolera erro de digitação', () => {
 		const results = searchHub(hub, 'darktde');
 		expect(results.some((entry) => entry.id.startsWith('item:darktide'))).toBe(true);
+	});
+
+	it('encontra item pela descrição', () => {
+		const results = searchHub(hub, 'repositorios');
+		expect(results.some((entry) => entry.id === 'item:ferramentas-github')).toBe(true);
 	});
 
 	it('retorna sugestões fixadas quando a busca está vazia', () => {

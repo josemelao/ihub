@@ -20,6 +20,7 @@ import {
 	removeGroup,
 	moveGroup,
 	moveCategory,
+	updateSettings,
 	type CategoryInput,
 	type SavedFilterInput,
 	type SourcePatch
@@ -138,6 +139,17 @@ describe('updateItem e removeItem', () => {
 		expect(() => parseHub(cleared)).not.toThrow();
 	});
 
+	it('define e remove descrição do item', () => {
+		const withDescription = updateItem(base(), 'wiki', { description: 'Guia completo' });
+		expect(withDescription.items.find((item) => item.id === 'wiki')?.description).toBe(
+			'Guia completo'
+		);
+
+		const cleared = updateItem(withDescription, 'wiki', { description: null });
+		expect(cleared.items.find((item) => item.id === 'wiki')?.description).toBeUndefined();
+		expect(() => parseHub(cleared)).not.toThrow();
+	});
+
 	it('remove item', () => {
 		const hub = removeItem(base(), 'wiki');
 		expect(hub.items.map((item) => item.id)).not.toContain('wiki');
@@ -156,7 +168,7 @@ describe('moveItem', () => {
 		expect(hub.items.find((item) => item.id === 'darktide-reddit')?.order).toBe(1);
 	});
 
-	it('não troca item com outro tipo', () => {
+	it('move item entre tipos no mesmo grupo', () => {
 		const withApp = addApp(base(), {
 			name: 'App',
 			launchValue: 'steam://run/1',
@@ -164,7 +176,8 @@ describe('moveItem', () => {
 			groupId: 'darktide'
 		});
 		const moved = moveItem(withApp, 'app', 'up');
-		expect(moved.items.find((item) => item.id === 'app')?.order).toBe(3);
+		expect(moved.items.find((item) => item.id === 'app')?.order).toBe(2);
+		expect(moved.items.find((item) => item.id === 'wiki')?.order).toBe(3);
 	});
 });
 
@@ -341,5 +354,22 @@ describe('grupos', () => {
 		const moved = moveGroup(withGroup, 'segundo', 'up');
 		expect(moved.groups.find((group) => group.id === 'segundo')?.order).toBe(1);
 		expect(moved.groups.find((group) => group.id === 'darktide')?.order).toBe(2);
+	});
+});
+
+describe('limite de posts e configurações', () => {
+	it('define e remove o limite de posts da fonte', () => {
+		const withLimit = updateSource(base(), 'reddit-patch', { maxItems: 50 });
+		expect(withLimit.feedSources[0].maxItems).toBe(50);
+
+		const cleared = updateSource(withLimit, 'reddit-patch', { maxItems: null });
+		expect(cleared.feedSources[0].maxItems).toBeUndefined();
+		expect(() => parseHub(cleared)).not.toThrow();
+	});
+
+	it('atualiza a cor de destaque', () => {
+		const hub = updateSettings(base(), { accent: '#7DD3A8' });
+		expect(hub.settings.accent).toBe('#7DD3A8');
+		expect(() => parseHub(hub)).not.toThrow();
 	});
 });

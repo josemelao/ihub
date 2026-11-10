@@ -37,8 +37,16 @@
 		<path d="M15 18l-6-6 6-6" />
 	{:else if name === 'chevron-down'}
 		<path d="M6 9l6 6 6-6" />
+	{:else if name === 'chevron-up'}
+		<path d="M6 15l6-6 6 6" />
 	{:else if name === 'chevron-right'}
 		<path d="M9 6l6 6-6 6" />
+	{:else if name === 'refresh'}
+		<path d="M20 11a8 8 0 1 0-1.4 6" />
+		<path d="M20 4v7h-7" />
+	{:else if name === 'upload'}
+		<path d="M12 21V9M7 14l5-5 5 5" />
+		<path d="M5 3h14" />
 	{:else if name === 'check'}
 		<path d="M5 12l5 5 9-10" />
 	{:else if name === 'x'}

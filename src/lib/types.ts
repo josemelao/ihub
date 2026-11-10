@@ -22,6 +22,7 @@ export interface Group {
 interface ItemBase {
 	id: string;
 	name: string;
+	description?: string;
 	categoryId: string;
 	groupId?: string;
 	tags: string[];
@@ -53,6 +54,7 @@ export interface FeedSource {
 	categoryId: string;
 	groupId?: string;
 	intervalMinutes: number;
+	maxItems?: number;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];

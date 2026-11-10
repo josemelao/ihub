@@ -13,6 +13,7 @@
 	{href}
 	target={item.type === 'link' ? '_blank' : undefined}
 	rel="noopener noreferrer"
+	title={item.description ?? undefined}
 >
 	<ItemIcon {item} {color} size={30} />
 	<span class="item-name">{item.name}</span>

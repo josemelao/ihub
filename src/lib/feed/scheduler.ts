@@ -11,11 +11,11 @@ type GlobalWithState = typeof globalThis & {
 
 const globalState = globalThis as GlobalWithState;
 
-export async function refreshAndSave(force = false): Promise<RefreshOutcome> {
+export async function refreshAndSave(force = false, sourceId?: string): Promise<RefreshOutcome> {
 	const storage = getStorage();
 	const hub = await storage.loadHub();
 	const cache = await storage.loadFeedCache();
-	const outcome = await refreshFeed(hub, cache, { force });
+	const outcome = await refreshFeed(hub, cache, { force, sourceId });
 	await storage.saveFeedCache(outcome.cache);
 	return outcome;
 }

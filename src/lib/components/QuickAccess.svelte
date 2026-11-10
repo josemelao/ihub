@@ -34,6 +34,7 @@
 				href={itemHref(item)}
 				target={item.type === 'link' ? '_blank' : undefined}
 				rel="noopener noreferrer"
+				title={item.description ?? undefined}
 			>
 				<ItemIcon {item} {color} size={34} />
 				<span class="quick-meta">

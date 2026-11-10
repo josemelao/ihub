@@ -136,6 +136,7 @@
 		{
 			"id": "darktide-builds",
 			"name": "Calculadora de builds",
+			"description": "Builds, talentos e equipamentos do jogo",
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"tags": ["build"],
@@ -313,6 +314,7 @@
 		{
 			"id": "quick-vscode",
 			"name": "VS Code",
+			"description": "Editor de código padrão",
 			"categoryId": "ferramentas",
 			"groupId": "ferramentas-geral",
 			"tags": ["editor"],
@@ -458,6 +460,7 @@
 			"categoryId": "jogos",
 			"groupId": "darktide",
 			"intervalMinutes": 30,
+			"maxItems": 30,
 			"enabled": true,
 			"include": ["patch"],
 			"exclude": [],

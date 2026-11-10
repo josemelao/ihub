@@ -6,6 +6,7 @@
 	let { item, color }: { item: HubItem; color: string } = $props();
 
 	function detail(): string {
+		if (item.description) return item.description;
 		if (item.type === 'app') return item.launch.value;
 		try {
 			return new URL(item.url).hostname.replace(/^www\./, '');

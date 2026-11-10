@@ -91,6 +91,14 @@ describe('applyHubAction', () => {
 		expect(moved.groups.find((group) => group.id === 'novo')?.order).toBe(1);
 	});
 
+	it('atualiza a cor de destaque', () => {
+		const result = applyHubAction(base(), {
+			action: 'update-settings',
+			settings: { accent: '#E58BC0' }
+		});
+		expect(result.settings.accent).toBe('#E58BC0');
+	});
+
 	it('rejeita direção inválida', () => {
 		expect(() =>
 			applyHubAction(base(), {

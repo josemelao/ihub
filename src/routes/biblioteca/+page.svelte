@@ -64,7 +64,7 @@
 		if (terms.length === 0) return true;
 
 		const haystack = normalize(
-			[item.name, category.name, groupName, item.tags.join(' ')].join('\n')
+			[item.name, category.name, groupName, item.tags.join(' '), item.description ?? ''].join('\n')
 		);
 		return terms.every((term) => haystack.includes(term));
 	}

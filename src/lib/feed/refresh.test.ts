@@ -141,4 +141,42 @@ describe('refreshFeed', () => {
 
 		expect(result.cache.items).toHaveLength(2);
 	});
+
+	it('respeita o limite específico da fonte', async () => {
+		const many = `<?xml version="1.0"?><rss version="2.0"><channel>
+			${Array.from(
+				{ length: 5 },
+				(_, i) =>
+					`<item><title>Post ${i}</title><link>https://good.test/${i}</link><description>x</description><pubDate>Mon, 09 Nov 2026 12:00:00 GMT</pubDate><guid>g${i}</guid></item>`
+			).join('')}
+		</channel></rss>`;
+		const fetcher: Fetcher = async () => new Response(many, { status: 200 });
+
+		const result = await refreshFeed(hub([source({ maxItems: 1 })]), cache(), {
+			fetcher,
+			now,
+			force: true,
+			maxPerSource: 4
+		});
+
+		expect(result.cache.items).toHaveLength(1);
+	});
+
+	it('atualiza só a fonte pedida', async () => {
+		const calls: string[] = [];
+		const fetcher: Fetcher = async (input) => {
+			calls.push(String(input));
+			return new Response(rss, { status: 200 });
+		};
+		const other = source({ id: 'other', name: 'Outra', target: 'https://other.test/feed' });
+
+		await refreshFeed(hub([source({}), other]), cache(), {
+			fetcher,
+			now,
+			force: true,
+			sourceId: 'other'
+		});
+
+		expect(calls).toEqual(['https://other.test/feed']);
+	});
 });

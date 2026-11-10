@@ -27,7 +27,9 @@ export function buildSearchEntries(hub: HubData): SearchEntry[] {
 			id: `item:${item.id}`,
 			type: item.type,
 			name: item.name,
-			description: [category?.name, group?.name, itemKind(item)].filter(Boolean).join(' · '),
+			description: [category?.name, group?.name, item.description, itemKind(item)]
+				.filter(Boolean)
+				.join(' · '),
 			href: itemHref(item),
 			tags: item.tags,
 			categoryName: category?.name ?? '',

@@ -11,6 +11,7 @@ export interface RefreshOptions {
 	timeoutMs?: number;
 	retentionDays?: number;
 	maxPerSource?: number;
+	sourceId?: string;
 }
 
 export interface RefreshResult {
@@ -40,7 +41,7 @@ export async function refreshFeed(
 	const fetcher = options.fetcher ?? (fetch as Fetcher);
 	const now = options.now?.() ?? new Date();
 	const nowIso = now.toISOString();
-	const maxPerSource = options.maxPerSource ?? DEFAULT_MAX_PER_SOURCE;
+	const defaultMaxPerSource = options.maxPerSource ?? DEFAULT_MAX_PER_SOURCE;
 	const retentionMs = (options.retentionDays ?? DEFAULT_RETENTION_DAYS) * 24 * 60 * 60 * 1000;
 	const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
@@ -55,6 +56,8 @@ export async function refreshFeed(
 	const results: RefreshResult[] = [];
 
 	for (const source of hub.feedSources) {
+		if (options.sourceId && source.id !== options.sourceId) continue;
+
 		const status = sources[source.id];
 
 		if (!source.enabled) {
@@ -108,12 +111,13 @@ export async function refreshFeed(
 			const parsed = parseFeed(text, source.id);
 			const previous = itemsBySource.get(source.id) ?? [];
 			const chosen = parsed.length > 0 ? parsed : previous;
+			const maxItems = source.maxItems ?? defaultMaxPerSource;
 
-			itemsBySource.set(source.id, chosen.slice(0, maxPerSource));
+			itemsBySource.set(source.id, chosen.slice(0, maxItems));
 			sources[source.id] = {
 				lastFetchedAt: nowIso,
 				error: null,
-				count: Math.min(chosen.length, maxPerSource)
+				count: Math.min(chosen.length, maxItems)
 			};
 
 			results.push({

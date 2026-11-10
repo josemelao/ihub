@@ -19,12 +19,14 @@ import {
 	updateItem,
 	updateSource,
 	updateSavedFilter,
+	updateSettings,
 	type AppInput,
 	type CategoryInput,
 	type GroupInput,
 	type ItemPatch,
 	type LinkInput,
 	type SavedFilterInput,
+	type SettingsInput,
 	type SourceInput,
 	type SourcePatch
 } from './hub-edit';
@@ -42,6 +44,7 @@ export interface HubPayload {
 	group?: GroupInput;
 	groupPatch?: Partial<GroupInput>;
 	filter?: SavedFilterInput;
+	settings?: SettingsInput;
 }
 
 function requireId(payload: HubPayload): string {
@@ -112,6 +115,9 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 
 		case 'move-category':
 			return moveCategory(hub, requireId(payload), requireDirection(payload));
+
+		case 'update-settings':
+			return updateSettings(hub, payload.settings ?? {});
 
 		case 'add-filter':
 			if (!payload.filter) throw new Error('Informe o filtro.');

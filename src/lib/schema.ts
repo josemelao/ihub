@@ -64,6 +64,7 @@ const groupSchema = z.object({
 const itemBase = {
 	id: z.string().min(1),
 	name: z.string().min(1),
+	description: z.string().trim().max(280).optional(),
 	categoryId: z.string().min(1),
 	groupId: z.string().optional(),
 	tags: z.array(z.string()).default([]),
@@ -107,6 +108,7 @@ const feedSourceSchema = z.object({
 	categoryId: z.string().min(1),
 	groupId: z.string().optional(),
 	intervalMinutes: z.number().int().min(1).default(30),
+	maxItems: z.number().int().min(1).max(200).optional(),
 	enabled: z.boolean().default(true),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),

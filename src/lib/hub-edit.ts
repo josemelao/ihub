@@ -10,6 +10,7 @@ import type {
 
 export interface LinkInput {
 	name: string;
+	description?: string;
 	url: string;
 	categoryId: string;
 	groupId?: string;
@@ -20,6 +21,7 @@ export interface LinkInput {
 
 export interface AppInput {
 	name: string;
+	description?: string;
 	launchValue: string;
 	categoryId: string;
 	groupId?: string;
@@ -30,6 +32,7 @@ export interface AppInput {
 
 export interface ItemPatch {
 	name?: string;
+	description?: string | null;
 	url?: string;
 	launchValue?: string;
 	categoryId?: string;
@@ -46,15 +49,17 @@ export interface SourceInput {
 	categoryId: string;
 	groupId?: string;
 	intervalMinutes: number;
+	maxItems?: number;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];
 	matchMode: MatchMode;
 }
 
-export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId'>> & {
+export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId' | 'maxItems'>> & {
 	type?: FeedSource['type'];
 	groupId?: string | null;
+	maxItems?: number | null;
 };
 
 export interface CategoryInput {
@@ -65,6 +70,10 @@ export interface CategoryInput {
 export interface GroupInput {
 	name: string;
 	categoryId: string;
+}
+
+export interface SettingsInput {
+	accent?: string;
 }
 
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -95,6 +104,7 @@ function nextItemOrder(hub: HubData, categoryId: string, groupId?: string): numb
 
 function itemBase(input: {
 	name: string;
+	description?: string;
 	categoryId: string;
 	groupId?: string;
 	tags?: string[];
@@ -104,6 +114,7 @@ function itemBase(input: {
 	return {
 		id: '',
 		name: input.name,
+		...(input.description ? { description: input.description } : {}),
 		categoryId: input.categoryId,
 		...(input.groupId ? { groupId: input.groupId } : {}),
 		...(input.icon ? { icon: input.icon } : {}),
@@ -149,6 +160,12 @@ export function updateItem(hub: HubData, id: string, patch: ItemPatch): HubData 
 			if (patch.tags !== undefined) next.tags = patch.tags;
 			if (patch.pinned !== undefined) next.pinned = patch.pinned;
 
+			if (patch.description === null || patch.description === '') {
+				delete (next as { description?: string }).description;
+			} else if (patch.description !== undefined) {
+				next.description = patch.description;
+			}
+
 			if (patch.icon === null || patch.icon === '') {
 				delete (next as { icon?: string }).icon;
 			} else if (patch.icon !== undefined) {
@@ -182,12 +199,7 @@ export function moveItem(hub: HubData, id: string, direction: 'up' | 'down'): Hu
 	if (!target) return hub;
 
 	const siblings = hub.items
-		.filter(
-			(item) =>
-				item.categoryId === target.categoryId &&
-				item.groupId === target.groupId &&
-				item.type === target.type
-		)
+		.filter((item) => item.categoryId === target.categoryId && item.groupId === target.groupId)
 		.sort((a, b) => a.order - b.order);
 
 	const index = siblings.findIndex((item) => item.id === id);
@@ -218,6 +230,7 @@ export function addSource(hub: HubData, input: SourceInput): HubData {
 		categoryId: input.categoryId,
 		...(input.groupId ? { groupId: input.groupId } : {}),
 		intervalMinutes: input.intervalMinutes,
+		...(input.maxItems ? { maxItems: input.maxItems } : {}),
 		enabled: input.enabled,
 		include: input.include,
 		exclude: input.exclude,
@@ -251,6 +264,12 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 				next.groupId = patch.groupId;
 			}
 
+			if (patch.maxItems === null) {
+				delete next.maxItems;
+			} else if (patch.maxItems !== undefined) {
+				next.maxItems = patch.maxItems;
+			}
+
 			return next;
 		})
 	};
@@ -266,6 +285,16 @@ export function toggleSource(hub: HubData, id: string): HubData {
 		feedSources: hub.feedSources.map((source) =>
 			source.id === id ? { ...source, enabled: !source.enabled } : source
 		)
+	};
+}
+
+export function updateSettings(hub: HubData, patch: SettingsInput): HubData {
+	return {
+		...hub,
+		settings: {
+			...hub.settings,
+			...(patch.accent ? { accent: patch.accent } : {})
+		}
 	};
 }
 

@@ -63,6 +63,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Organização por **categoria → grupo**. Um grupo pode combinar serviços do mesmo assunto (ex.: Darktide = app na Steam + site de builds + wiki + subreddit), e cada item mantém seu `type` (`app` ou `link`).
 - Itens sem grupo aparecem em **“Sem grupo”**.
 - **Ícones**: links usam o favicon do domínio (via DuckDuckGo) e apps usam o ícone do protocolo (Simple Icons, ex.: `steam://` → Steam). Se a imagem falhar, aparecem as iniciais.
+- **Descrição curta** opcional por item aparece no card da Biblioteca, no tooltip do Acesso rápido e na busca.
 - O campo opcional `icon` sobrescreve o ícone: use um slug do Simple Icons (`github`) ou uma URL `https://...`.
 - A rota antiga `/apps` redireciona para `/biblioteca`.
 
@@ -70,6 +71,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 
 - Busca automática a cada ~60 s apenas nas fontes cujo intervalo venceu, e também pelo botão **Atualizar agora** (home, categoria, feed e Gerenciar).
 - Tipos de fonte: **RSS/Atom** (URL direta), **Reddit** (nome do subreddit ou URL do `.rss`) e **YouTube** (ID do canal `UC...` ou URL `feeds/videos.xml?channel_id=...`).
+- Cada fonte tem intervalo próprio e **limite de posts** (10/20/30/50/100; padrão 30), além de poder ser atualizada individualmente em **Gerenciar → Fontes**.
 - Regras por fonte: `include`/`exclude` e `matchMode` (`any`/`all`), aplicadas sobre título + resumo, sem diferenciar maiúsculas nem acentos. Uma fonte com erro não derruba as outras; o status aparece em **Gerenciar** e em **Feed completo**.
 - Filtro ao vivo no **Feed completo** e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria, "Não lidos" e destaque do trecho encontrado.
 - **+ Salvar filtro** captura a busca atual num formulário em linha com **Nome, Incluir, Excluir e Modo (qualquer/todas)**. Os filtros podem ser editados/removidos em Gerenciar → Regras.
@@ -96,11 +98,14 @@ Na tela **Gerenciar**:
 
 Em **Gerenciar**, as abas são funcionais:
 
-- **Fontes do feed**: adicionar, editar, remover e ligar/desligar; status de cada fonte.
-- **Links** e **Apps do PC**: adicionar, editar, remover e reordenar (↑/↓), com ícone opcional (slug do Simple Icons ou URL).
-- **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens).
-- **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso).
-- **Regras do feed**: adicionar/remover filtros salvos.
+- **Fontes do feed**: adicionar, editar, remover, ligar/desligar, **atualizar só uma fonte** e buscar por nome/alvo/grupo/categoria. Status de cada fonte.
+- **Itens**: links e apps juntos, com subchips **Todos / Links / Apps**, busca local e agrupamento por **categoria → grupo** (inclui “Sem grupo”). Adicionar link e adicionar app ficam no cabeçalho.
+- **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens ou fontes).
+- **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso). Mostra itens, grupos e fontes.
+- **Filtros salvos**: adicionar/editar/remover filtros de busca, com Incluir, Excluir e Modo.
+- **Aparência**: escolher a cor de destaque do tema (predefinidas ou cor personalizada).
+
+O editor lateral é compacto, dividido em seções (**Fonte/Organização/Atualização/Filtros**, **Identificação/Organização/Aparência/Extras**), com cabeçalho e rodapé fixos — os botões **Cancelar/Salvar** ficam sempre visíveis. A remoção usa um diálogo próprio, no tema escuro, em vez do `confirm()` do navegador.
 
 O botão **Adicionar** abre um painel lateral com formulário específico. Para fontes RSS, o botão **Detectar** procura automaticamente o feed na página informada. Toda alteração é validada pelo Zod e gravada no `hub.json` de forma atômica, com backup `.bak`.
 

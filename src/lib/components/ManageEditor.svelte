@@ -11,6 +11,7 @@
 		ValidationIssue
 	} from '#lib/types';
 	import Icon from './Icon.svelte';
+	import ItemIcon from './ItemIcon.svelte';
 
 	type Kind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
 
@@ -30,6 +31,7 @@
 
 	interface Seed {
 		name: string;
+		description: string;
 		url: string;
 		launchValue: string;
 		icon: string;
@@ -40,6 +42,7 @@
 		sourceType: FeedSource['type'];
 		target: string;
 		intervalMinutes: number;
+		maxItems: number;
 		enabled: boolean;
 		include: string;
 		exclude: string;
@@ -63,6 +66,7 @@
 
 		return {
 			name: (source && 'name' in source ? source.name : '') || '',
+			description: item?.description ?? '',
 			url: item?.type === 'link' ? item.url : '',
 			launchValue: item?.type === 'app' ? item.launch.value : '',
 			icon: item?.icon ?? '',
@@ -74,6 +78,7 @@
 			sourceType: feedSource?.type ?? 'rss',
 			target: feedSource?.target ?? '',
 			intervalMinutes: feedSource?.intervalMinutes ?? 30,
+			maxItems: feedSource?.maxItems ?? 30,
 			enabled: feedSource?.enabled ?? true,
 			include: (feedSource?.include ?? []).join(', '),
 			exclude: (feedSource?.exclude ?? []).join(', '),
@@ -88,6 +93,7 @@
 	const seed = untrack(() => buildSeed(initial, hub));
 
 	let name = $state(seed.name);
+	let description = $state(seed.description);
 	let url = $state(seed.url);
 	let launchValue = $state(seed.launchValue);
 	let icon = $state(seed.icon);
@@ -99,6 +105,7 @@
 	let sourceType = $state<FeedSource['type']>(seed.sourceType);
 	let target = $state(seed.target);
 	let intervalMinutes = $state(seed.intervalMinutes);
+	let maxItems = $state(seed.maxItems);
 	let enabled = $state(seed.enabled);
 	let include = $state(seed.include);
 	let exclude = $state(seed.exclude);
@@ -117,6 +124,25 @@
 	let dialogEl = $state<HTMLDialogElement | null>(null);
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
+	const currentColor = $derived(
+		hub.categories.find((category) => category.id === categoryId)?.color ?? '#8AA4FF'
+	);
+	const previewItem = $derived.by((): HubItem => {
+		const base = {
+			id: 'preview',
+			name: name || (kind === 'app' ? 'App' : 'Link'),
+			...(description.trim() ? { description: description.trim() } : {}),
+			categoryId,
+			tags: [] as string[],
+			pinned: false,
+			order: 0,
+			...(icon.trim() ? { icon: icon.trim() } : {})
+		};
+
+		return kind === 'link'
+			? { ...base, type: 'link', url }
+			: { ...base, type: 'app', launch: { kind: 'protocol', value: launchValue } };
+	});
 	const kindLabel = $derived(
 		kind === 'source'
 			? 'fonte'
@@ -210,6 +236,7 @@
 				name,
 				categoryId,
 				...(groupId ? { groupId } : {}),
+				...(description.trim() ? { description: description.trim() } : {}),
 				...(icon.trim() ? { icon: icon.trim() } : {}),
 				tags: parseList(tags),
 				pinned
@@ -225,6 +252,7 @@
 							...base,
 							groupId: groupId || null,
 							icon: icon.trim() || null,
+							description: description.trim() || null,
 							...(kind === 'link' ? { url } : { launchValue })
 						}
 					}
@@ -236,6 +264,7 @@
 				target,
 				categoryId,
 				intervalMinutes,
+				maxItems,
 				enabled,
 				include: parseList(include),
 				exclude: parseList(exclude),
@@ -323,224 +352,281 @@
 	</div>
 
 	<form class="editor-form" onsubmit={submit}>
-		{#if kind === 'link' || kind === 'app'}
-			<div class="field">
-				<label for="e-name">Nome</label>
-				<input id="e-name" bind:value={name} required maxlength="120" />
-			</div>
-
-			{#if kind === 'link'}
+		<div class="editor-body">
+			{#if kind === 'link' || kind === 'app'}
 				<div class="field">
-					<label for="e-url">URL</label>
-					<input id="e-url" type="url" bind:value={url} required placeholder="https://..." />
+					<label for="e-name">Nome</label>
+					<input id="e-name" bind:value={name} required maxlength="120" />
+				</div>
+
+				{#if kind === 'link'}
+					<div class="field">
+						<label for="e-url">URL</label>
+						<input id="e-url" type="url" bind:value={url} required placeholder="https://..." />
+					</div>
+				{:else}
+					<div class="field">
+						<label for="e-launch">Protocolo / comando</label>
+						<input id="e-launch" bind:value={launchValue} required placeholder="steam://run/..." />
+						<span class="muted small">Ex.: steam://, discord://, vscode://, obsidian://</span>
+					</div>
+				{/if}
+
+				<div class="field">
+					<label for="e-description">Descrição curta (opcional)</label>
+					<textarea
+						id="e-description"
+						bind:value={description}
+						maxlength="280"
+						rows="2"
+						placeholder="Uma nota curta para lembrar para que serve"></textarea>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Organização</span>
+					<div class="editor-row">
+						<div class="field">
+							<label for="e-cat">Categoria</label>
+							<select id="e-cat" bind:value={categoryId} onchange={onCategoryChange} required>
+								{#each hub.categories as category (category.id)}
+									<option value={category.id}>{category.name}</option>
+								{/each}
+							</select>
+						</div>
+						<div class="field">
+							<label for="e-group">Grupo</label>
+							<select id="e-group" bind:value={groupId}>
+								<option value="">Sem grupo</option>
+								{#each groups as group (group.id)}
+									<option value={group.id}>{group.name}</option>
+								{/each}
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Aparência</span>
+					<div class="field">
+						<label for="e-icon">Ícone (opcional)</label>
+						<div class="field-inline">
+							<ItemIcon item={previewItem} color={currentColor} size={38} />
+							<input id="e-icon" bind:value={icon} placeholder="github ou https://..." />
+						</div>
+						<span class="muted small">
+							Slug do Simple Icons (ex.: <code>steam</code>) ou URL de uma imagem. Vazio usa o
+							favicon (links) ou o ícone do protocolo (apps).
+						</span>
+					</div>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Extras</span>
+					<div class="field">
+						<label for="e-tags">Tags (separadas por vírgula)</label>
+						<input id="e-tags" bind:value={tags} placeholder="build, wiki" />
+					</div>
+
+					<label class="check">
+						<input type="checkbox" bind:checked={pinned} />
+						Fixar no acesso rápido da home
+					</label>
+				</div>
+			{:else if kind === 'source'}
+				<div class="editor-section">
+					<span class="editor-section-label">Fonte</span>
+					<div class="field">
+						<label for="e-source-type">Tipo de fonte</label>
+						<select id="e-source-type" bind:value={sourceType}>
+							<option value="rss">RSS / Atom</option>
+							<option value="youtube">YouTube</option>
+							<option value="reddit">Reddit</option>
+						</select>
+					</div>
+
+					<div class="field">
+						<label for="e-target">
+							{sourceType === 'reddit'
+								? 'Subreddit ou URL do .rss'
+								: sourceType === 'youtube'
+									? 'ID do canal (UC...) ou URL do feed'
+									: 'URL do feed ou da página'}
+						</label>
+						<div class="field-inline">
+							<input
+								id="e-target"
+								bind:value={target}
+								required
+								placeholder={sourceType === 'reddit'
+									? 'Darktide'
+									: sourceType === 'youtube'
+										? 'UC...'
+										: 'https://exemplo.com/feed.xml'}
+							/>
+							{#if sourceType === 'rss'}
+								<button
+									type="button"
+									class="btn"
+									onclick={detectFeed}
+									disabled={detecting || !target}
+								>
+									{detecting ? 'Detectando...' : 'Detectar'}
+								</button>
+							{/if}
+						</div>
+					</div>
+
+					<div class="field">
+						<label for="e-source-name">Nome de exibição</label>
+						<input id="e-source-name" bind:value={name} required maxlength="120" />
+					</div>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Organização</span>
+					<div class="editor-row">
+						<div class="field">
+							<label for="e-source-cat">Categoria</label>
+							<select
+								id="e-source-cat"
+								bind:value={categoryId}
+								onchange={onCategoryChange}
+								required
+							>
+								{#each hub.categories as category (category.id)}
+									<option value={category.id}>{category.name}</option>
+								{/each}
+							</select>
+						</div>
+						<div class="field">
+							<label for="e-source-group">Grupo</label>
+							<select id="e-source-group" bind:value={groupId}>
+								<option value="">Sem grupo</option>
+								{#each groups as group (group.id)}
+									<option value={group.id}>{group.name}</option>
+								{/each}
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Atualização</span>
+					<div class="editor-row">
+						<div class="field">
+							<label for="e-interval">Atualizar a cada</label>
+							<select id="e-interval" bind:value={intervalMinutes}>
+								<option value={15}>15 minutos</option>
+								<option value={30}>30 minutos</option>
+								<option value={60}>1 hora</option>
+								<option value={360}>6 horas</option>
+								<option value={1440}>24 horas</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="e-max-items">Limite de posts</label>
+							<select id="e-max-items" bind:value={maxItems}>
+								<option value={10}>10 posts</option>
+								<option value={20}>20 posts</option>
+								<option value={30}>30 posts</option>
+								<option value={50}>50 posts</option>
+								<option value={100}>100 posts</option>
+							</select>
+						</div>
+					</div>
+				</div>
+
+				<div class="editor-section">
+					<span class="editor-section-label">Filtros</span>
+					<div class="editor-row">
+						<div class="field">
+							<label for="e-include">Destacar se contiver</label>
+							<input id="e-include" bind:value={include} placeholder="patch, hotfix" />
+						</div>
+						<div class="field">
+							<label for="e-exclude">Silenciar se contiver</label>
+							<input id="e-exclude" bind:value={exclude} placeholder="promoção" />
+						</div>
+					</div>
+
+					<div class="field">
+						<label for="e-mode">Regra</label>
+						<select id="e-mode" bind:value={matchMode}>
+							<option value="any">Qualquer palavra</option>
+							<option value="all">Todas as palavras</option>
+						</select>
+					</div>
+
+					<label class="check">
+						<input type="checkbox" bind:checked={enabled} />
+						Mostrar no feed da página inicial
+					</label>
+				</div>
+			{:else if kind === 'category'}
+				<div class="field">
+					<label for="e-cat-name">Nome da categoria</label>
+					<input id="e-cat-name" bind:value={name} required maxlength="80" />
+				</div>
+				<div class="field">
+					<label for="e-cat-color">Cor</label>
+					<input id="e-cat-color" type="color" bind:value={color} />
+				</div>
+			{:else if kind === 'group'}
+				<div class="field">
+					<label for="e-group-name">Nome do grupo</label>
+					<input id="e-group-name" bind:value={name} required maxlength="80" />
+				</div>
+				<div class="field">
+					<label for="e-group-cat">Categoria</label>
+					<select id="e-group-cat" bind:value={categoryId} required>
+						{#each hub.categories as category (category.id)}
+							<option value={category.id}>{category.name}</option>
+						{/each}
+					</select>
 				</div>
 			{:else}
 				<div class="field">
-					<label for="e-launch">Protocolo / comando</label>
-					<input id="e-launch" bind:value={launchValue} required placeholder="steam://run/..." />
-					<span class="muted small">Ex.: steam://, discord://, vscode://, obsidian://</span>
+					<label for="e-filter-label">Rótulo do filtro</label>
+					<input id="e-filter-label" bind:value={filterLabel} required placeholder="patch" />
 				</div>
-			{/if}
-
-			<div class="field">
-				<label for="e-icon">Ícone (opcional)</label>
-				<input id="e-icon" bind:value={icon} placeholder="github ou https://..." />
-				<span class="muted small">
-					Slug do Simple Icons (ex.: <code>steam</code>) ou URL de uma imagem. Vazio usa o favicon
-					(links) ou o ícone do protocolo (apps).
-				</span>
-			</div>
-
-			<div class="editor-row">
-				<div class="field">
-					<label for="e-cat">Categoria</label>
-					<select id="e-cat" bind:value={categoryId} onchange={onCategoryChange} required>
-						{#each hub.categories as category (category.id)}
-							<option value={category.id}>{category.name}</option>
-						{/each}
-					</select>
+				<div class="editor-row">
+					<div class="field">
+						<label for="e-filter-include">Incluir</label>
+						<input id="e-filter-include" bind:value={filterInclude} placeholder="patch, hotfix" />
+					</div>
+					<div class="field">
+						<label for="e-filter-exclude">Excluir</label>
+						<input id="e-filter-exclude" bind:value={filterExclude} placeholder="promoção" />
+					</div>
 				</div>
 				<div class="field">
-					<label for="e-group">Grupo</label>
-					<select id="e-group" bind:value={groupId}>
-						<option value="">Sem grupo</option>
-						{#each groups as group (group.id)}
-							<option value={group.id}>{group.name}</option>
-						{/each}
-					</select>
-				</div>
-			</div>
-
-			<div class="field">
-				<label for="e-tags">Tags (separadas por vírgula)</label>
-				<input id="e-tags" bind:value={tags} placeholder="build, wiki" />
-			</div>
-
-			<label class="check">
-				<input type="checkbox" bind:checked={pinned} />
-				Fixar no acesso rápido da home
-			</label>
-		{:else if kind === 'source'}
-			<div class="field">
-				<label for="e-source-type">Tipo de fonte</label>
-				<select id="e-source-type" bind:value={sourceType}>
-					<option value="rss">RSS / Atom</option>
-					<option value="youtube">YouTube</option>
-					<option value="reddit">Reddit</option>
-				</select>
-			</div>
-
-			<div class="field">
-				<label for="e-target">
-					{sourceType === 'reddit'
-						? 'Subreddit ou URL do .rss'
-						: sourceType === 'youtube'
-							? 'ID do canal (UC...) ou URL do feed'
-							: 'URL do feed ou da página'}
-				</label>
-				<div class="field-inline">
-					<input
-						id="e-target"
-						bind:value={target}
-						required
-						placeholder={sourceType === 'reddit'
-							? 'Darktide'
-							: sourceType === 'youtube'
-								? 'UC...'
-								: 'https://exemplo.com/feed.xml'}
-					/>
-					{#if sourceType === 'rss'}
-						<button type="button" class="btn" onclick={detectFeed} disabled={detecting || !target}>
-							{detecting ? 'Detectando...' : 'Detectar'}
-						</button>
-					{/if}
-				</div>
-			</div>
-
-			<div class="field">
-				<label for="e-source-name">Nome de exibição</label>
-				<input id="e-source-name" bind:value={name} required maxlength="120" />
-			</div>
-
-			<div class="editor-row">
-				<div class="field">
-					<label for="e-source-cat">Categoria</label>
-					<select id="e-source-cat" bind:value={categoryId} onchange={onCategoryChange} required>
-						{#each hub.categories as category (category.id)}
-							<option value={category.id}>{category.name}</option>
-						{/each}
-					</select>
-				</div>
-				<div class="field">
-					<label for="e-source-group">Grupo</label>
-					<select id="e-source-group" bind:value={groupId}>
-						<option value="">Sem grupo</option>
-						{#each groups as group (group.id)}
-							<option value={group.id}>{group.name}</option>
-						{/each}
-					</select>
-				</div>
-			</div>
-
-			<div class="editor-row">
-				<div class="field">
-					<label for="e-interval">Atualizar a cada</label>
-					<select id="e-interval" bind:value={intervalMinutes}>
-						<option value={15}>15 minutos</option>
-						<option value={30}>30 minutos</option>
-						<option value={60}>1 hora</option>
-						<option value={360}>6 horas</option>
-						<option value={1440}>24 horas</option>
-					</select>
-				</div>
-				<div class="field">
-					<label for="e-mode">Regra</label>
-					<select id="e-mode" bind:value={matchMode}>
+					<label for="e-filter-mode">Modo</label>
+					<select id="e-filter-mode" bind:value={matchMode}>
 						<option value="any">Qualquer palavra</option>
 						<option value="all">Todas as palavras</option>
 					</select>
 				</div>
-			</div>
+			{/if}
 
-			<div class="editor-row">
-				<div class="field">
-					<label for="e-include">Destacar se contiver</label>
-					<input id="e-include" bind:value={include} placeholder="patch, hotfix" />
-				</div>
-				<div class="field">
-					<label for="e-exclude">Silenciar se contiver</label>
-					<input id="e-exclude" bind:value={exclude} placeholder="promoção" />
-				</div>
-			</div>
+			{#if notice}
+				<div class="notice" role="status">{notice}</div>
+			{/if}
 
-			<label class="check">
-				<input type="checkbox" bind:checked={enabled} />
-				Mostrar no feed da página inicial
-			</label>
-		{:else if kind === 'category'}
-			<div class="field">
-				<label for="e-cat-name">Nome da categoria</label>
-				<input id="e-cat-name" bind:value={name} required maxlength="80" />
-			</div>
-			<div class="field">
-				<label for="e-cat-color">Cor</label>
-				<input id="e-cat-color" type="color" bind:value={color} />
-			</div>
-		{:else if kind === 'group'}
-			<div class="field">
-				<label for="e-group-name">Nome do grupo</label>
-				<input id="e-group-name" bind:value={name} required maxlength="80" />
-			</div>
-			<div class="field">
-				<label for="e-group-cat">Categoria</label>
-				<select id="e-group-cat" bind:value={categoryId} required>
-					{#each hub.categories as category (category.id)}
-						<option value={category.id}>{category.name}</option>
-					{/each}
-				</select>
-			</div>
-		{:else}
-			<div class="field">
-				<label for="e-filter-label">Rótulo do filtro</label>
-				<input id="e-filter-label" bind:value={filterLabel} required placeholder="patch" />
-			</div>
-			<div class="editor-row">
-				<div class="field">
-					<label for="e-filter-include">Incluir</label>
-					<input id="e-filter-include" bind:value={filterInclude} placeholder="patch, hotfix" />
+			{#if error}
+				<div class="alert" role="alert">
+					<strong>{error}</strong>
+					{#if issues.length > 0}
+						<ul>
+							{#each issues.slice(0, 6) as issue, index (index)}
+								<li>
+									<code>{issue.path.length ? issue.path.join(' › ') : 'arquivo'}</code>: {issue.message}
+								</li>
+							{/each}
+						</ul>
+					{/if}
 				</div>
-				<div class="field">
-					<label for="e-filter-exclude">Excluir</label>
-					<input id="e-filter-exclude" bind:value={filterExclude} placeholder="promoção" />
-				</div>
-			</div>
-			<div class="field">
-				<label for="e-filter-mode">Modo</label>
-				<select id="e-filter-mode" bind:value={matchMode}>
-					<option value="any">Qualquer palavra</option>
-					<option value="all">Todas as palavras</option>
-				</select>
-			</div>
-		{/if}
-
-		{#if notice}
-			<div class="notice" role="status">{notice}</div>
-		{/if}
-
-		{#if error}
-			<div class="alert" role="alert">
-				<strong>{error}</strong>
-				{#if issues.length > 0}
-					<ul>
-						{#each issues.slice(0, 6) as issue, index (index)}
-							<li>
-								<code>{issue.path.length ? issue.path.join(' › ') : 'arquivo'}</code>: {issue.message}
-							</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
-		{/if}
+			{/if}
+		</div>
 
 		<div class="editor-actions">
 			<button class="btn" type="button" onclick={onclose} disabled={busy}>Cancelar</button>
