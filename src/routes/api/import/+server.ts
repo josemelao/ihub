@@ -10,6 +10,7 @@ const MAX_BODY_BYTES = 10_000_000;
 interface ImportPayload {
 	bundle?: ExportBundle;
 	mode?: 'replace' | 'merge';
+	settingsPolicy?: 'keep' | 'incoming';
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -34,7 +35,9 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	try {
-		await getStorage().importBundle(payload.bundle, mode);
+		await getStorage().importBundle(payload.bundle, mode, {
+			settingsPolicy: payload.settingsPolicy === 'incoming' ? 'incoming' : 'keep'
+		});
 
 		return json({
 			ok: true,

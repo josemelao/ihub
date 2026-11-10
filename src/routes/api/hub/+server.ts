@@ -4,6 +4,7 @@ import { applyHubAction, type HubPayload } from '#lib/hub-actions';
 import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { HubValidationError, parseHub } from '#lib/schema';
 import { getStorage } from '#lib/storage';
+import type { HubData } from '#lib/types';
 import type { RequestHandler } from './$types';
 
 const MAX_BODY_BYTES = 2_000_000;
@@ -33,27 +34,31 @@ export const POST: RequestHandler = async ({ request }) => {
 	const storage = getStorage();
 
 	try {
-		const hub = await storage.loadHub();
-		const validated = parseHub(applyHubAction(hub, payload));
-		await storage.saveHub(validated);
+		let previousSource: HubData['feedSources'][number] | undefined;
+		let nextSource: HubData['feedSources'][number] | undefined;
+		const sourceId = payload.id;
+		const touchesSourceCache =
+			payload.action === 'delete-source' || payload.action === 'update-source';
 
-		const previousSource = payload.id
-			? hub.feedSources.find((source) => source.id === payload.id)
-			: undefined;
-		const nextSource = payload.id
-			? validated.feedSources.find((source) => source.id === payload.id)
-			: undefined;
-		const stale = sourceCacheIsStale(previousSource, nextSource);
-		const removed = payload.action === 'delete-source' && Boolean(payload.id);
-
-		if (payload.id && (stale || removed)) {
-			try {
-				const cache = await storage.loadFeedCache();
-				await storage.saveFeedCache(removeSourceFromCache(cache, payload.id));
-			} catch {
-				// A edição do hub já foi salva; o cache será repopulado no próximo refresh.
-			}
-		}
+		const { hub: validated } = await storage.updateHubAndCache(
+			(hub) => {
+				previousSource = sourceId
+					? hub.feedSources.find((source) => source.id === sourceId)
+					: undefined;
+				const next = parseHub(applyHubAction(hub, payload));
+				nextSource = sourceId
+					? next.feedSources.find((source) => source.id === sourceId)
+					: undefined;
+				return next;
+			},
+			sourceId && touchesSourceCache
+				? (cache) => {
+						const stale = sourceCacheIsStale(previousSource, nextSource);
+						const removed = payload.action === 'delete-source';
+						return stale || removed ? removeSourceFromCache(cache, sourceId) : cache;
+					}
+				: null
+		);
 
 		return json({ ok: true, hub: validated });
 	} catch (error) {

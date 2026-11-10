@@ -1,34 +1,38 @@
 import { getStorage } from '../storage';
 import { refreshFeed, type RefreshOutcome } from './refresh';
+import { createRefreshRunner, type RefreshRequest } from './refresh-runner';
 
 const SCHEDULER_KEY = Symbol.for('meu-hub.feed-scheduler');
-const RUNNING_KEY = Symbol.for('meu-hub.feed-running');
 
 type GlobalWithState = typeof globalThis & {
 	[SCHEDULER_KEY]?: ReturnType<typeof setInterval>;
-	[RUNNING_KEY]?: boolean;
 };
 
 const globalState = globalThis as GlobalWithState;
 
-export async function refreshAndSave(force = false, sourceId?: string): Promise<RefreshOutcome> {
-	const storage = getStorage();
-	const hub = await storage.loadHub();
-	const cache = await storage.loadFeedCache();
-	const outcome = await refreshFeed(hub, cache, { force, sourceId });
-	await storage.saveFeedCache(outcome.cache);
-	return outcome;
+const runner = createRefreshRunner({
+	loadHub: () => getStorage().loadHub(),
+	refresh: (hub, cache, options) => refreshFeed(hub, cache, options),
+	updateFeedCache: (fn) => getStorage().updateFeedCache(fn)
+});
+
+/**
+ * Ponto único de refresh: scheduler e `/api/refresh` passam por aqui.
+ * Chamadas simultâneas para a mesma chave são coalescidas.
+ */
+export function runRefresh(request: RefreshRequest = {}): Promise<RefreshOutcome> {
+	return runner.run(request);
+}
+
+export function refreshAndSave(force = false, sourceId?: string): Promise<RefreshOutcome> {
+	return runRefresh({ force, sourceId });
 }
 
 async function scheduledRun(): Promise<void> {
-	if (globalState[RUNNING_KEY]) return;
-	globalState[RUNNING_KEY] = true;
 	try {
-		await refreshAndSave(false);
+		await runRefresh();
 	} catch (error) {
 		console.error('[feed] falha na atualização periódica:', error);
-	} finally {
-		globalState[RUNNING_KEY] = false;
 	}
 }
 

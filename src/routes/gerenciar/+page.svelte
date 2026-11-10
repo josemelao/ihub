@@ -9,8 +9,10 @@
 	import ManageEditor from '#lib/components/ManageEditor.svelte';
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
+	import type { ImportPreview } from '#lib/import-preview';
 	import { HubValidationError, parseHub } from '#lib/schema';
 	import type {
+		BackupInfo,
 		Category,
 		ExportBundle,
 		FeedSource,
@@ -342,27 +344,130 @@
 	let fileInput = $state<HTMLInputElement | null>(null);
 	let pending = $state<ExportBundle | null>(null);
 	let mode = $state<'replace' | 'merge'>('merge');
+	let settingsPolicy = $state<'keep' | 'incoming'>('keep');
+	let preview = $state<ImportPreview | null>(null);
+	let previewError = $state('');
+	let previewBusy = $state(false);
 	let fileName = $state('');
 	let importError = $state('');
 	let importIssues = $state<ValidationIssue[]>([]);
 	let importMessage = $state('');
 	let busy = $state(false);
 
+	const diffTotals = $derived.by(() => {
+		let added = 0;
+		let updated = 0;
+		let removed = 0;
+		if (preview) {
+			for (const change of Object.values(preview.changes)) {
+				added += change.added.length;
+				updated += change.updated.length;
+				removed += change.removed.length;
+			}
+		}
+		return { added, updated, removed };
+	});
+
 	let refreshing = $state(false);
 	let refreshingSourceId = $state<string | null>(null);
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
 
+	let backupInfo = $state<BackupInfo | null>(null);
+	let backupBusy = $state(false);
+	let backupMessage = $state('');
+	let backupFailed = $state(false);
+
+	async function loadBackupInfo(): Promise<void> {
+		try {
+			const response = await fetch('/api/backup');
+			if (!response.ok) return;
+			backupInfo = (await response.json()) as BackupInfo;
+		} catch {
+			// Diagnóstico de backup é opcional; não bloqueia a página.
+		}
+	}
+
+	async function runBackup(): Promise<void> {
+		backupBusy = true;
+		backupMessage = '';
+		backupFailed = false;
+
+		try {
+			const response = await fetch('/api/backup', { method: 'POST' });
+			const result = (await response.json()) as {
+				ok?: boolean;
+				error?: string;
+				backup?: { directory: string; files: string[] };
+			};
+
+			if (!response.ok || !result.ok) {
+				backupMessage = result.error ?? 'Falha ao criar backup.';
+				backupFailed = true;
+				return;
+			}
+
+			backupMessage = `Backup criado em ${result.backup?.directory} (${result.backup?.files.length ?? 0} arquivos).`;
+			await loadBackupInfo();
+		} catch (caught) {
+			backupMessage = `Falha de rede ao criar backup: ${(caught as Error).message}`;
+			backupFailed = true;
+		} finally {
+			backupBusy = false;
+		}
+	}
+
+	onMount(() => {
+		void loadBackupInfo();
+	});
+
 	function resetFeedback(): void {
 		importError = '';
 		importIssues = [];
 		importMessage = '';
+		previewError = '';
+	}
+
+	async function loadPreview(): Promise<void> {
+		preview = null;
+		previewError = '';
+		if (!pending) return;
+
+		previewBusy = true;
+		try {
+			const response = await fetch('/api/import/preview', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ bundle: pending, mode })
+			});
+			const result = (await response.json()) as {
+				ok?: boolean;
+				error?: string;
+				preview?: ImportPreview;
+			};
+
+			if (!response.ok || !result.ok || !result.preview) {
+				previewError = result.error ?? 'Falha ao analisar a importação.';
+				return;
+			}
+			preview = result.preview;
+		} catch (caught) {
+			previewError = `Falha de rede ao analisar: ${(caught as Error).message}`;
+		} finally {
+			previewBusy = false;
+		}
+	}
+
+	async function changeMode(next: 'replace' | 'merge'): Promise<void> {
+		mode = next;
+		await loadPreview();
 	}
 
 	async function onFileChange(event: Event): Promise<void> {
 		const input = event.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
 		pending = null;
+		preview = null;
 		resetFeedback();
 		if (!file) return;
 
@@ -378,6 +483,7 @@
 					: undefined;
 
 			pending = { hub: parseHub(source), state };
+			await loadPreview();
 		} catch (caught) {
 			if (caught instanceof HubValidationError) {
 				importError = caught.message;
@@ -397,7 +503,7 @@
 			const response = await fetch('/api/import', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ bundle: pending, mode })
+				body: JSON.stringify({ bundle: pending, mode, settingsPolicy })
 			});
 			const result = (await response.json()) as {
 				ok?: boolean;
@@ -549,6 +655,18 @@
 		<Icon name="refresh" size={16} />
 		{refreshing ? 'Atualizando...' : 'Atualizar feed'}
 	</button>
+	<button class="btn" type="button" onclick={runBackup} disabled={backupBusy}>
+		<Icon name="download" size={16} />
+		{backupBusy ? 'Criando backup...' : 'Backup agora'}
+	</button>
+	{#if backupInfo?.lastAutomaticAt}
+		<span class="muted small">
+			Backup automático: {relativeTime(backupInfo.lastAutomaticAt)}
+			{#if backupInfo.generations > 1}
+				· {backupInfo.generations} gerações
+			{/if}
+		</span>
+	{/if}
 	<input
 		bind:this={fileInput}
 		type="file"
@@ -557,6 +675,12 @@
 		hidden
 	/>
 </div>
+
+{#if backupMessage}
+	<div class:alert={backupFailed} class:notice={!backupFailed} role="status">
+		{backupMessage}
+	</div>
+{/if}
 
 {#if refreshMessage}
 	<div class:alert={refreshFailed} class:notice={!refreshFailed} role="status">
@@ -620,7 +744,7 @@
 				class:active={mode === 'replace'}
 				type="button"
 				aria-pressed={mode === 'replace'}
-				onclick={() => (mode = 'replace')}
+				onclick={() => void changeMode('replace')}
 			>
 				Substituir tudo
 			</button>
@@ -629,13 +753,65 @@
 				class:active={mode === 'merge'}
 				type="button"
 				aria-pressed={mode === 'merge'}
-				onclick={() => (mode = 'merge')}
+				onclick={() => void changeMode('merge')}
 			>
 				Mesclar por id
 			</button>
 		</div>
+
+		{#if previewBusy}
+			<span class="muted small">Analisando o que vai mudar…</span>
+		{/if}
+
+		{#if previewError}
+			<div class="notice" role="alert">{previewError}</div>
+		{/if}
+
+		{#if preview}
+			<div class="chips" aria-label="Resumo das mudanças">
+				<span class="chip">{diffTotals.added} novos</span>
+				<span class="chip">{diffTotals.updated} atualizados</span>
+				<span class="chip">{diffTotals.removed} removidos</span>
+			</div>
+			{#if preview.state}
+				<span class="muted small">
+					Estado: {preview.state.read} leituras, {preview.state.saved} salvos e
+					{preview.state.snapshots} snapshots.
+				</span>
+			{/if}
+
+			{#if mode === 'merge' && preview.settingsConflict}
+				<div class="chips" role="group" aria-label="Configurações do arquivo">
+					<span class="muted small">A cor de destaque do arquivo difere da atual:</span>
+					<button
+						class="chip"
+						class:active={settingsPolicy === 'keep'}
+						type="button"
+						aria-pressed={settingsPolicy === 'keep'}
+						onclick={() => (settingsPolicy = 'keep')}
+					>
+						Manter atual
+					</button>
+					<button
+						class="chip"
+						class:active={settingsPolicy === 'incoming'}
+						type="button"
+						aria-pressed={settingsPolicy === 'incoming'}
+						onclick={() => (settingsPolicy = 'incoming')}
+					>
+						Usar do arquivo
+					</button>
+				</div>
+			{/if}
+		{/if}
+
 		<div class="chips">
-			<button class="btn btn-primary" type="button" onclick={confirmImport} disabled={busy}>
+			<button
+				class="btn btn-primary"
+				type="button"
+				onclick={confirmImport}
+				disabled={busy || previewBusy}
+			>
 				{busy ? 'Importando...' : 'Confirmar importação'}
 			</button>
 			<button class="btn" type="button" onclick={cancelImport} disabled={busy}>Cancelar</button>

@@ -1,7 +1,8 @@
-import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_STATE } from '#lib/defaults';
+import { EMPTY_FEED_CACHE, EMPTY_STATE } from '#lib/defaults';
 import { startScheduler } from '#lib/feed/scheduler';
 import { backfillSavedSnapshots } from '#lib/feed/view';
 import { HubValidationError } from '#lib/schema';
+import { pruneState } from '#lib/state-prune';
 import { getStorage } from '#lib/storage';
 import type { FeedCache, HubData, HubState, ValidationIssue } from '#lib/types';
 import type { LayoutServerLoad } from './$types';
@@ -38,11 +39,7 @@ export const load: LayoutServerLoad = async () => {
 	startScheduler();
 
 	const [hubResult, stateResult, cacheResult] = await Promise.all([
-		loadWithBackup(
-			() => storage.loadHub(),
-			() => storage.loadHubFromBackup(),
-			() => structuredClone(EMPTY_HUB)
-		),
+		storage.loadHubWithFallback(),
 		loadWithBackup(
 			() => storage.loadState(),
 			() => storage.loadStateFromBackup(),
@@ -55,12 +52,20 @@ export const load: LayoutServerLoad = async () => {
 		)
 	]);
 
-	const hub: HubData = hubResult.value;
+	const hub: HubData = hubResult.hub;
 	const loadedState: HubState = stateResult.value;
 	const feed: FeedCache = cacheResult.value;
-	const state = backfillSavedSnapshots(hub, feed, loadedState);
-	if (state !== loadedState) {
-		await storage.saveState(state);
+	const backfilled = backfillSavedSnapshots(hub, feed, loadedState);
+	const pruned = pruneState(backfilled);
+
+	let state = pruned.state;
+	if (pruned.changed || backfilled !== loadedState) {
+		// Reaplica sobre o estado mais recente para não sobrescrever uma ação
+		// que chegou entre o load e a gravação.
+		state = await storage.updateState((current) => {
+			const merged = backfillSavedSnapshots(hub, feed, current);
+			return pruneState(merged).state;
+		});
 	}
 
 	return {

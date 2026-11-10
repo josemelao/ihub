@@ -173,7 +173,7 @@ npm run lint    # Prettier + ESLint
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 
@@ -198,6 +198,11 @@ Eles não fazem parte do build do app.
 - O refresh de feeds usa fetch seguro: timeout, 5 MB, bloqueio de loopback/IP privado e validação de redirects.
 - Headers de segurança ativos: `nosniff`, `no-referrer`, `X-Frame-Options: DENY` e `Permissions-Policy`.
 - CSP está em **Report-Only** com allowlist para YouTube, Reddit, Google Fonts e imagens; a troca para enforce fica para depois da revisão do console.
+- Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
+- Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
+- Backups automáticos mantêm `.bak` + 6 gerações rotativas; “Backup agora” cria uma cópia datada em `data/backups/`.
+- Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
+- `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.
 - Sem login, sem versão online, sem tema claro.
 - Escrita de links/fontes pela interface é validada e restrita ao `hub.json`.
 - O descobridor de feeds só acessa `http(s)` públicos (bloqueia loopback/redes privadas) e limita o tamanho da resposta.

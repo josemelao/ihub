@@ -98,3 +98,16 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] Remover `'unsafe-inline'` de `script-src` com nonce/hash.
 - [ ] Confirmar URL de feed/snapshot só `http(s)`.
 - [ ] Confirmar limite de corpo (413) e SSRF no refresh.
+
+## Dados e concorrência
+
+- [x] 10 marcações de leitura simultâneas não perdem nenhuma.
+- [x] 10 filtros salvos simultâneos não perdem nenhum.
+- [x] Remover/trocar fonte limpa itens e status do cache.
+- [x] Cache inválido impede a remoção da fonte.
+- [x] Nenhum `.tmp-*` fica em `data/` após salvar.
+- [x] Existem 7 gerações de `.bak` após gravações suficientes.
+- [x] “Backup agora” cria pasta datada e o Gerenciar mostra a idade.
+- [x] Preview de importação mostra novos/atualizados/removidos.
+- [x] Merge mantém as settings atuais por padrão.
+- [x] Leituras com mais de 90 dias são podadas; posts salvos ficam.

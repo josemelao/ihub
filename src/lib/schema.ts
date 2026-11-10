@@ -237,7 +237,8 @@ export const stateSchema = z
 		version: z.number().int().positive().default(1),
 		read: z.record(z.string(), z.string()).default({}),
 		saved: z.array(z.string()).default([]),
-		savedItems: z.record(z.string(), savedSnapshotSchema).default({})
+		savedItems: z.record(z.string(), savedSnapshotSchema).default({}),
+		lastPrunedAt: z.string().optional()
 	})
 	.superRefine((state, ctx) => {
 		for (const [key, snapshot] of Object.entries(state.savedItems)) {

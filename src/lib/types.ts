@@ -96,6 +96,7 @@ export interface HubState {
 	read: Record<string, string>;
 	saved: string[];
 	savedItems: Record<string, SavedItemSnapshot>;
+	lastPrunedAt?: string;
 }
 
 export interface FeedItem {
@@ -126,6 +127,35 @@ export interface ExportBundle {
 	state?: HubState;
 }
 
+export interface ImportOptions {
+	/** No modo mesclar, decide o que acontece com `settings`. Padrão: manter o atual. */
+	settingsPolicy?: 'keep' | 'incoming';
+}
+
+export interface BackupInfo {
+	lastAutomaticAt: string | null;
+	lastManualAt: string | null;
+	generations: number;
+	retention: number;
+}
+
+export interface BackupCreated {
+	directory: string;
+	createdAt: string;
+	files: string[];
+}
+
+export interface HubLoadError {
+	message: string;
+	issues: ValidationIssue[];
+	usingBackup: boolean;
+}
+
+export interface HubLoadResult {
+	hub: HubData;
+	error: HubLoadError | null;
+}
+
 export interface ValidationIssue {
 	path: (string | number)[];
 	message: string;
@@ -134,13 +164,30 @@ export interface ValidationIssue {
 export interface HubStorage {
 	loadHub(): Promise<HubData>;
 	loadHubFromBackup(): Promise<HubData | null>;
+	/** Hub + fallback para o backup mais novo válido, sem expor a implementação. */
+	loadHubWithFallback(): Promise<HubLoadResult>;
+	/** Atualização read-modify-write serializada por arquivo (lock por processo). */
+	updateHub(fn: (hub: HubData) => HubData | Promise<HubData>): Promise<HubData>;
 	saveHub(data: HubData): Promise<void>;
 	loadState(): Promise<HubState>;
 	loadStateFromBackup(): Promise<HubState | null>;
+	updateState(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState>;
 	saveState(state: HubState): Promise<void>;
 	loadFeedCache(): Promise<FeedCache>;
 	loadFeedCacheFromBackup(): Promise<FeedCache | null>;
+	updateFeedCache(fn: (cache: FeedCache) => FeedCache | Promise<FeedCache>): Promise<FeedCache>;
+	/** Mantém hub e cache sob o mesmo lock, na ordem hub → cache. */
+	updateHubAndCache(
+		hubFn: (hub: HubData) => HubData | Promise<HubData>,
+		cacheFn: ((cache: FeedCache) => FeedCache | Promise<FeedCache>) | null
+	): Promise<{ hub: HubData; cache: FeedCache | null }>;
 	saveFeedCache(cache: FeedCache): Promise<void>;
 	exportBundle(): Promise<ExportBundle>;
-	importBundle(bundle: ExportBundle, mode: 'replace' | 'merge'): Promise<void>;
+	importBundle(
+		bundle: ExportBundle,
+		mode: 'replace' | 'merge',
+		options?: ImportOptions
+	): Promise<void>;
+	backupNow(): Promise<BackupCreated>;
+	backupInfo(): Promise<BackupInfo>;
 }

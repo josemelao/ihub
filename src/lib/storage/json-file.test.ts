@@ -312,4 +312,268 @@ describe('JsonFileStorage', () => {
 		const loaded = await storage.loadState();
 		expect(loaded.savedItems).toEqual({});
 	});
+
+	it('não perde updates concorrentes do hub', async () => {
+		await storage.saveHub(hub('Base'));
+
+		await Promise.all(
+			Array.from({ length: 10 }, (_, index) =>
+				storage.updateHub((current) => ({
+					...current,
+					categories: [
+						...current.categories,
+						{
+							id: `concorrente-${index}`,
+							name: `Concorrente ${index}`,
+							color: '#8AA4FF',
+							order: index + 2
+						}
+					]
+				}))
+			)
+		);
+
+		const loaded = await storage.loadHub();
+		expect(loaded.categories).toHaveLength(11);
+		expect(loaded.categories.map((category) => category.id)).toEqual(
+			expect.arrayContaining(Array.from({ length: 10 }, (_, index) => `concorrente-${index}`))
+		);
+	});
+
+	it('não perde updates concorrentes do estado', async () => {
+		await storage.saveState({ version: 1, read: {}, saved: [], savedItems: {} });
+
+		await Promise.all(
+			Array.from({ length: 10 }, (_, index) =>
+				storage.updateState((current) => ({
+					...current,
+					read: { ...current.read, [`post-${index}`]: '2026-11-10T12:00:00Z' }
+				}))
+			)
+		);
+
+		const loaded = await storage.loadState();
+		expect(Object.keys(loaded.read)).toHaveLength(10);
+	});
+
+	it('não perde updates concorrentes do cache', async () => {
+		await storage.saveFeedCache({
+			version: 1,
+			updatedAt: '2026-11-10T12:00:00Z',
+			items: [],
+			sources: {}
+		});
+
+		await Promise.all(
+			Array.from({ length: 10 }, (_, index) =>
+				storage.updateFeedCache((current) => ({
+					...current,
+					items: [
+						...current.items,
+						{
+							id: `item-${index}`,
+							sourceId: 'fonte',
+							title: `Item ${index}`,
+							summary: '',
+							url: `https://example.com/${index}`,
+							publishedAt: '',
+							thumbnail: null
+						}
+					]
+				}))
+			)
+		);
+
+		const loaded = await storage.loadFeedCache();
+		expect(loaded.items).toHaveLength(10);
+	});
+
+	it('não grava quando o updater lança erro', async () => {
+		await storage.saveHub(hub('Original'));
+
+		await expect(
+			storage.updateHub(() => {
+				throw new Error('falhou no meio');
+			})
+		).rejects.toThrow('falhou no meio');
+
+		const loaded = await storage.loadHub();
+		expect(loaded.categories[0].name).toBe('Original');
+	});
+
+	it('atualiza hub e cache na mesma transação', async () => {
+		const withSource = hub('Jogos');
+		withSource.feedSources.push({
+			id: 'fonte',
+			type: 'rss',
+			name: 'Fonte',
+			target: 'https://example.com/feed',
+			categoryId: 'jogos',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+		await storage.saveHub(withSource);
+		await storage.saveFeedCache({
+			version: 1,
+			updatedAt: '2026-11-10T12:00:00Z',
+			items: [
+				{
+					id: 'post',
+					sourceId: 'fonte',
+					title: 'Post',
+					summary: '',
+					url: 'https://example.com/post',
+					publishedAt: '',
+					thumbnail: null
+				}
+			],
+			sources: { fonte: { lastFetchedAt: '', error: null, count: 1 } }
+		});
+
+		const result = await storage.updateHubAndCache(
+			(current) => ({ ...current, feedSources: [] }),
+			(current) => ({
+				...current,
+				items: current.items.filter((item) => item.sourceId !== 'fonte'),
+				sources: {}
+			})
+		);
+
+		expect(result.hub.feedSources).toEqual([]);
+		expect(result.cache?.items).toEqual([]);
+		expect((await storage.loadHub()).feedSources).toEqual([]);
+		expect((await storage.loadFeedCache()).items).toEqual([]);
+	});
+
+	it('aborta sem alterar o hub quando o cache está inválido', async () => {
+		const withSource = hub('Jogos');
+		withSource.feedSources.push({
+			id: 'fonte',
+			type: 'rss',
+			name: 'Fonte',
+			target: 'https://example.com/feed',
+			categoryId: 'jogos',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+		await storage.saveHub(withSource);
+		await writeFile(join(dir, 'feed-cache.json'), '{ quebrado', 'utf-8');
+
+		await expect(
+			storage.updateHubAndCache(
+				(current) => ({ ...current, feedSources: [] }),
+				(current) => current
+			)
+		).rejects.toThrow(HubValidationError);
+
+		const loaded = await storage.loadHub();
+		expect(loaded.feedSources.map((source) => source.id)).toEqual(['fonte']);
+	});
+
+	it('mescla mantendo as settings atuais por padrão', async () => {
+		const current = hub('Original');
+		current.settings = { accent: '#111111' };
+		await storage.saveHub(current);
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+		incoming.settings = { accent: '#222222' };
+		await storage.importBundle({ hub: incoming }, 'merge');
+
+		expect((await storage.loadHub()).settings).toEqual({ accent: '#111111' });
+	});
+
+	it('mescla usando as settings do arquivo quando pedido', async () => {
+		const current = hub('Original');
+		current.settings = { accent: '#111111' };
+		await storage.saveHub(current);
+
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+		incoming.settings = { accent: '#222222' };
+		await storage.importBundle({ hub: incoming }, 'merge', { settingsPolicy: 'incoming' });
+
+		expect((await storage.loadHub()).settings).toEqual({ accent: '#222222' });
+	});
+
+	it('substituir sempre usa as settings do arquivo', async () => {
+		const current = hub('Original');
+		current.settings = { accent: '#111111' };
+		await storage.saveHub(current);
+
+		const incoming = hub('Novo');
+		incoming.settings = { accent: '#222222' };
+		await storage.importBundle({ hub: incoming }, 'replace', { settingsPolicy: 'keep' });
+
+		expect((await storage.loadHub()).settings).toEqual({ accent: '#222222' });
+	});
+
+	it('mantém no máximo 7 gerações de backup', async () => {
+		for (let index = 0; index < 9; index += 1) {
+			await storage.saveHub(hub(`Versão ${index}`));
+		}
+
+		const newest = JSON.parse(await readFile(join(dir, 'hub.json.bak'), 'utf-8'));
+		const oldest = JSON.parse(await readFile(join(dir, 'hub.json.bak.6'), 'utf-8'));
+		expect(newest.categories[0].name).toBe('Versão 7');
+		expect(oldest.categories[0].name).toBe('Versão 1');
+		await expect(readFile(join(dir, 'hub.json.bak.7'), 'utf-8')).rejects.toThrow();
+	});
+
+	it('cria backup manual datado com os arquivos atuais', async () => {
+		await storage.saveHub(hub('Anterior'));
+		await storage.saveHub(hub('Atual'));
+		await storage.saveState({ version: 1, read: { a: 't' }, saved: [], savedItems: {} });
+
+		const backup = await storage.backupNow();
+
+		expect(backup.directory).toContain('backups');
+		expect(backup.files).toEqual(expect.arrayContaining(['hub.json', 'estado.json']));
+
+		const copied = JSON.parse(await readFile(join(backup.directory, 'hub.json'), 'utf-8'));
+		expect(copied.categories[0].name).toBe('Atual');
+
+		const info = await storage.backupInfo();
+		expect(info.lastAutomaticAt).toBeTruthy();
+		expect(info.lastManualAt).toBeTruthy();
+		expect(info.generations).toBeGreaterThan(0);
+	});
+
+	it('usa geração mais antiga quando o backup mais novo está corrompido', async () => {
+		await storage.saveHub(hub('Versão 1'));
+		await storage.saveHub(hub('Versão 2'));
+		await storage.saveHub(hub('Versão 3'));
+
+		await writeFile(join(dir, 'hub.json.bak'), '{ quebrado', 'utf-8');
+
+		const backup = await storage.loadHubFromBackup();
+		expect(backup?.categories[0].name).toBe('Versão 1');
+	});
+
+	it('carrega hub com fallback e descreve o erro', async () => {
+		await storage.saveHub(hub('Versão 1'));
+		await storage.saveHub(hub('Versão 2'));
+		await writeFile(join(dir, 'hub.json'), '{ quebrado', 'utf-8');
+
+		const result = await storage.loadHubWithFallback();
+
+		expect(result.hub.categories[0].name).toBe('Versão 1');
+		expect(result.error?.usingBackup).toBe(true);
+		expect(result.error?.issues.length).toBeGreaterThan(0);
+	});
+
+	it('devolve hub vazio quando não há backup válido', async () => {
+		await writeFile(join(dir, 'hub.json'), '{ quebrado', 'utf-8');
+
+		const result = await storage.loadHubWithFallback();
+
+		expect(result.hub.categories).toEqual([]);
+		expect(result.error?.usingBackup).toBe(false);
+	});
 });
