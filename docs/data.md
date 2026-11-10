@@ -76,7 +76,7 @@
 
 ## Verificação
 
-- `npm test`: **266/266** em 32 arquivos.
+- `npm test`: **272/272** em 33 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
@@ -94,3 +94,9 @@
 - **DATA-03** (refresh concorrente com progresso por fonte/SSE): adiado para a fase de UX; o refresh segue síncrono, mas coalescido.
 - **DATA-07** (migrações versionadas): o schema continua em `version: 1`; `lastPrunedAt` é opcional e compatível com arquivos antigos. Migrações entram quando houver mudança quebrante.
 - Lock entre processos e SQLite continuam em PLAT-04/PLAT-12.
+
+## Nota sobre CSRF em POSTs
+
+Os POSTs da interface enviam `content-type: application/json`. O SvelteKit trata POST sem `content-type` (ou `text/plain`/form) como submissão de formulário e responde **403 Cross-site POST form submissions are forbidden** antes de chegar ao handler.
+
+O botão “Backup agora” passou por esse problema em 10/11/2026: ele fazia `fetch('/api/backup', { method: 'POST' })` sem corpo. A correção envia `{}` com JSON e usa `readJsonResponse` para mostrar o status/corpo real quando a resposta não for JSON. Não desative o CSRF para “resolver” isso.

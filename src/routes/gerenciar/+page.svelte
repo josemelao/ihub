@@ -10,6 +10,7 @@
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
 	import type { ImportPreview } from '#lib/import-preview';
+	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
 	import { HubValidationError, parseHub } from '#lib/schema';
 	import type {
 		BackupInfo,
@@ -395,12 +396,16 @@
 		backupFailed = false;
 
 		try {
-			const response = await fetch('/api/backup', { method: 'POST' });
-			const result = (await response.json()) as {
+			const response = await fetch('/api/backup', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: '{}'
+			});
+			const result = await readJsonResponse<{
 				ok?: boolean;
 				error?: string;
 				backup?: { directory: string; files: string[] };
-			};
+			}>(response);
 
 			if (!response.ok || !result.ok) {
 				backupMessage = result.error ?? 'Falha ao criar backup.';
@@ -411,7 +416,10 @@
 			backupMessage = `Backup criado em ${result.backup?.directory} (${result.backup?.files.length ?? 0} arquivos).`;
 			await loadBackupInfo();
 		} catch (caught) {
-			backupMessage = `Falha de rede ao criar backup: ${(caught as Error).message}`;
+			backupMessage =
+				caught instanceof HttpResponseError
+					? `Falha ao criar backup: ${caught.message}`
+					: `Falha de rede ao criar backup: ${(caught as Error).message}`;
 			backupFailed = true;
 		} finally {
 			backupBusy = false;
@@ -445,11 +453,11 @@
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ bundle: pending, mode })
 			});
-			const result = (await response.json()) as {
+			const result = await readJsonResponse<{
 				ok?: boolean;
 				error?: string;
 				preview?: ImportPreview;
-			};
+			}>(response);
 
 			if (request !== previewRequest) return;
 			if (!response.ok || !result.ok || !result.preview) {
@@ -459,7 +467,10 @@
 			preview = result.preview;
 		} catch (caught) {
 			if (request !== previewRequest) return;
-			previewError = `Falha de rede ao analisar: ${(caught as Error).message}`;
+			previewError =
+				caught instanceof HttpResponseError
+					? caught.message
+					: `Falha de rede ao analisar: ${(caught as Error).message}`;
 		} finally {
 			if (request === previewRequest) previewBusy = false;
 		}

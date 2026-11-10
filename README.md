@@ -201,6 +201,7 @@ Eles não fazem parte do build do app.
 - Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
 - Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
 - Backups automáticos mantêm `.bak` + 6 gerações rotativas; “Backup agora” cria uma cópia datada em `data/backups/`.
+- POSTs da interface enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST vazio/form com **403** (proteção intencional).
 - Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
 - `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.
 - Sem login, sem versão online, sem tema claro.
