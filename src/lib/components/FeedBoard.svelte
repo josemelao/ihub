@@ -62,6 +62,8 @@
 	let reduceMotion = $state(false);
 	let viewReady = $state(false);
 	let animationsEnabled = $state(false);
+	let viewMotionReady = $state(false);
+	let viewTimer: ReturnType<typeof setTimeout> | undefined;
 	let showFilterForm = $state(false);
 	let filterLabel = $state('');
 	let filterInclude = $state('');
@@ -85,17 +87,28 @@
 		});
 		const timer = setTimeout(() => {
 			animationsEnabled = true;
+			viewMotionReady = true;
 		}, 400);
 
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(timer);
+			clearTimeout(viewTimer);
+		};
 	});
 
-	const motionDuration = $derived(reduceMotion || !animationsEnabled ? 0 : 300);
-	const fadeDuration = $derived(reduceMotion || !animationsEnabled ? 0 : 160);
+	const motionDuration = $derived(reduceMotion || !animationsEnabled || !viewMotionReady ? 0 : 300);
+	const fadeDuration = $derived(reduceMotion || !animationsEnabled || !viewMotionReady ? 0 : 160);
 
 	function setView(next: FeedView): void {
-		view = next;
 		localStorage.setItem('meu-hub:feed-view', next);
+		if (next === view) return;
+
+		viewMotionReady = false;
+		view = next;
+		clearTimeout(viewTimer);
+		viewTimer = setTimeout(() => {
+			viewMotionReady = true;
+		}, 200);
 	}
 
 	const activeFilter = $derived(
@@ -540,7 +553,7 @@
 			class:bento={view === 'bento'}
 			class:completo-view={view === 'completo'}
 			class:compact-view={view === 'compact'}
-			class:motion-enabled={animationsEnabled}
+			class:motion-enabled={animationsEnabled && viewMotionReady}
 			use:masonry={{ enabled: view === 'bento', gap: 12 }}
 		>
 			{#each visible as entry (entry.item.id)}
