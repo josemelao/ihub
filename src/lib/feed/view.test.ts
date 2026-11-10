@@ -26,6 +26,7 @@ const hub: HubData = {
 			target: 'Darktide',
 			categoryId: 'jogos',
 			intervalMinutes: 30,
+			locale: 'en',
 			enabled: true,
 			include: ['patch'],
 			exclude: [],
@@ -93,12 +94,14 @@ describe('buildSavedView', () => {
 			categoryId: 'categoria-sumiu',
 			categoryName: 'Jogos',
 			color: '#123456',
+			locale: 'en',
 			savedAt: '2026-11-09T12:00:00Z'
 		};
 
 		const view = buildSavedView(hub, cache, snapshotState);
 		expect(view).toHaveLength(1);
 		expect(view[0].source.name).toBe('Fonte removida');
+		expect(view[0].source.locale).toBe('en');
 		expect(view[0].category?.color).toBe('#123456');
 	});
 
@@ -118,6 +121,7 @@ describe('backfillSavedSnapshots', () => {
 		const original = state(['post-1']);
 		const filled = backfillSavedSnapshots(hub, cache, original);
 		expect(filled.savedItems['post-1'].sourceName).toBe('r/Darktide (patch)');
+		expect(filled.savedItems['post-1'].locale).toBe('en');
 		expect(filled).not.toBe(original);
 	});
 

@@ -78,7 +78,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Favoritos mesmo se a fonte for removida ou o cache expirar.
 - **Vídeos do YouTube**: a thumbnail mostra um botão **▶**; o clique abre um player em modal com `youtube-nocookie` e autoplay, sem alterar o layout do Bento. O modal fecha por Esc, botão fechar ou clique fora e tem o atalho **Abrir no YouTube**.
-- **Vídeos do Reddit**: a thumbnail mostra um selo **Reddit**; ao clicar, o hub consulta o embed oficial e detecta se o post é vídeo. Se for, abre o player do Reddit em modal; se não, mantém o lightbox de imagem. O resultado fica em cache por 10 minutos. Não há scraping do JSON nem extração de MP4/HLS.
+- **Vídeos do Reddit**: a thumbnail mostra um selo **Reddit**; ao clicar, o hub consulta o embed oficial e detecta se o post é vídeo. Se for, abre o player do Reddit em modal; se não, mantém o lightbox de imagem. O resultado fica em cache por 10 minutos. Não há scraping do JSON nem extração de MP4/HLS. O idioma do player vem da fonte: **Exibir em inglês** (`locale=en`) ou navegador quando desligado; snapshots de salvos preservam essa escolha.
 - **Imagens do feed**: thumbnails que não são vídeo abrem um **lightbox** com a imagem, título e atalhos **Abrir imagem** e **Abrir publicação**; não é mais necessário sair do hub só para ver a imagem.
 - **Visualizações**: **Bento** (masonry em colunas iguais: 2 colunas, 3 quando o feed está largo, imagens 3:2 e retrato adaptativo), **Compacto** (imagem ou placeholder com o nome da fonte, meta, título e ações; sem excerpt) e **Completo** (lista com imagem lateral maior e texto expansível). A escolha fica salva no navegador.
 - No Bento o texto flui naturalmente (sem corte de linhas) e o masonry posiciona cada card na coluna mais curta, sem buracos.
@@ -101,7 +101,7 @@ Na tela **Gerenciar**:
 
 Em **Gerenciar**, as abas são funcionais:
 
-- **Fontes do feed**: adicionar, editar, remover, ligar/desligar, **atualizar só uma fonte** e buscar por nome/alvo/grupo/categoria. Status de cada fonte.
+- **Fontes do feed**: adicionar, editar, remover, ligar/desligar, **atualizar só uma fonte** e buscar por nome/alvo/grupo/categoria. Status de cada fonte. Para Reddit, um interruptor **Exibir em inglês** define `locale=en`; desligado usa o idioma do navegador.
 - **Itens**: links e apps juntos, com subchips **Todos / Links / Apps**, busca local e agrupamento por **categoria → grupo** (inclui “Sem grupo”). Adicionar link e adicionar app ficam no cabeçalho.
 - **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens ou fontes).
 - **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso). Mostra itens, grupos e fontes.

@@ -109,6 +109,10 @@ const feedSourceSchema = z.object({
 	groupId: z.string().optional(),
 	intervalMinutes: z.number().int().min(1).default(30),
 	maxItems: z.number().int().min(1).max(200).optional(),
+	locale: z
+		.string()
+		.regex(/^[a-z]{2}(?:[-_][A-Za-z]{2,8})*$/, 'Locale inválido (ex.: en, pt-BR)')
+		.optional(),
 	enabled: z.boolean().default(true),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),

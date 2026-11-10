@@ -55,6 +55,7 @@ export interface FeedSource {
 	groupId?: string;
 	intervalMinutes: number;
 	maxItems?: number;
+	locale?: string;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];
@@ -86,6 +87,7 @@ export interface SavedItemSnapshot {
 	categoryId?: string;
 	categoryName?: string;
 	color?: string;
+	locale?: string;
 	savedAt: string;
 }
 

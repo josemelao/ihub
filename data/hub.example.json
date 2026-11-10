@@ -461,6 +461,7 @@
 			"groupId": "darktide",
 			"intervalMinutes": 30,
 			"maxItems": 30,
+			"locale": "en",
 			"enabled": true,
 			"include": ["patch"],
 			"exclude": [],

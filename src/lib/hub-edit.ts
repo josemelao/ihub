@@ -50,16 +50,18 @@ export interface SourceInput {
 	groupId?: string;
 	intervalMinutes: number;
 	maxItems?: number;
+	locale?: string;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];
 	matchMode: MatchMode;
 }
 
-export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId' | 'maxItems'>> & {
+export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId' | 'maxItems' | 'locale'>> & {
 	type?: FeedSource['type'];
 	groupId?: string | null;
 	maxItems?: number | null;
+	locale?: string | null;
 };
 
 export interface CategoryInput {
@@ -231,6 +233,7 @@ export function addSource(hub: HubData, input: SourceInput): HubData {
 		...(input.groupId ? { groupId: input.groupId } : {}),
 		intervalMinutes: input.intervalMinutes,
 		...(input.maxItems ? { maxItems: input.maxItems } : {}),
+		...(input.locale ? { locale: input.locale } : {}),
 		enabled: input.enabled,
 		include: input.include,
 		exclude: input.exclude,
@@ -268,6 +271,12 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 				delete next.maxItems;
 			} else if (patch.maxItems !== undefined) {
 				next.maxItems = patch.maxItems;
+			}
+
+			if (patch.locale === null) {
+				delete next.locale;
+			} else if (patch.locale !== undefined) {
+				next.locale = patch.locale;
 			}
 
 			return next;

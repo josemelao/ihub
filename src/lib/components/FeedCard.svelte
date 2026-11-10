@@ -439,6 +439,7 @@
 		embedUrl={redditVideo}
 		postUrl={reddit?.canonicalUrl ?? entry.item.url}
 		title={entry.item.title}
+		locale={entry.source.locale}
 		onclose={() => (redditOpen = false)}
 	/>
 {/if}

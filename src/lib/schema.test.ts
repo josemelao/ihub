@@ -147,6 +147,7 @@ describe('parseHub', () => {
 					categoryId: 'jogos',
 					intervalMinutes: 30,
 					maxItems: 50,
+					locale: 'en',
 					enabled: true,
 					include: [],
 					exclude: [],
@@ -157,6 +158,7 @@ describe('parseHub', () => {
 
 		expect(hub.items[0].description).toBe('Guia completo');
 		expect(hub.feedSources[0].maxItems).toBe(50);
+		expect(hub.feedSources[0].locale).toBe('en');
 	});
 
 	it('rejeita descrição longa e limite de posts inválido', () => {
@@ -185,5 +187,28 @@ describe('parseHub', () => {
 
 		expect(() => parseHub(longDescription)).toThrow(HubValidationError);
 		expect(() => parseHub(badLimit)).toThrow(HubValidationError);
+	});
+
+	it('rejeita locale inválido', () => {
+		const invalid = {
+			...structuredClone(base),
+			feedSources: [
+				{
+					id: 'feed',
+					type: 'rss',
+					name: 'Feed',
+					target: 'https://example.com/feed.xml',
+					categoryId: 'jogos',
+					intervalMinutes: 30,
+					locale: '../pt',
+					enabled: true,
+					include: [],
+					exclude: [],
+					matchMode: 'any'
+				}
+			]
+		};
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
 	});
 });

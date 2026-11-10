@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRedditVideoHtml, redditPostInfo } from './reddit';
+import { isRedditVideoHtml, redditEmbedUrlWithLocale, redditPostInfo } from './reddit';
 
 describe('redditPostInfo', () => {
 	it('extrai subreddit, id, slug e URLs do post', () => {
@@ -49,5 +49,18 @@ describe('isRedditVideoHtml', () => {
 			false
 		);
 		expect(isRedditVideoHtml('')).toBe(false);
+	});
+});
+
+describe('redditEmbedUrlWithLocale', () => {
+	const embed =
+		'https://www.redditmedia.com/r/DarkTide/comments/1xskv1q/another_round_of_clips/?embed=true&showmedia=1';
+
+	it('adiciona locale quando definido', () => {
+		expect(redditEmbedUrlWithLocale(embed, 'en')).toBe(`${embed}&locale=en`);
+	});
+
+	it('mantém a URL quando locale não é definido', () => {
+		expect(redditEmbedUrlWithLocale(embed)).toBe(embed);
 	});
 });

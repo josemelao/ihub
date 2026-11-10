@@ -49,6 +49,7 @@
 		target: string;
 		intervalMinutes: number;
 		maxItems: number;
+		locale: string;
 		enabled: boolean;
 		include: string;
 		exclude: string;
@@ -85,6 +86,7 @@
 			target: feedSource?.target ?? '',
 			intervalMinutes: feedSource?.intervalMinutes ?? 30,
 			maxItems: feedSource?.maxItems ?? 30,
+			locale: feedSource?.locale ?? '',
 			enabled: feedSource?.enabled ?? true,
 			include: (feedSource?.include ?? []).join(', '),
 			exclude: (feedSource?.exclude ?? []).join(', '),
@@ -112,6 +114,7 @@
 	let target = $state(seed.target);
 	let intervalMinutes = $state(seed.intervalMinutes);
 	let maxItems = $state(seed.maxItems);
+	let redditEnglish = $state(seed.locale === 'en');
 	let enabled = $state(seed.enabled);
 	let include = $state(seed.include);
 	let exclude = $state(seed.exclude);
@@ -309,11 +312,19 @@
 				? {
 						action: 'update-source',
 						id: (initial as FeedSource).id,
-						sourcePatch: { ...sourceBase, groupId: groupId || null }
+						sourcePatch: {
+							...sourceBase,
+							groupId: groupId || null,
+							locale: sourceType === 'reddit' && redditEnglish ? 'en' : null
+						}
 					}
 				: {
 						action: 'add-source',
-						source: { ...sourceBase, ...(groupId ? { groupId } : {}) }
+						source: {
+							...sourceBase,
+							...(groupId ? { groupId } : {}),
+							...(sourceType === 'reddit' && redditEnglish ? { locale: 'en' } : {})
+						}
 					};
 		} else if (kind === 'category') {
 			payload = isEdit
@@ -480,6 +491,16 @@
 							<option value="reddit">Reddit</option>
 						</select>
 					</div>
+
+					{#if sourceType === 'reddit'}
+						<label class="check">
+							<input type="checkbox" bind:checked={redditEnglish} />
+							Exibir em inglês
+						</label>
+						<span class="muted small">
+							Desligado: usa o idioma do navegador (ex.: português).
+						</span>
+					{/if}
 
 					<div class="field">
 						<label for="e-target">

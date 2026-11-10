@@ -367,6 +367,15 @@ describe('limite de posts e configurações', () => {
 		expect(() => parseHub(cleared)).not.toThrow();
 	});
 
+	it('define e remove o locale da fonte', () => {
+		const withLocale = updateSource(base(), 'reddit-patch', { locale: 'en' });
+		expect(withLocale.feedSources[0].locale).toBe('en');
+
+		const cleared = updateSource(withLocale, 'reddit-patch', { locale: null });
+		expect(cleared.feedSources[0].locale).toBeUndefined();
+		expect(() => parseHub(cleared)).not.toThrow();
+	});
+
 	it('atualiza a cor de destaque', () => {
 		const hub = updateSettings(base(), { accent: '#7DD3A8' });
 		expect(hub.settings.accent).toBe('#7DD3A8');

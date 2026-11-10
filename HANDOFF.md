@@ -137,6 +137,7 @@ data/
   - Ações: abrir, salvar para depois, marcar como lido — ícones (link externo, bookmark, check) com tooltip/`aria-label`; “marcar tudo como lido” respeita o filtro.
   - **Vídeos do YouTube**: thumbnail com botão ▶; clique abre player em modal (`youtube-nocookie`, autoplay), sem afetar o masonry; fecha por Esc, botão ou backdrop e oferece “Abrir no YouTube”. O ID é extraído da URL ou da thumbnail, então funciona também em Favoritos/snapshots.
   - **Vídeos do Reddit**: thumbnail com selo Reddit; no clique, `/api/reddit-media` consulta o embed oficial e detecta vídeo. Se for vídeo, abre o player do Reddit em modal; senão, mantém o lightbox de imagem. Cache em memória de 10 min. Não usa JSON do Reddit nem extração de MP4/HLS.
+  - **Idioma por fonte Reddit**: interruptor “Exibir em inglês” no editor. Ligado grava `locale: "en"` e envia `locale=en` ao embed; desligado não envia locale (navegador). O snapshot de salvos preserva o locale.
   - **Imagens**: thumbnail abre lightbox com a imagem, título e atalhos “Abrir imagem”/“Abrir publicação”; fundo escuro e fechamento por Esc, botão ou backdrop.
 - Contadores de não lidos na sidebar e nas fontes.
 - Imagens: `enclosure`, `media:content`, `media:thumbnail`, `media:group`, primeiro `<img>` do HTML e thumbnail do YouTube (normaliza URLs antigas).

@@ -41,3 +41,14 @@ export function isRedditVideoHtml(html: string): boolean {
 		html
 	);
 }
+
+export function redditEmbedUrlWithLocale(embedUrl: string, locale?: string): string {
+	if (!locale) return embedUrl;
+	try {
+		const url = new URL(embedUrl);
+		url.searchParams.set('locale', locale);
+		return url.toString();
+	} catch {
+		return embedUrl;
+	}
+}

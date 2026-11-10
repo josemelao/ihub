@@ -56,6 +56,7 @@ export function snapshotFromEntry(entry: FeedViewItem): SavedItemSnapshot {
 		categoryId: entry.source.categoryId,
 		categoryName: entry.category?.name,
 		color: entry.category?.color,
+		locale: entry.source.locale,
 		savedAt: new Date().toISOString()
 	};
 }
@@ -99,6 +100,7 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 			target: '',
 			categoryId: category.id,
 			intervalMinutes: 0,
+			locale: snapshot.locale,
 			enabled: true,
 			include: [],
 			exclude: [],
@@ -143,6 +145,7 @@ export function backfillSavedSnapshots(hub: HubData, cache: FeedCache, state: Hu
 			categoryId: source.categoryId,
 			categoryName: category?.name,
 			color: category?.color,
+			locale: source.locale,
 			savedAt: new Date().toISOString()
 		};
 		changed = true;
