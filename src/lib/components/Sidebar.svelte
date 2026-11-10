@@ -5,7 +5,11 @@
 	import type { HubData } from '#lib/types';
 	import Icon from './Icon.svelte';
 
-	let { hub, unread = 0 }: { hub: HubData; unread?: number } = $props();
+	let {
+		hub,
+		unread = 0,
+		savedCount = 0
+	}: { hub: HubData; unread?: number; savedCount?: number } = $props();
 
 	const path = $derived(page.url.pathname);
 	const categories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
@@ -48,6 +52,9 @@
 			<a class="nav-link" class:active={active('/favoritos')} href={resolve('/favoritos')}>
 				<Icon name="star" />
 				Favoritos
+				{#if savedCount > 0}
+					<span class="badge">{savedCount}</span>
+				{/if}
 			</a>
 			<a class="nav-link" class:active={active('/apps')} href={resolve('/apps')}>
 				<Icon name="monitor" />

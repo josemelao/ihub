@@ -24,6 +24,7 @@
 		emptyTitle = '',
 		emptyHint = '',
 		overview = false,
+		saved = false,
 		initialFilterId = null
 	}: {
 		entries: FeedViewItem[];
@@ -35,6 +36,7 @@
 		emptyTitle?: string;
 		emptyHint?: string;
 		overview?: boolean;
+		saved?: boolean;
 		initialFilterId?: string | null;
 	} = $props();
 
@@ -51,6 +53,8 @@
 	let lastInitialFilterId = untrack(() => initialFilterId);
 	let unreadOnly = $state(false);
 	let categoryFilter = $state('all');
+	let savedQuery = $state('');
+	let savedSort = $state<'saved' | 'published'>('saved');
 	let limit = $state(10);
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
@@ -113,7 +117,23 @@
 			return matchesFilter(`${entry.item.title}\n${entry.item.summary}`, terms, exclude, mode);
 		})
 	);
-	const visible = $derived(filtered.slice(0, overview ? 5 : limit));
+	const savedTerms = $derived(savedQuery.trim().split(/\s+/).filter(Boolean));
+	const savedFiltered = $derived(
+		[...entries]
+			.filter((entry) =>
+				matchesFilter(`${entry.item.title}\n${entry.source.name}`, savedTerms, [], 'any')
+			)
+			.sort((a, b) =>
+				savedSort === 'saved'
+					? (b.savedAt ?? b.item.publishedAt ?? '').localeCompare(
+							a.savedAt ?? a.item.publishedAt ?? ''
+						)
+					: (b.item.publishedAt ?? '').localeCompare(a.item.publishedAt ?? '')
+			)
+	);
+	const savedVisible = $derived(savedFiltered.slice(0, limit));
+	const visible = $derived(saved ? savedVisible : filtered.slice(0, overview ? 5 : limit));
+	const isEmpty = $derived(saved ? savedFiltered.length === 0 : filtered.length === 0);
 
 	$effect(() => {
 		if (initialFilterId !== lastInitialFilterId) {
@@ -290,7 +310,7 @@
 					</button>
 				{/each}
 			</div>
-			{#if overview}
+			{#if overview || saved}
 				<a class="chip link" href={resolve('/feed')}>Ver feed completo</a>
 			{:else}
 				<button class="chip link" type="button" onclick={markAllRead}>Marcar tudo como lido</button>
@@ -307,7 +327,53 @@
 		</div>
 	{/if}
 
-	{#if !overview}
+	{#if saved}
+		<div class="filter-panel saved-toolbar">
+			<div class="filter-row">
+				<div class="filter-input">
+					<Icon name="filter" size={16} />
+					<label class="sr-only" for="saved-search">Buscar nos salvos</label>
+					<input
+						id="saved-search"
+						bind:value={savedQuery}
+						placeholder="Buscar nos salvos"
+						oninput={resetLimit}
+					/>
+				</div>
+				<div class="chips" role="group" aria-label="Ordenação dos salvos">
+					<button
+						class="chip"
+						class:active={savedSort === 'saved'}
+						type="button"
+						aria-pressed={savedSort === 'saved'}
+						onclick={() => {
+							savedSort = 'saved';
+							resetLimit();
+						}}
+					>
+						Salvos
+					</button>
+					<button
+						class="chip"
+						class:active={savedSort === 'published'}
+						type="button"
+						aria-pressed={savedSort === 'published'}
+						onclick={() => {
+							savedSort = 'published';
+							resetLimit();
+						}}
+					>
+						Publicados
+					</button>
+				</div>
+				<span class="muted small" style="margin-left: auto">
+					Mostrando {Math.min(limit, savedFiltered.length)} de {savedFiltered.length} salvos
+				</span>
+			</div>
+		</div>
+	{/if}
+
+	{#if !overview && !saved}
 		<div class="filter-panel">
 			<div class="filter-row">
 				<div class="filter-input">
@@ -496,22 +562,32 @@
 		</div>
 	</div>
 
-	{#if filtered.length === 0}
+	{#if isEmpty}
 		<div class="placeholder-panel">
 			<span class="placeholder-title">
-				{emptyTitle ||
-					(entries.length === 0 ? 'Nenhum post no cache ainda' : 'Nenhum post com esse filtro')}
+				{entries.length === 0
+					? emptyTitle || (saved ? 'Nenhum post salvo ainda' : 'Nenhum post no cache ainda')
+					: saved
+						? 'Nenhum salvo com essa busca'
+						: 'Nenhum post com esse filtro'}
 			</span>
 			<span class="muted">
-				{emptyHint ||
-					(entries.length === 0
-						? 'Clique em "Atualizar agora" para buscar as fontes cadastradas.'
-						: 'Ajuste a palavra-chave, o modo ou os filtros salvos.')}
+				{entries.length === 0
+					? emptyHint ||
+						(saved
+							? "Use 'Salvar para depois' nos cards do feed."
+							: 'Clique em "Atualizar agora" para buscar as fontes cadastradas.')
+					: saved
+						? 'Ajuste a busca ou o modo de ordenação.'
+						: 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
 			</span>
+			{#if saved && entries.length === 0}
+				<a class="chip link" href={resolve('/feed')}>Ir para o feed</a>
+			{/if}
 		</div>
 	{/if}
 
-	{#if !overview && limit < filtered.length}
+	{#if saved ? limit < savedFiltered.length : !overview && limit < filtered.length}
 		<button class="btn" type="button" style="align-self: center" onclick={() => (limit += 10)}>
 			Carregar mais
 		</button>

@@ -109,7 +109,7 @@ data/
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Apps do PC e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
-- **Favoritos**: atalhos fixados, filtros salvos e posts salvos; estado vazio contextual (“Nenhum post salvo ainda”). Os salvos guardam um **snapshot**, então permanecem mesmo sem fonte/cache.
+- **Favoritos**: lista focada nos posts salvos, com contador, busca local e ordenação por **salvos/publicados**; sem atalhos ou filtros duplicados. A sidebar mostra um badge com a quantidade de salvos.
 - **Apps do PC**: grade de apps por categoria, mostrando o protocolo e ação de abrir.
 
 ### Acesso rápido

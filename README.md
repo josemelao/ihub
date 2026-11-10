@@ -110,7 +110,7 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 | `/`                  | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito |
 | `/c/[slug]`          | Categoria: grupos, links/apps e feed restrito à categoria                               |
 | `/feed`              | Feed completo com filtros e fontes cadastradas                                          |
-| `/favoritos`         | Atalhos fixados, filtros salvos e posts salvos                                          |
+| `/favoritos`         | Posts salvos para depois, com busca e ordenação por salvos/publicados                   |
 | `/apps`              | Apps do PC por categoria (abrem por protocolo)                                          |
 | `/gerenciar`         | Fontes/links/apps, edição, status do feed, exportar/importar                            |
 | `/api/hub`           | JSON do hub validado (GET) e mutações validadas (POST)                                  |

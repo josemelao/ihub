@@ -29,7 +29,7 @@
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
 <div class="app-shell" style="--accent: {data.hub.settings.accent}">
-	<Sidebar hub={data.hub} {unread} />
+	<Sidebar hub={data.hub} {unread} savedCount={data.state.saved.length} />
 
 	<main class="main" id="conteudo">
 		{#if data.dataError}

@@ -15,6 +15,7 @@ export interface FeedViewItem {
 	category?: Category;
 	read: boolean;
 	saved: boolean;
+	savedAt?: string;
 }
 
 export function buildFeedView(
@@ -75,7 +76,8 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 				source: liveSource,
 				category: categoryById.get(liveSource.categoryId),
 				read: Boolean(state.read[id]),
-				saved: true
+				saved: true,
+				savedAt: state.savedItems?.[id]?.savedAt
 			});
 			continue;
 		}
@@ -108,11 +110,14 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 			source,
 			category,
 			read: Boolean(state.read[id]),
-			saved: true
+			saved: true,
+			savedAt: snapshot.savedAt
 		});
 	}
 
-	return result.sort((a, b) => (b.item.publishedAt || '').localeCompare(a.item.publishedAt || ''));
+	return result.sort((a, b) =>
+		(b.savedAt ?? b.item.publishedAt ?? '').localeCompare(a.savedAt ?? a.item.publishedAt ?? '')
+	);
 }
 
 export function backfillSavedSnapshots(hub: HubData, cache: FeedCache, state: HubState): HubState {
