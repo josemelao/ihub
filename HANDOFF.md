@@ -148,7 +148,7 @@ data/
   - Imagens 3:2; se a imagem for retrato, proporção real limitada entre 0,7 e 1,6.
   - Altura natural; texto sem corte de linhas.
   - Recalcula com ResizeObserver (imagens/filtros) e MutationObserver (novos cards).
-- **Compacto**: lista minimalista, sem resumo/meta/ações; mostra só a imagem (se houver) e o título, e o card inteiro abre o post.
+- **Compacto**: imagem (ou placeholder 96×72 com o nome da fonte), meta, título em até 2 linhas e ações; **sem excerpt**.
 - **Completo**: mesma lista do Compacto, com imagem lateral maior, resumo em ~4 linhas e botão **Expandir/Recolher** apenas quando o texto realmente transborda (medido via `scrollHeight`/`clientHeight`).
 - A escolha fica em `localStorage` (`meu-hub:feed-view`); `grid` antigo migra para `completo`.
 - A barra direita da home é **fixa/sticky, sem recolher**, com Fontes do feed, Filtros salvos (com contagem e link para `/feed?filtro=id`), Salvos recentemente e Nota rápida.
