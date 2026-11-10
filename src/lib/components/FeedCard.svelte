@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
+	import { redditPostInfo } from '#lib/feed/reddit';
 	import { youtubeVideoId } from '#lib/feed/youtube';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import Icon from './Icon.svelte';
 	import ImageLightbox from './ImageLightbox.svelte';
+	import RedditPlayerDialog from './RedditPlayerDialog.svelte';
 	import VideoPlayerDialog from './VideoPlayerDialog.svelte';
 
 	let {
@@ -23,11 +25,15 @@
 
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
 	const videoId = $derived(youtubeVideoId(entry.item.url, entry.item.thumbnail));
+	const reddit = $derived(redditPostInfo(entry.item.url));
 	let imageFailed = $state(false);
 	let naturalAspect = $state<number | null>(null);
 	let expanded = $state(false);
 	let playerOpen = $state(false);
 	let imageOpen = $state(false);
+	let redditLoading = $state(false);
+	let redditOpen = $state(false);
+	let redditVideo = $state<string | null | undefined>(undefined);
 	let summaryEl = $state<HTMLElement | null>(null);
 	let overflowing = $state(false);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
@@ -73,6 +79,43 @@
 			naturalAspect = image.naturalWidth / image.naturalHeight;
 		}
 	}
+
+	async function openRedditMedia(): Promise<void> {
+		if (!reddit) return;
+
+		if (redditVideo !== undefined) {
+			if (redditVideo) redditOpen = true;
+			else imageOpen = true;
+			return;
+		}
+
+		redditLoading = true;
+		try {
+			const response = await fetch('/api/reddit-media', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ url: entry.item.url })
+			});
+			const result = (await response.json()) as {
+				ok?: boolean;
+				isVideo?: boolean;
+				embedUrl?: string;
+			};
+
+			if (result.ok && result.isVideo && result.embedUrl) {
+				redditVideo = result.embedUrl;
+				redditOpen = true;
+			} else {
+				redditVideo = null;
+				imageOpen = true;
+			}
+		} catch {
+			redditVideo = null;
+			imageOpen = true;
+		} finally {
+			redditLoading = false;
+		}
+	}
 </script>
 
 {#if variant === 'compact'}
@@ -98,6 +141,36 @@
 					<span>{entry.source.name}</span>
 				{/if}
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={20} /></span>
+			</button>
+		{:else if reddit && hasImage}
+			<button
+				class="feed-thumb feed-thumb-button feed-thumb-reddit"
+				class:loading={redditLoading}
+				type="button"
+				aria-label={`Abrir mídia do Reddit: ${entry.item.title}`}
+				title="Abrir mídia do Reddit"
+				style={thumbStyle}
+				onclick={openRedditMedia}
+				disabled={redditLoading}
+			>
+				<img
+					src={entry.item.thumbnail ?? ''}
+					alt=""
+					loading="lazy"
+					onload={onImageLoad}
+					onerror={() => (imageFailed = true)}
+				/>
+				<span class="feed-reddit" aria-hidden="true">
+					{#if redditLoading}
+						<span class="feed-spinner"></span>
+					{:else if redditVideo}
+						<Icon name="play" size={12} />
+					{:else if redditVideo === null}
+						<Icon name="expand" size={12} />
+					{:else}
+						R
+					{/if}
+				</span>
 			</button>
 		{:else if hasImage}
 			<button
@@ -211,6 +284,36 @@
 					<span class="feed-thumb-fallback">{entry.source.name}</span>
 				{/if}
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={22} /></span>
+			</button>
+		{:else if reddit && hasImage}
+			<button
+				class="feed-thumb feed-thumb-button feed-thumb-reddit"
+				class:loading={redditLoading}
+				type="button"
+				aria-label={`Abrir mídia do Reddit: ${entry.item.title}`}
+				title="Abrir mídia do Reddit"
+				style={thumbStyle}
+				onclick={openRedditMedia}
+				disabled={redditLoading}
+			>
+				<img
+					src={entry.item.thumbnail ?? ''}
+					alt=""
+					loading="lazy"
+					onload={onImageLoad}
+					onerror={() => (imageFailed = true)}
+				/>
+				<span class="feed-reddit" aria-hidden="true">
+					{#if redditLoading}
+						<span class="feed-spinner"></span>
+					{:else if redditVideo}
+						<Icon name="play" size={13} />
+					{:else if redditVideo === null}
+						<Icon name="expand" size={13} />
+					{:else}
+						R
+					{/if}
+				</span>
 			</button>
 		{:else if hasImage}
 			<button
@@ -328,5 +431,14 @@
 		title={entry.item.title}
 		publicationUrl={entry.item.url}
 		onclose={() => (imageOpen = false)}
+	/>
+{/if}
+
+{#if redditOpen && redditVideo}
+	<RedditPlayerDialog
+		embedUrl={redditVideo}
+		postUrl={reddit?.canonicalUrl ?? entry.item.url}
+		title={entry.item.title}
+		onclose={() => (redditOpen = false)}
 	/>
 {/if}

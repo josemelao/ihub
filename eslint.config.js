@@ -42,6 +42,7 @@ export default defineConfig(
 			'src/lib/components/QuickAccess.svelte',
 			'src/lib/components/FeedCard.svelte',
 			'src/lib/components/ImageLightbox.svelte',
+			'src/lib/components/RedditPlayerDialog.svelte',
 			'src/lib/components/VideoPlayerDialog.svelte',
 			'src/lib/components/LibraryCard.svelte',
 			'src/routes/+page.svelte'
