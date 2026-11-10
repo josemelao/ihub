@@ -9,6 +9,7 @@
 	import type { FeedViewItem } from '#lib/feed/view';
 	import { snapshotFromEntry } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
+	import { clearUndoBatch, loadUndoBatch, saveUndoBatch } from '#lib/undo';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
@@ -70,8 +71,11 @@
 	let confirmMarkAll = $state(false);
 	let pendingMarkAllIds = $state<string[]>([]);
 	let undoIds = $state<string[]>([]);
+	let undoBusy = $state(false);
 	let toastMessage = $state('');
+	let toastKind = $state<'undo' | 'success' | 'error' | ''>('');
 	let undoTimer: ReturnType<typeof setTimeout> | undefined;
+	let toastTimer: ReturnType<typeof setTimeout> | undefined;
 	let reduceMotion = $state(false);
 	let viewReady = $state(false);
 	let animationsEnabled = $state(false);
@@ -95,6 +99,21 @@
 		}
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+		if (!overview && !saved) {
+			const batch = loadUndoBatch();
+			if (batch) {
+				undoIds = batch.ids;
+				showToast(
+					`${batch.ids.length} ${
+						batch.ids.length === 1 ? 'post marcado' : 'posts marcados'
+					} como lidos.`,
+					'undo',
+					0
+				);
+				scheduleUndoExpiry(batch.expiresAt);
+			}
+		}
+
 		requestAnimationFrame(() => {
 			viewReady = true;
 		});
@@ -107,6 +126,7 @@
 			clearTimeout(timer);
 			clearTimeout(viewTimer);
 			clearTimeout(undoTimer);
+			clearTimeout(toastTimer);
 		};
 	});
 
@@ -279,14 +299,54 @@
 		}
 	}
 
+	async function sendState(body: unknown): Promise<boolean> {
+		try {
+			const response = await fetch('/api/state', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(body)
+			});
+			return response.ok;
+		} catch {
+			return false;
+		}
+	}
+
 	async function postState(body: unknown): Promise<boolean> {
-		const response = await fetch('/api/state', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify(body)
-		});
-		if (response.ok) await invalidateAll();
-		return response.ok;
+		const ok = await sendState(body);
+		if (ok) await invalidateAll();
+		return ok;
+	}
+
+	function showToast(
+		message: string,
+		kind: 'undo' | 'success' | 'error',
+		durationMs: number
+	): void {
+		toastMessage = message;
+		toastKind = kind;
+		clearTimeout(toastTimer);
+		if (durationMs > 0) {
+			toastTimer = setTimeout(() => {
+				if (toastKind === kind) {
+					toastMessage = '';
+					toastKind = '';
+				}
+			}, durationMs);
+		}
+	}
+
+	function scheduleUndoExpiry(expiresAt: number): void {
+		clearTimeout(undoTimer);
+		const remaining = Math.max(0, expiresAt - Date.now());
+		undoTimer = setTimeout(() => {
+			undoIds = [];
+			clearUndoBatch();
+			if (toastKind === 'undo') {
+				toastMessage = '';
+				toastKind = '';
+			}
+		}, remaining);
 	}
 
 	function toggleRead(entry: FeedViewItem): void {
@@ -312,24 +372,44 @@
 		const ids = pendingMarkAllIds;
 		confirmMarkAll = false;
 		if (ids.length === 0) return;
-		const ok = await postState({ action: 'mark-all-read', ids });
-		if (!ok) return;
-		undoIds = ids;
-		toastMessage = `${ids.length} ${ids.length === 1 ? 'post marcado' : 'posts marcados'} como lidos.`;
-		clearTimeout(undoTimer);
-		undoTimer = setTimeout(() => {
-			toastMessage = '';
-			undoIds = [];
-		}, 10_000);
+
+		const ok = await sendState({ action: 'mark-all-read', ids });
+		if (!ok) {
+			showToast('Não foi possível marcar como lido.', 'error', 5000);
+			return;
+		}
+
+		const batch = saveUndoBatch(ids);
+		undoIds = batch.ids;
+		showToast(
+			`${ids.length} ${ids.length === 1 ? 'post marcado' : 'posts marcados'} como lidos.`,
+			'undo',
+			0
+		);
+		scheduleUndoExpiry(batch.expiresAt);
+		await invalidateAll();
 	}
 
 	async function undoMarkAllRead(): Promise<void> {
+		if (undoBusy || undoIds.length === 0) return;
+		undoBusy = true;
 		const ids = undoIds;
-		undoIds = [];
-		toastMessage = '';
-		clearTimeout(undoTimer);
-		if (ids.length === 0) return;
-		await postState({ action: 'mark-unread', ids });
+
+		try {
+			const ok = await sendState({ action: 'mark-unread', ids });
+			if (!ok) {
+				showToast('Não foi possível desfazer. Tente novamente.', 'error', 6000);
+				return;
+			}
+
+			clearUndoBatch();
+			clearTimeout(undoTimer);
+			undoIds = [];
+			showToast('Leitura desfeita.', 'success', 4000);
+			await invalidateAll();
+		} finally {
+			undoBusy = false;
+		}
 	}
 
 	async function refresh(): Promise<void> {
@@ -398,6 +478,11 @@
 				<button class="chip link" type="button" onclick={requestMarkAllRead}>
 					Marcar tudo como lido
 				</button>
+				{#if undoIds.length > 0}
+					<button class="chip" type="button" onclick={undoMarkAllRead} disabled={undoBusy}>
+						{undoBusy ? 'Desfazendo...' : 'Desfazer'}
+					</button>
+				{/if}
 				<button class="chip link" type="button" onclick={refresh} disabled={refreshing}>
 					{refreshing ? 'Atualizando...' : 'Atualizar agora'}
 				</button>
@@ -707,7 +792,9 @@
 	<div class="toast" role="status">
 		<span>{toastMessage}</span>
 		{#if undoIds.length > 0}
-			<button class="chip" type="button" onclick={undoMarkAllRead}>Desfazer</button>
+			<button class="chip" type="button" onclick={undoMarkAllRead} disabled={undoBusy}>
+				{undoBusy ? 'Desfazendo...' : 'Desfazer'}
+			</button>
 		{/if}
 	</div>
 {/if}

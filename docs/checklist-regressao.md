@@ -22,6 +22,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] Filtro, busca, lido/não lido e “Carregar mais” continuam animando.
 - [ ] Título do card abre o post em nova aba.
 - [ ] Ações de abrir, salvar e marcar lido funcionam em ícones.
+- [ ] “Marcar tudo como lido” pede confirmação; o desfazer funciona e sobrevive a reload dentro de 30 s.
 - [ ] Imagens externas e placeholders aparecem corretamente.
 
 ## YouTube

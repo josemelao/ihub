@@ -310,7 +310,7 @@ Executado em 10/11/2026 sobre o Sprint 0.
 - Métricas/fontes da home clicáveis; filtros `?fonte=` e `?nao-lidos=1`.
 - Fontes com erro só ativas; cache limpo ao mudar `target`/`type` ou remover fonte.
 - Busca de salvos com resumo e destaque no resumo.
-- Confirmação + desfazer em “marcar tudo como lido”.
+- Confirmação + desfazer em “marcar tudo como lido”; lote persistido em `sessionStorage` por 30 s, sobrevive a reload e tem botão no cabeçalho e no toast.
 - Palette com focus trap, clique fora, scroll lock e retorno de foco.
 - Switch de fonte com semântica de switch; editor com aviso de descarte.
 - Terminologia unificada, contraste melhorado, favicon e textos de filtro corrigidos.

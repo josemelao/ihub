@@ -6,24 +6,24 @@
 
 ## Entregas
 
-| ID    | Entrega                                                                                          |
-| ----- | ------------------------------------------------------------------------------------------------ |
-| UX-01 | Título do card virou link nas três visões, com foco visível.                                     |
-| UX-02 | A Command Palette agora busca posts do feed, além de links, apps e categorias.                   |
-| UX-03 | Deep links de “Adicionar” com aba, tipo, categoria e grupo.                                      |
-| UX-04 | “Nova categoria” abre a criação; “editar” de grupo abre Grupos com foco no grupo.                |
-| UX-05 | “Fontes com erro” conta apenas fontes ativas e mostra os nomes no tooltip.                       |
-| UX-06 | Cache da fonte é limpo ao mudar `target`/`type` ou remover a fonte.                              |
-| UX-07 | Métricas e fontes da home são clicáveis; feed aceita `?fonte=` e `?nao-lidos=1`.                 |
-| UX-08 | Busca de salvos inclui o resumo; resumo também recebe destaque.                                  |
-| UX-09 | “Marcar tudo como lido” pede confirmação e oferece desfazer por 10 s.                            |
-| UX-10 | Terminologia principal unificada: Favoritos, Biblioteca, Fontes, Gerenciar, Link.                |
-| UX-11 | Palette com clique fora, scroll lock, focus trap e retorno de foco.                              |
-| UX-12 | Switch de fonte com `role="switch"` e `aria-checked`.                                            |
-| UX-13 | Editor avisa antes de descartar alterações não salvas.                                           |
-| UX-14 | Removida a opacidade dos cards lidos; textos pequenos maiores; accent gera contraste automático. |
-| UX-15 | Favicon adicionado em `static/favicon.svg` e `app.html`.                                         |
-| UX-16 | “Destacar se contiver” virou “Mostrar somente se contiver” / “Ocultar se contiver”.              |
+| ID    | Entrega                                                                                                            |
+| ----- | ------------------------------------------------------------------------------------------------------------------ |
+| UX-01 | Título do card virou link nas três visões, com foco visível.                                                       |
+| UX-02 | A Command Palette agora busca posts do feed, além de links, apps e categorias.                                     |
+| UX-03 | Deep links de “Adicionar” com aba, tipo, categoria e grupo.                                                        |
+| UX-04 | “Nova categoria” abre a criação; “editar” de grupo abre Grupos com foco no grupo.                                  |
+| UX-05 | “Fontes com erro” conta apenas fontes ativas e mostra os nomes no tooltip.                                         |
+| UX-06 | Cache da fonte é limpo ao mudar `target`/`type` ou remover a fonte.                                                |
+| UX-07 | Métricas e fontes da home são clicáveis; feed aceita `?fonte=` e `?nao-lidos=1`.                                   |
+| UX-08 | Busca de salvos inclui o resumo; resumo também recebe destaque.                                                    |
+| UX-09 | “Marcar tudo como lido” pede confirmação e oferece desfazer por 30 s, persistido na sessão e com feedback de erro. |
+| UX-10 | Terminologia principal unificada: Favoritos, Biblioteca, Fontes, Gerenciar, Link.                                  |
+| UX-11 | Palette com clique fora, scroll lock, focus trap e retorno de foco.                                                |
+| UX-12 | Switch de fonte com `role="switch"` e `aria-checked`.                                                              |
+| UX-13 | Editor avisa antes de descartar alterações não salvas.                                                             |
+| UX-14 | Removida a opacidade dos cards lidos; textos pequenos maiores; accent gera contraste automático.                   |
+| UX-15 | Favicon adicionado em `static/favicon.svg` e `app.html`.                                                           |
+| UX-16 | “Destacar se contiver” virou “Mostrar somente se contiver” / “Ocultar se contiver”.                                |
 
 ## Arquivos principais
 
@@ -62,5 +62,6 @@ npm run verify
 
 ## Observações
 
+- O desfazer de “marcar tudo como lido” fica em `sessionStorage` por 30 s, sobrevive a reload/remontagem e tem botão também no cabeçalho do feed.
 - A checklist completa de regressão está em `docs/checklist-regressao.md`.
 - A próxima fase recomendada é segurança: SEC-01, SEC-03, SEC-04 e SEC-05; depois SEC-02 com allowlist de iframes e imagens.
