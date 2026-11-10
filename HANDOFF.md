@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 301 testes
+npm test        # 303 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **301/301 testes, 35 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **303/303 testes, 35 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -381,3 +381,11 @@ Executada em 10/11/2026 sobre `v0.11.0`.
 - `npm run verify` verde com **301/301 testes**.
 
 Detalhes em [`docs/triage.md`](docs/triage.md).
+
+### Correção v0.12.1 — contagens e cache órfão
+
+- Sidebar calcula não lidos a partir de `buildFeedView` (mesma visão do feed), não do cache bruto.
+- `pruneOrphanFeedCache` remove itens/status de fontes removidas ao carregar o layout.
+- No servidor real: cache de 26 → 16 posts e contador da sidebar de 11 → 1, coerente com o feed.
+- “Marcar antigos” validado com um post real de 21/10: cálculo → marcar → desfazer → estado restaurado.
+- `npm run verify` verde com **303/303 testes**.

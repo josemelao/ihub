@@ -50,7 +50,7 @@
 
 ## Verificação
 
-- `npm test`: **301/301** em 35 arquivos.
+- `npm test`: **303/303** em 35 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
@@ -60,6 +60,20 @@
   - `?filtro=` aplicou o filtro salvo;
   - filtro de teste removido e estado preservado (41 leituras).
 - Screenshot conferido em `/feed?filtro=...`.
+
+## Correção v0.12.1 — contagens e cache órfão
+
+- O total de não lidos da sidebar agora vem de `buildFeedView`, a mesma visão do feed — não do cache bruto.
+- Isso elimina a diferença “sidebar 11 × feed 1” causada por `blog-games`, uma fonte removida que ainda estava no cache.
+- `pruneOrphanFeedCache` remove itens/status de fontes que não existem mais no hub, e o layout chama a limpeza ao carregar.
+- No servidor real, o cache passou de **26 para 16 posts** e a sidebar passou a mostrar **1 não lido**.
+- “Marcar antigos” foi exercitado com um post real de 21/10:
+  1. marcado como não lido;
+  2. `1 dia` calculou exatamente 1 id elegível;
+  3. `mark-all-read` marcou o post;
+  4. `mark-unread` desfez;
+  5. estado restaurado com 41 leituras e ponto de teste removido.
+- Ação equivalente à do botão, que usa `idsOlderThan` + o mesmo endpoint/desfazer.
 
 ## Fora deste bloco
 

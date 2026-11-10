@@ -4,27 +4,15 @@
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
 	import { contrastText } from '#lib/display';
 	import { countUnread } from '#lib/feed/triage';
+	import { buildFeedView } from '#lib/feed/view';
 	import { ui } from '#lib/ui.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
 
-	const unread = $derived(data.feed.items.filter((item) => !data.state.read[item.id]).length);
-	const unreadByCategory = $derived.by(() => {
-		const sourceCategory = new Map(
-			data.hub.feedSources.map((source) => [source.id, source.categoryId])
-		);
-		return countUnread(
-			data.feed.items.map((item) => ({
-				read: Boolean(data.state.read[item.id]),
-				item: { id: item.id, publishedAt: item.publishedAt },
-				source: {
-					id: item.sourceId,
-					categoryId: sourceCategory.get(item.sourceId) ?? ''
-				}
-			}))
-		).byCategory;
-	});
+	const feedEntries = $derived(buildFeedView(data.hub, data.feed, data.state));
+	const unread = $derived(feedEntries.filter((entry) => !entry.read).length);
+	const unreadByCategory = $derived(countUnread(feedEntries).byCategory);
 
 	function onKeydown(event: KeyboardEvent): void {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {

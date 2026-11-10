@@ -1,4 +1,5 @@
 import { EMPTY_FEED_CACHE, EMPTY_STATE } from '#lib/defaults';
+import { pruneOrphanFeedCache } from '#lib/feed/cache';
 import { startScheduler } from '#lib/feed/scheduler';
 import { backfillSavedSnapshots } from '#lib/feed/view';
 import { HubValidationError } from '#lib/schema';
@@ -54,7 +55,12 @@ export const load: LayoutServerLoad = async () => {
 
 	const hub: HubData = hubResult.hub;
 	const loadedState: HubState = stateResult.value;
-	const feed: FeedCache = cacheResult.value;
+	const prunedCache = pruneOrphanFeedCache(hub, cacheResult.value);
+	let feed: FeedCache = prunedCache.cache;
+	if (prunedCache.removed > 0) {
+		feed = await storage.updateFeedCache((current) => pruneOrphanFeedCache(hub, current).cache);
+	}
+
 	const backfilled = backfillSavedSnapshots(hub, feed, loadedState);
 	const pruned = pruneState(backfilled);
 
