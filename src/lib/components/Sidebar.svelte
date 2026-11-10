@@ -8,8 +8,14 @@
 	let {
 		hub,
 		unread = 0,
+		unreadByCategory = {},
 		savedCount = 0
-	}: { hub: HubData; unread?: number; savedCount?: number } = $props();
+	}: {
+		hub: HubData;
+		unread?: number;
+		unreadByCategory?: Record<string, number>;
+		savedCount?: number;
+	} = $props();
 
 	const path = $derived(page.url.pathname);
 	const categories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
@@ -65,9 +71,9 @@
 					class="cat-link"
 					class:active={path === `/c/${cat.id}`}
 					href={resolve('/c/[slug]', { slug: cat.id })}
-					aria-label={`${cat.name}: ${counts[cat.id] ?? 0} itens e ${
+					aria-label={`${cat.name}: ${counts[cat.id] ?? 0} itens, ${
 						sourceCounts[cat.id] ?? 0
-					} fontes de feed`}
+					} fontes de feed e ${unreadByCategory[cat.id] ?? 0} não lidos`}
 				>
 					<span class="dot" style="background: {cat.color}"></span>
 					<span>{cat.name}</span>
@@ -80,6 +86,11 @@
 							<span class="cat-feed-count">· {sourceCounts[cat.id]}</span>
 						{/if}
 					</span>
+					{#if unreadByCategory[cat.id]}
+						<span class="cat-unread" title="{unreadByCategory[cat.id]} não lidos">
+							{unreadByCategory[cat.id]}
+						</span>
+					{/if}
 				</a>
 			{/each}
 			<a

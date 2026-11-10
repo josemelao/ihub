@@ -41,6 +41,7 @@
 	title="Todos os posts"
 	savedFilters={hub.savedFilters}
 	categories={hub.categories}
+	{sources}
 	showCategoryChips
 	{initialFilterId}
 	{initialSourceId}

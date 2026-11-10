@@ -125,7 +125,10 @@ const savedFilterSchema = z.object({
 	label: z.string().min(1),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),
-	matchMode: matchModeSchema
+	matchMode: matchModeSchema,
+	categoryId: z.string().min(1).nullable().optional(),
+	sourceId: z.string().min(1).nullable().optional(),
+	unreadOnly: z.boolean().optional()
 });
 
 function addIssue(ctx: z.RefinementCtx, path: (string | number)[], message: string): void {
@@ -193,6 +196,7 @@ export const hubSchema = z
 	.superRefine((hub, ctx) => {
 		const categoryIds = new Set(hub.categories.map((c) => c.id));
 		const groupCategories = new Map(hub.groups.map((g) => [g.id, g.categoryId]));
+		const sourceCategories = new Map(hub.feedSources.map((s) => [s.id, s.categoryId]));
 
 		checkDuplicateIds(ctx, hub.categories, 'categories');
 		checkDuplicateIds(ctx, hub.groups, 'groups');
@@ -203,6 +207,33 @@ export const hubSchema = z
 		checkReferences(ctx, hub.groups, 'groups', categoryIds, new Map());
 		checkReferences(ctx, hub.items, 'items', categoryIds, groupCategories);
 		checkReferences(ctx, hub.feedSources, 'feedSources', categoryIds, groupCategories);
+
+		hub.savedFilters.forEach((filter, index) => {
+			if (filter.categoryId && !categoryIds.has(filter.categoryId)) {
+				addIssue(
+					ctx,
+					['savedFilters', index, 'categoryId'],
+					`Referência quebrada: categoria '${filter.categoryId}' não existe`
+				);
+			}
+
+			if (filter.sourceId) {
+				const sourceCategory = sourceCategories.get(filter.sourceId);
+				if (sourceCategory === undefined) {
+					addIssue(
+						ctx,
+						['savedFilters', index, 'sourceId'],
+						`Referência quebrada: fonte '${filter.sourceId}' não existe`
+					);
+				} else if (filter.categoryId && sourceCategory !== filter.categoryId) {
+					addIssue(
+						ctx,
+						['savedFilters', index, 'sourceId'],
+						`Referência inconsistente: a fonte '${filter.sourceId}' pertence à categoria '${sourceCategory}', não a '${filter.categoryId}'`
+					);
+				}
+			}
+		});
 	});
 
 const feedItemSchema = z.object({

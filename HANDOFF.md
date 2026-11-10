@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 287 testes
+npm test        # 301 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **287/287 testes, 34 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **301/301 testes, 35 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -368,3 +368,16 @@ Detalhes em [`docs/data.md`](docs/data.md). Adiados: DATA-03 (progresso por font
 ### Correção pós-fase: “Backup agora” com 403
 
 O botão fazia `POST /api/backup` sem corpo; o SvelteKit tratava como formulário e o CSRF respondia 403 em texto puro, quebrando o `response.json()`. Agora o botão envia `content-type: application/json` + `{}` e usa `readJsonResponse` para mostrar o status real. POST vazio continua bloqueado de propósito. Detalhes em [`docs/data.md`](docs/data.md#nota-sobre-csrf-em-posts).
+
+## 17. Fase 2 — triagem do feed
+
+Executada em 10/11/2026 sobre `v0.11.0`.
+
+- **ORG-07**: `countUnread` calcula não lidos por categoria/fonte; Sidebar mostra badge por categoria e os chips do feed mostram contagem.
+- **ORG-13**: linha de chips de fonte (com “Todas”), filtrada pela categoria, com não lidos por fonte.
+- **ORG-08**: “Marcar antigos” com 1/3/7 dias sobre a visão atual, confirmação e desfazer em 30 s.
+- **ORG-10**: filtros salvos com `categoryId`, `sourceId` e `unreadOnly` opcionais; validação de referências; formulário rápido e editor do Gerenciar; remoção de fonte/categoria limpa o escopo.
+- Sem migração: campos opcionais e hub antigo continua válido.
+- `npm run verify` verde com **301/301 testes**.
+
+Detalhes em [`docs/triage.md`](docs/triage.md).

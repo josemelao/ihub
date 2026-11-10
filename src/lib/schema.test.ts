@@ -20,6 +20,13 @@ const base = {
 	savedFilters: []
 };
 
+function extendedBase() {
+	return structuredClone(base) as typeof base & {
+		feedSources: Record<string, unknown>[];
+		savedFilters: Record<string, unknown>[];
+	};
+}
+
 describe('parseHub', () => {
 	it('aceita um hub válido e aplica valores padrão', () => {
 		const hub = parseHub(base);
@@ -53,6 +60,86 @@ describe('parseHub', () => {
 			const issues = (error as HubValidationError).issues;
 			expect(issues.some((i) => i.message.toLowerCase().includes('duplicado'))).toBe(true);
 		}
+	});
+
+	it('aceita filtro salvo com escopo válido', () => {
+		const hubWithFilter = extendedBase();
+		hubWithFilter.feedSources.push({
+			id: 'fonte',
+			type: 'rss',
+			name: 'Fonte',
+			target: 'https://example.com/feed',
+			categoryId: 'jogos',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+		hubWithFilter.savedFilters.push({
+			id: 'filtro',
+			label: 'Só jogos',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'fonte',
+			unreadOnly: true
+		});
+
+		const parsed = parseHub(hubWithFilter);
+		expect(parsed.savedFilters[0].categoryId).toBe('jogos');
+		expect(parsed.savedFilters[0].unreadOnly).toBe(true);
+	});
+
+	it('rejeita filtro com categoria ou fonte inexistente', () => {
+		const invalid = extendedBase();
+		invalid.savedFilters.push({
+			id: 'filtro',
+			label: 'Quebrado',
+			include: ['x'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'nao-existe',
+			sourceId: 'nao-existe'
+		});
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+		try {
+			parseHub(invalid);
+		} catch (error) {
+			const issues = (error as HubValidationError).issues;
+			expect(issues.some((i) => i.path.join('.') === 'savedFilters.0.categoryId')).toBe(true);
+			expect(issues.some((i) => i.path.join('.') === 'savedFilters.0.sourceId')).toBe(true);
+		}
+	});
+
+	it('rejeita filtro cuja fonte não pertence à categoria', () => {
+		const invalid = extendedBase();
+		invalid.categories.push({ id: 'ferramentas', name: 'Ferramentas', color: '#7DD3A8', order: 2 });
+		invalid.feedSources.push({
+			id: 'fonte',
+			type: 'rss',
+			name: 'Fonte',
+			target: 'https://example.com/feed',
+			categoryId: 'ferramentas',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+		invalid.savedFilters.push({
+			id: 'filtro',
+			label: 'Inconsistente',
+			include: ['x'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'fonte'
+		});
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
 	});
 
 	it('rejeita link com URL inválida', () => {

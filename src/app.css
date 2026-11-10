@@ -253,6 +253,17 @@ button {
 	opacity: 0.75;
 }
 
+.cat-unread {
+	margin-left: 6px;
+	padding: 1px 6px;
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--accent) 22%, transparent);
+	color: var(--accent);
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
 .sidebar-footer {
 	margin-top: 0;
 	flex: 0 0 auto;

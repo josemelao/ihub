@@ -63,6 +63,9 @@
 		filterLabel: string;
 		filterInclude: string;
 		filterExclude: string;
+		filterCategoryId: string;
+		filterSourceId: string;
+		filterUnreadOnly: boolean;
 	}
 
 	function buildSeed(
@@ -113,7 +116,12 @@
 			color: source && 'color' in source ? source.color : '#8AA4FF',
 			filterLabel: source && 'label' in source ? source.label : '',
 			filterInclude: source && 'include' in source ? source.include.join(', ') : '',
-			filterExclude: source && 'exclude' in source ? source.exclude.join(', ') : ''
+			filterExclude: source && 'exclude' in source ? source.exclude.join(', ') : '',
+			filterCategoryId:
+				source && 'label' in source ? ((source as SavedFilter).categoryId ?? '') : '',
+			filterSourceId: source && 'label' in source ? ((source as SavedFilter).sourceId ?? '') : '',
+			filterUnreadOnly:
+				source && 'label' in source ? Boolean((source as SavedFilter).unreadOnly) : false
 		};
 	}
 
@@ -143,6 +151,9 @@
 	let filterLabel = $state(seed.filterLabel);
 	let filterInclude = $state(seed.filterInclude);
 	let filterExclude = $state(seed.filterExclude);
+	let filterCategoryId = $state(seed.filterCategoryId);
+	let filterSourceId = $state(seed.filterSourceId);
+	let filterUnreadOnly = $state(seed.filterUnreadOnly);
 
 	let confirmDiscard = $state(false);
 
@@ -411,7 +422,10 @@
 				label: filterLabel,
 				include: parseList(filterInclude),
 				exclude: parseList(filterExclude),
-				matchMode
+				matchMode,
+				categoryId: filterCategoryId || null,
+				sourceId: filterSourceId || null,
+				unreadOnly: filterUnreadOnly
 			};
 			payload = isEdit
 				? { action: 'update-filter', id: (initial as SavedFilter).id, filter }
@@ -735,6 +749,43 @@
 						<option value="all">Todas as palavras</option>
 					</select>
 				</div>
+				<div class="editor-row">
+					<div class="field">
+						<label for="e-filter-category">Categoria</label>
+						<select
+							id="e-filter-category"
+							bind:value={filterCategoryId}
+							onchange={() => {
+								const valid =
+									!filterSourceId ||
+									hub.feedSources.some(
+										(source) =>
+											source.id === filterSourceId &&
+											(!filterCategoryId || source.categoryId === filterCategoryId)
+									);
+								if (!valid) filterSourceId = '';
+							}}
+						>
+							<option value="">Todas</option>
+							{#each [...hub.categories].sort((a, b) => a.order - b.order) as category (category.id)}
+								<option value={category.id}>{category.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="field">
+						<label for="e-filter-source">Fonte</label>
+						<select id="e-filter-source" bind:value={filterSourceId}>
+							<option value="">Todas</option>
+							{#each hub.feedSources.filter((source) => !filterCategoryId || source.categoryId === filterCategoryId) as source (source.id)}
+								<option value={source.id}>{source.name}</option>
+							{/each}
+						</select>
+					</div>
+				</div>
+				<label class="check">
+					<input type="checkbox" bind:checked={filterUnreadOnly} />
+					Somente não lidos
+				</label>
 			{/if}
 
 			{#if notice}

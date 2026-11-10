@@ -23,6 +23,11 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] Título do card abre o post em nova aba.
 - [ ] Ações de abrir, salvar e marcar lido funcionam em ícones.
 - [ ] “Marcar tudo como lido” pede confirmação; o desfazer funciona e sobrevive a reload dentro de 30 s.
+- [x] Sidebar mostra não lidos por categoria; chips de categoria/fonte mostram contagem.
+- [x] Chips de fonte alternam o feed e respeitam a categoria selecionada.
+- [x] “Marcar antigos” (1/3/7 dias) age sobre a visão atual, confirma e permite desfazer.
+- [x] Filtro salvo com categoria/fonte/não lidos persiste e aplica o escopo após reload.
+- [x] Remover fonte ou categoria limpa o escopo dos filtros salvos.
 - [ ] Imagens externas e placeholders aparecem corretamente.
 
 ## YouTube
@@ -69,7 +74,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 
 ## Gerenciar
 
-- [ ] Abas Fontes, Itens, Grupos, Categorias, Filtros salvos e Aparência funcionam.
+- [ ] Abas Fontes, Itens, Grupos, Categorias, Filtros salvos, Backups e Aparência funcionam.
 - [ ] Editor abre compacto, sem campos esticados; cabeçalho/rodapé fixos.
 - [ ] Link/App: descrição, ícone, tags, categoria, grupo e fixar.
 - [ ] Fonte: tipo, alvo, nome, categoria, grupo, intervalo, limite, filtros, ativo e interruptor de inglês.

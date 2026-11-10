@@ -73,8 +73,9 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Tipos de fonte: **RSS/Atom** (URL direta), **Reddit** (nome do subreddit ou URL do `.rss`) e **YouTube** (`@handle`, URL do canal, ID `UC...` ou URL `feeds/videos.xml?channel_id=...`).
 - Cada fonte tem intervalo próprio e **limite de posts** (10/20/30/50/100; padrão 30), além de poder ser atualizada individualmente em **Gerenciar → Fontes**.
 - Regras por fonte: `include`/`exclude` e `matchMode` (`any`/`all`), aplicadas sobre título + resumo, sem diferenciar maiúsculas nem acentos. Uma fonte com erro não derruba as outras; o status aparece em **Gerenciar** e em **Feed completo**.
-- Filtro ao vivo no **Feed completo** e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria, "Não lidos" e destaque do trecho encontrado.
-- **+ Salvar filtro** captura a busca atual num formulário em linha com **Nome, Incluir, Excluir e Modo (qualquer/todas)**. Os filtros podem ser editados/removidos em Gerenciar → Regras.
+- Filtro ao vivo no **Feed completo** e na categoria: palavra-chave, alternância qualquer/todas, filtros salvos com contagem, chips de categoria e de fonte com não lidos, "Não lidos" e destaque do trecho encontrado.
+- **+ Salvar filtro** captura a busca atual num formulário em linha com **Nome, Incluir, Excluir, Modo, Categoria, Fonte e "Somente não lidos"**. Os filtros podem ser editados/removidos em Gerenciar → Regras.
+- **Marcar antigos** permite marcar como lido o que está na visão atual com mais de 1, 3 ou 7 dias, com desfazer por 30 segundos.
 - A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Favoritos mesmo se a fonte for removida ou o cache expirar.
 - **Vídeos do YouTube**: a thumbnail mostra um botão **▶**; o clique abre um player em modal com `youtube-nocookie` e autoplay, sem alterar o layout do Bento. O modal fecha por Esc, botão fechar ou clique fora e tem o atalho **Abrir no YouTube**.
@@ -173,7 +174,7 @@ npm run lint    # Prettier + ESLint
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md), [`docs/triage.md`](docs/triage.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 

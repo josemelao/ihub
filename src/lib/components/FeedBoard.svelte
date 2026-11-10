@@ -6,9 +6,10 @@
 	import { fade } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
 	import { matchesFilter } from '#lib/feed/filter';
+	import { countUnread, cutoffDaysAgo, idsOlderThan, resolveScope } from '#lib/feed/triage';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import { snapshotFromEntry } from '#lib/feed/view';
-	import type { Category, SavedFilter } from '#lib/types';
+	import type { Category, FeedSource, SavedFilter } from '#lib/types';
 	import { clearUndoBatch, loadUndoBatch, saveUndoBatch } from '#lib/undo';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
@@ -20,6 +21,7 @@
 		entries,
 		savedFilters = [],
 		categories = [],
+		sources = [],
 		title,
 		showCategoryChips = false,
 		contextNote = '',
@@ -34,6 +36,7 @@
 		entries: FeedViewItem[];
 		savedFilters?: SavedFilter[];
 		categories?: Category[];
+		sources?: FeedSource[];
 		title: string;
 		showCategoryChips?: boolean;
 		contextNote?: string;
@@ -86,6 +89,9 @@
 	let filterInclude = $state('');
 	let filterExclude = $state('');
 	let filterMode = $state<'any' | 'all'>('any');
+	let filterCategory = $state('all');
+	let filterSource = $state('all');
+	let filterUnreadOnly = $state(false);
 	let filterError = $state('');
 	let filterBusy = $state(false);
 
@@ -152,24 +158,41 @@
 	const terms = $derived(activeFilter ? activeFilter.include : queryTerms);
 	const exclude = $derived(activeFilter?.exclude ?? []);
 	const mode = $derived(activeFilter?.matchMode ?? modeChoice);
+	const unreadCounts = $derived(countUnread(entries));
+	const scope = $derived(
+		resolveScope(activeFilter, {
+			categoryId: categoryFilter,
+			sourceId: sourceFilter,
+			unreadOnly
+		})
+	);
+	const scopedSources = $derived(
+		sources.filter(
+			(source) =>
+				(source.enabled || source.id === scope.sourceId) &&
+				(scope.categoryId === 'all' || source.categoryId === scope.categoryId)
+		)
+	);
 
 	const base = $derived(
 		entries.filter(
 			(entry) =>
-				(categoryFilter === 'all' || entry.source.categoryId === categoryFilter) &&
-				(sourceFilter === 'all' || entry.source.id === sourceFilter)
+				(scope.categoryId === 'all' || entry.source.categoryId === scope.categoryId) &&
+				(scope.sourceId === 'all' || entry.source.id === scope.sourceId)
 		)
 	);
 	const filtered = $derived(
 		base.filter((entry) => {
-			if (unreadOnly && entry.read) return false;
+			if (scope.unreadOnly && entry.read) return false;
 			return matchesFilter(`${entry.item.title}\n${entry.item.summary}`, terms, exclude, mode);
 		})
 	);
 	const activeSource = $derived(
-		sourceFilter === 'all'
+		scope.sourceId === 'all'
 			? null
-			: (entries.find((entry) => entry.source.id === sourceFilter)?.source ?? null)
+			: (sources.find((source) => source.id === scope.sourceId) ??
+					entries.find((entry) => entry.source.id === scope.sourceId)?.source ??
+					null)
 	);
 	const savedTerms = $derived(savedQuery.trim().split(/\s+/).filter(Boolean));
 	const savedFiltered = $derived(
@@ -219,13 +242,19 @@
 	});
 
 	function countFor(filter: SavedFilter): number {
-		return base.filter((entry) =>
-			matchesFilter(
-				`${entry.item.title}\n${entry.item.summary}`,
-				filter.include,
-				filter.exclude,
-				filter.matchMode
-			)
+		const categoryId = filter.categoryId ?? 'all';
+		const sourceId = filter.sourceId ?? 'all';
+		return entries.filter(
+			(entry) =>
+				(categoryId === 'all' || entry.source.categoryId === categoryId) &&
+				(sourceId === 'all' || entry.source.id === sourceId) &&
+				(!filter.unreadOnly || !entry.read) &&
+				matchesFilter(
+					`${entry.item.title}\n${entry.item.summary}`,
+					filter.include,
+					filter.exclude,
+					filter.matchMode
+				)
 		).length;
 	}
 
@@ -238,11 +267,69 @@
 		resetLimit();
 	}
 
+	function categoryName(id: string | null | undefined): string {
+		if (!id) return 'todas as categorias';
+		return categories.find((category) => category.id === id)?.name ?? id;
+	}
+
+	function sourceName(id: string | null | undefined): string {
+		if (!id) return 'todas as fontes';
+		return sources.find((source) => source.id === id)?.name ?? id;
+	}
+
+	function chooseCategory(id: string): void {
+		if (activeFilter?.categoryId && activeFilter.categoryId !== id) activeFilterId = null;
+		categoryFilter = id;
+		const validSource =
+			id === 'all' ||
+			sourceFilter === 'all' ||
+			sources.some((source) => source.id === sourceFilter && source.categoryId === id);
+		if (!validSource) sourceFilter = 'all';
+		resetLimit();
+	}
+
+	function chooseSource(id: string): void {
+		if (activeFilter?.sourceId && activeFilter.sourceId !== id) activeFilterId = null;
+		sourceFilter = id;
+		resetLimit();
+	}
+
+	function toggleUnread(): void {
+		const next = !scope.unreadOnly;
+		if (activeFilter?.unreadOnly !== undefined && activeFilter.unreadOnly !== next) {
+			activeFilterId = null;
+		}
+		unreadOnly = next;
+		resetLimit();
+	}
+
+	function requestMarkOlder(days: number): void {
+		const ids = idsOlderThan(filtered, cutoffDaysAgo(days));
+		if (ids.length === 0) {
+			showToast('Nenhum post antigo não lido nesta visão.', 'success', 3500);
+			return;
+		}
+		pendingMarkAllIds = ids;
+		confirmMarkAll = true;
+	}
+
 	function openFilterForm(): void {
 		filterLabel = activeFilter?.label ?? '';
 		filterInclude = (activeFilter?.include ?? queryTerms).join(', ');
 		filterExclude = (activeFilter?.exclude ?? []).join(', ');
 		filterMode = activeFilter?.matchMode ?? modeChoice;
+		filterCategory =
+			activeFilter?.categoryId ?? (categoryFilter === 'all' ? 'all' : categoryFilter);
+		filterSource = activeFilter?.sourceId ?? (sourceFilter === 'all' ? 'all' : sourceFilter);
+		const sourceValid =
+			filterSource === 'all' ||
+			sources.some(
+				(source) =>
+					source.id === filterSource &&
+					(filterCategory === 'all' || source.categoryId === filterCategory)
+			);
+		if (!sourceValid) filterSource = 'all';
+		filterUnreadOnly = activeFilter?.unreadOnly ?? unreadOnly;
 		filterError = '';
 		showFilterForm = true;
 	}
@@ -279,7 +366,10 @@
 						label: filterLabel.trim(),
 						include: includeTerms,
 						exclude: excludeTerms,
-						matchMode: filterMode
+						matchMode: filterMode,
+						...(filterCategory !== 'all' ? { categoryId: filterCategory } : {}),
+						...(filterSource !== 'all' ? { sourceId: filterSource } : {}),
+						...(filterUnreadOnly ? { unreadOnly: true } : {})
 					}
 				})
 			});
@@ -588,17 +678,18 @@
 			</div>
 
 			<div class="chips">
-				{#if sourceFilter !== 'all'}
+				{#if scope.sourceId !== 'all'}
 					<button
 						class="chip active"
 						type="button"
 						title="Remover filtro de fonte"
 						onclick={() => {
+							if (activeFilter?.sourceId) activeFilterId = null;
 							sourceFilter = 'all';
 							resetLimit();
 						}}
 					>
-						Fonte: {activeSource?.name ?? sourceFilter} ×
+						Fonte: {activeSource?.name ?? scope.sourceId} ×
 					</button>
 				{/if}
 				{#if savedFilters.length > 0}
@@ -614,6 +705,12 @@
 							{filter.label} · {countFor(filter)}
 						</button>
 					{/each}
+				{/if}
+				{#if activeFilter && (activeFilter.categoryId || activeFilter.sourceId || activeFilter.unreadOnly)}
+					<span class="muted small">
+						Escopo: {categoryName(activeFilter.categoryId)} · {sourceName(activeFilter.sourceId)}
+						{activeFilter.unreadOnly ? ' · não lidos' : ''}
+					</span>
 				{/if}
 				<button class="chip link" type="button" onclick={openFilterForm}>+ Salvar filtro</button>
 			</div>
@@ -644,6 +741,41 @@
 							<option value="all">Todas</option>
 						</select>
 					</div>
+					<div class="field">
+						<label for="filter-category">Categoria</label>
+						<select
+							id="filter-category"
+							bind:value={filterCategory}
+							onchange={() => {
+								const valid =
+									filterSource === 'all' ||
+									sources.some(
+										(source) =>
+											source.id === filterSource &&
+											(filterCategory === 'all' || source.categoryId === filterCategory)
+									);
+								if (!valid) filterSource = 'all';
+							}}
+						>
+							<option value="all">Todas</option>
+							{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
+								<option value={category.id}>{category.name}</option>
+							{/each}
+						</select>
+					</div>
+					<div class="field">
+						<label for="filter-source">Fonte</label>
+						<select id="filter-source" bind:value={filterSource}>
+							<option value="all">Todas</option>
+							{#each sources.filter((source) => filterCategory === 'all' || source.categoryId === filterCategory) as source (source.id)}
+								<option value={source.id}>{source.name}</option>
+							{/each}
+						</select>
+					</div>
+					<label class="check">
+						<input type="checkbox" bind:checked={filterUnreadOnly} />
+						Somente não lidos
+					</label>
 					<div class="chips filter-save-actions">
 						<button
 							class="btn btn-primary"
@@ -672,46 +804,76 @@
 				{#if showCategoryChips}
 					<button
 						class="chip"
-						class:solid={categoryFilter === 'all'}
+						class:solid={scope.categoryId === 'all'}
 						type="button"
-						aria-pressed={categoryFilter === 'all'}
-						onclick={() => {
-							categoryFilter = 'all';
-							resetLimit();
-						}}
+						aria-pressed={scope.categoryId === 'all'}
+						onclick={() => chooseCategory('all')}
 					>
 						Tudo
 					</button>
 					{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
 						<button
 							class="chip"
-							class:active={categoryFilter === category.id}
+							class:active={scope.categoryId === category.id}
 							type="button"
-							aria-pressed={categoryFilter === category.id}
-							onclick={() => {
-								categoryFilter = category.id;
-								resetLimit();
-							}}
+							aria-pressed={scope.categoryId === category.id}
+							onclick={() => chooseCategory(category.id)}
 						>
 							{category.name}
+							{#if unreadCounts.byCategory[category.id]}
+								· {unreadCounts.byCategory[category.id]}
+							{/if}
 						</button>
 					{/each}
 				{/if}
 				<button
 					class="chip"
-					class:active={unreadOnly}
+					class:active={scope.unreadOnly}
 					type="button"
-					aria-pressed={unreadOnly}
-					onclick={() => {
-						unreadOnly = !unreadOnly;
-						resetLimit();
-					}}
+					aria-pressed={scope.unreadOnly}
+					onclick={toggleUnread}
 				>
 					Não lidos
 				</button>
 				<span class="muted small" style="margin-left: auto">
 					Mostrando {Math.min(limit, filtered.length)} de {filtered.length} posts
 				</span>
+			</div>
+
+			{#if sources.length > 0}
+				<div class="chips" role="group" aria-label="Filtrar por fonte">
+					<span class="muted small">Fontes</span>
+					<button
+						class="chip"
+						class:solid={scope.sourceId === 'all'}
+						type="button"
+						aria-pressed={scope.sourceId === 'all'}
+						onclick={() => chooseSource('all')}
+					>
+						Todas
+					</button>
+					{#each scopedSources as source (source.id)}
+						<button
+							class="chip"
+							class:active={scope.sourceId === source.id}
+							type="button"
+							aria-pressed={scope.sourceId === source.id}
+							onclick={() => chooseSource(source.id)}
+						>
+							{source.name}
+							{#if unreadCounts.bySource[source.id]}
+								· {unreadCounts.bySource[source.id]}
+							{/if}
+						</button>
+					{/each}
+				</div>
+			{/if}
+
+			<div class="chips" role="group" aria-label="Marcar posts antigos como lidos">
+				<span class="muted small">Marcar antigos:</span>
+				<button class="chip" type="button" onclick={() => requestMarkOlder(1)}>1 dia</button>
+				<button class="chip" type="button" onclick={() => requestMarkOlder(3)}>3 dias</button>
+				<button class="chip" type="button" onclick={() => requestMarkOlder(7)}>7 dias</button>
 			</div>
 		</div>
 	{/if}
@@ -781,7 +943,7 @@
 		title={`Marcar ${pendingMarkAllIds.length} ${
 			pendingMarkAllIds.length === 1 ? 'post' : 'posts'
 		} como lidos?`}
-		message="Você pode desfazer por 10 segundos depois."
+		message="Você pode desfazer por 30 segundos depois."
 		confirmLabel="Marcar como lido"
 		onconfirm={confirmMarkAllRead}
 		oncancel={() => (confirmMarkAll = false)}

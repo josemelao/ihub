@@ -68,6 +68,9 @@ export interface SavedFilter {
 	include: string[];
 	exclude: string[];
 	matchMode: MatchMode;
+	categoryId?: string | null;
+	sourceId?: string | null;
+	unreadOnly?: boolean;
 }
 
 export interface HubData {

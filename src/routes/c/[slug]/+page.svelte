@@ -97,5 +97,6 @@
 	{entries}
 	title={`Feed de ${category.name}`}
 	savedFilters={data.hub.savedFilters}
+	sources={data.hub.feedSources.filter((source) => source.categoryId === category.id)}
 	contextNote={`Só fontes desta categoria · ${sourceCount} fontes`}
 />

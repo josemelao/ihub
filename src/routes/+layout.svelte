@@ -3,12 +3,28 @@
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
 	import { contrastText } from '#lib/display';
+	import { countUnread } from '#lib/feed/triage';
 	import { ui } from '#lib/ui.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
 
 	const unread = $derived(data.feed.items.filter((item) => !data.state.read[item.id]).length);
+	const unreadByCategory = $derived.by(() => {
+		const sourceCategory = new Map(
+			data.hub.feedSources.map((source) => [source.id, source.categoryId])
+		);
+		return countUnread(
+			data.feed.items.map((item) => ({
+				read: Boolean(data.state.read[item.id]),
+				item: { id: item.id, publishedAt: item.publishedAt },
+				source: {
+					id: item.sourceId,
+					categoryId: sourceCategory.get(item.sourceId) ?? ''
+				}
+			}))
+		).byCategory;
+	});
 
 	function onKeydown(event: KeyboardEvent): void {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
@@ -35,7 +51,7 @@
 		data.hub.settings.accent
 	)}"
 >
-	<Sidebar hub={data.hub} {unread} savedCount={data.state.saved.length} />
+	<Sidebar hub={data.hub} {unread} {unreadByCategory} savedCount={data.state.saved.length} />
 
 	<main class="main" id="conteudo">
 		{#if data.dataError}

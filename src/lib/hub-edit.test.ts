@@ -255,6 +255,89 @@ describe('categorias e filtros', () => {
 		expect(removed.savedFilters).toHaveLength(0);
 	});
 
+	it('cria filtro com escopo válido', () => {
+		const hub = addSavedFilter(base(), {
+			label: 'Escopo',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch',
+			unreadOnly: true
+		});
+
+		expect(hub.savedFilters[0]).toMatchObject({
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch',
+			unreadOnly: true
+		});
+		expect(() => parseHub(hub)).not.toThrow();
+	});
+
+	it('edita filtro preservando o escopo quando não informado', () => {
+		const created = addSavedFilter(base(), {
+			label: 'Escopo',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch'
+		});
+		const id = created.savedFilters[0].id;
+		const updated = updateSavedFilter(created, id, { label: 'Novo nome' });
+
+		expect(updated.savedFilters[0]).toMatchObject({
+			label: 'Novo nome',
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch'
+		});
+	});
+
+	it('limpa o escopo com null', () => {
+		const created = addSavedFilter(base(), {
+			label: 'Escopo',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch'
+		});
+		const id = created.savedFilters[0].id;
+		const updated = updateSavedFilter(created, id, { categoryId: null, sourceId: null });
+
+		expect(updated.savedFilters[0].categoryId).toBeUndefined();
+		expect(updated.savedFilters[0].sourceId).toBeUndefined();
+	});
+
+	it('remove o escopo de fonte ao remover a fonte', () => {
+		const hub = addSavedFilter(base(), {
+			label: 'Escopo',
+			include: ['patch'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'jogos',
+			sourceId: 'reddit-patch'
+		});
+
+		const removed = removeSource(hub, 'reddit-patch');
+		expect(removed.savedFilters[0].sourceId).toBeUndefined();
+		expect(() => parseHub(removed)).not.toThrow();
+	});
+
+	it('remove o escopo de categoria ao remover a categoria', () => {
+		const hub = addSavedFilter(base(), {
+			label: 'Escopo',
+			include: ['x'],
+			exclude: [],
+			matchMode: 'any',
+			categoryId: 'trabalho'
+		});
+
+		const removed = removeCategory(hub, 'trabalho');
+		expect(removed.savedFilters[0].categoryId).toBeUndefined();
+		expect(() => parseHub(removed)).not.toThrow();
+	});
+
 	it('edita um filtro salvo sem trocar o id', () => {
 		const created = addSavedFilter(base(), {
 			label: 'patch',

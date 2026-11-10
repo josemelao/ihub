@@ -285,7 +285,13 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 }
 
 export function removeSource(hub: HubData, id: string): HubData {
-	return { ...hub, feedSources: hub.feedSources.filter((source) => source.id !== id) };
+	return {
+		...hub,
+		feedSources: hub.feedSources.filter((source) => source.id !== id),
+		savedFilters: hub.savedFilters.map((filter) =>
+			filter.sourceId === id ? { ...filter, sourceId: undefined } : filter
+		)
+	};
 }
 
 export function toggleSource(hub: HubData, id: string): HubData {
@@ -401,7 +407,13 @@ export function removeCategory(hub: HubData, id: string): HubData {
 		throw new Error('Categoria em uso: remova ou mova os grupos, itens e fontes antes.');
 	}
 
-	return { ...hub, categories: hub.categories.filter((category) => category.id !== id) };
+	return {
+		...hub,
+		categories: hub.categories.filter((category) => category.id !== id),
+		savedFilters: hub.savedFilters.map((filter) =>
+			filter.categoryId === id ? { ...filter, categoryId: undefined } : filter
+		)
+	};
 }
 
 export function updateCategory(hub: HubData, id: string, patch: Partial<CategoryInput>): HubData {
@@ -453,7 +465,10 @@ export function addSavedFilter(hub: HubData, input: SavedFilterInput): HubData {
 				label: input.label,
 				include: input.include,
 				exclude: input.exclude,
-				matchMode: input.matchMode
+				matchMode: input.matchMode,
+				...(input.categoryId ? { categoryId: input.categoryId } : {}),
+				...(input.sourceId ? { sourceId: input.sourceId } : {}),
+				...(input.unreadOnly ? { unreadOnly: true } : {})
 			}
 		]
 	};
@@ -470,16 +485,27 @@ export function updateSavedFilter(
 ): HubData {
 	return {
 		...hub,
-		savedFilters: hub.savedFilters.map((filter) =>
-			filter.id === id
-				? {
-						id: filter.id,
-						label: patch.label ?? filter.label,
-						include: patch.include ?? filter.include,
-						exclude: patch.exclude ?? filter.exclude,
-						matchMode: patch.matchMode ?? filter.matchMode
-					}
-				: filter
-		)
+		savedFilters: hub.savedFilters.map((filter) => {
+			if (filter.id !== id) return filter;
+
+			const categoryId =
+				patch.categoryId === null
+					? undefined
+					: (patch.categoryId ?? filter.categoryId ?? undefined);
+			const sourceId =
+				patch.sourceId === null ? undefined : (patch.sourceId ?? filter.sourceId ?? undefined);
+			const unreadOnly = patch.unreadOnly ?? filter.unreadOnly;
+
+			return {
+				id: filter.id,
+				label: patch.label ?? filter.label,
+				include: patch.include ?? filter.include,
+				exclude: patch.exclude ?? filter.exclude,
+				matchMode: patch.matchMode ?? filter.matchMode,
+				...(categoryId ? { categoryId } : {}),
+				...(sourceId ? { sourceId } : {}),
+				...(unreadOnly ? { unreadOnly: true } : {})
+			};
+		})
 	};
 }
