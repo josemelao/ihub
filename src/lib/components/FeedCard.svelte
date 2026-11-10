@@ -4,6 +4,7 @@
 	import { youtubeVideoId } from '#lib/feed/youtube';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import Icon from './Icon.svelte';
+	import ImageLightbox from './ImageLightbox.svelte';
 	import VideoPlayerDialog from './VideoPlayerDialog.svelte';
 
 	let {
@@ -26,6 +27,7 @@
 	let naturalAspect = $state<number | null>(null);
 	let expanded = $state(false);
 	let playerOpen = $state(false);
+	let imageOpen = $state(false);
 	let summaryEl = $state<HTMLElement | null>(null);
 	let overflowing = $state(false);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
@@ -98,13 +100,12 @@
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={20} /></span>
 			</button>
 		{:else if hasImage}
-			<a
-				class="feed-thumb"
-				href={entry.item.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label={`Abrir: ${entry.item.title}`}
+			<button
+				class="feed-thumb feed-thumb-button feed-thumb-image"
+				type="button"
+				aria-label={`Ver imagem: ${entry.item.title}`}
 				style={thumbStyle}
+				onclick={() => (imageOpen = true)}
 			>
 				<img
 					src={entry.item.thumbnail ?? ''}
@@ -113,7 +114,8 @@
 					onload={onImageLoad}
 					onerror={() => (imageFailed = true)}
 				/>
-			</a>
+				<span class="feed-zoom" aria-hidden="true"><Icon name="expand" size={14} /></span>
+			</button>
 		{:else}
 			<span class="feed-thumb compact-placeholder" style={thumbStyle}>
 				<span>{entry.source.name}</span>
@@ -211,13 +213,12 @@
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={22} /></span>
 			</button>
 		{:else if hasImage}
-			<a
-				class="feed-thumb"
-				href={entry.item.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label={`Abrir: ${entry.item.title}`}
+			<button
+				class="feed-thumb feed-thumb-button feed-thumb-image"
+				type="button"
+				aria-label={`Ver imagem: ${entry.item.title}`}
 				style={thumbStyle}
+				onclick={() => (imageOpen = true)}
 			>
 				<img
 					src={entry.item.thumbnail ?? ''}
@@ -226,7 +227,8 @@
 					onload={onImageLoad}
 					onerror={() => (imageFailed = true)}
 				/>
-			</a>
+				<span class="feed-zoom" aria-hidden="true"><Icon name="expand" size={15} /></span>
+			</button>
 		{/if}
 
 		<div class="feed-body">
@@ -318,4 +320,13 @@
 
 {#if playerOpen && videoId}
 	<VideoPlayerDialog {videoId} title={entry.item.title} onclose={() => (playerOpen = false)} />
+{/if}
+
+{#if imageOpen && entry.item.thumbnail}
+	<ImageLightbox
+		src={entry.item.thumbnail}
+		title={entry.item.title}
+		publicationUrl={entry.item.url}
+		onclose={() => (imageOpen = false)}
+	/>
 {/if}

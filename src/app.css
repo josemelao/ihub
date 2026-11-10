@@ -1401,6 +1401,34 @@ h3 {
 	height: 34px;
 }
 
+.feed-zoom {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 26px;
+	height: 26px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 7px;
+	background: rgba(8, 10, 14, 0.68);
+	color: #fff;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity var(--motion) var(--ease-motion);
+}
+
+.feed-thumb-image:hover .feed-zoom,
+.feed-thumb-image:focus-visible .feed-zoom {
+	opacity: 1;
+}
+
+@media (hover: none) {
+	.feed-thumb-image .feed-zoom {
+		opacity: 0.85;
+	}
+}
+
 .feed-thumb-fallback {
 	padding: 6px;
 	font-size: 12px;
@@ -1539,6 +1567,71 @@ h3 {
 .video-actions {
 	display: flex;
 	justify-content: flex-end;
+}
+
+/* Lightbox de imagens */
+.image-dialog {
+	width: fit-content;
+	max-width: min(1100px, calc(100% - 32px));
+	max-height: calc(100vh - 32px);
+	margin: auto;
+	padding: 0;
+	border: 1px solid var(--line);
+	border-radius: 16px;
+	background: var(--side);
+	color: var(--tx);
+	overflow: hidden;
+}
+
+.image-dialog::backdrop {
+	background: rgba(5, 7, 10, 0.9);
+}
+
+.image-body {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px;
+	min-height: 0;
+	max-height: calc(100vh - 32px);
+}
+
+.image-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.image-head h2 {
+	font-size: 16px;
+	line-height: 1.35;
+}
+
+.image-frame {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 0;
+	border-radius: 10px;
+	overflow: hidden;
+	background: #000;
+}
+
+.image-frame img {
+	display: block;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	max-height: calc(100vh - 190px);
+	object-fit: contain;
+}
+
+.image-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
 }
 
 .feed-body {

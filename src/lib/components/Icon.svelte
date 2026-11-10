@@ -69,5 +69,7 @@
 		<path d="M8 12l3 3 5-6" />
 	{:else if name === 'play'}
 		<path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none" />
+	{:else if name === 'expand'}
+		<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
 	{/if}
 </svg>
