@@ -215,4 +215,6 @@ export interface HubStorage {
 	loadBackupBundle(id: string): Promise<ExportBundle>;
 	/** Restaura hub/estado/cache de um ponto, criando antes um ponto de segurança. */
 	restoreBackup(id: string): Promise<BackupRestoreResult>;
+	/** Remove um ponto manual; backups automáticos não são afetados. */
+	deleteBackup(id: string): Promise<{ id: string }>;
 }

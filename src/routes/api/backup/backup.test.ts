@@ -8,12 +8,14 @@ import type { HubData } from '#lib/types';
 import type { RequestHandler as BackupHandler } from './$types';
 import type { RequestHandler as RestoreHandler } from './restore/$types';
 import type { RequestHandler as DownloadHandler } from './download/[id]/$types';
+import type { RequestHandler as DeleteHandler } from './[id]/$types';
 
 let dir: string;
 let storage: JsonFileStorage;
 let BACKUP_POST: BackupHandler;
 let RESTORE_POST: RestoreHandler;
 let DOWNLOAD_GET: DownloadHandler;
+let DELETE_BACKUP: DeleteHandler;
 
 function hub(name: string): HubData {
 	const data = structuredClone(EMPTY_HUB);
@@ -35,6 +37,10 @@ function downloadEvent(id: string): Parameters<DownloadHandler>[0] {
 	return { params: { id } } as Parameters<DownloadHandler>[0];
 }
 
+function deleteEvent(id: string): Parameters<DeleteHandler>[0] {
+	return { params: { id } } as Parameters<DeleteHandler>[0];
+}
+
 beforeAll(async () => {
 	dir = await mkdtemp(join(tmpdir(), 'meu-hub-backup-'));
 	process.env.HUB_DATA_DIR = dir;
@@ -42,6 +48,7 @@ beforeAll(async () => {
 	({ POST: BACKUP_POST } = await import('./+server'));
 	({ POST: RESTORE_POST } = await import('./restore/+server'));
 	({ GET: DOWNLOAD_GET } = await import('./download/[id]/+server'));
+	({ DELETE: DELETE_BACKUP } = await import('./[id]/+server'));
 });
 
 afterAll(async () => {
@@ -114,6 +121,22 @@ describe('API de pontos de restauração', () => {
 
 	it('rejeita download de id inválido', async () => {
 		const response = await DOWNLOAD_GET(downloadEvent('../hub.json'));
+		expect(response.status).toBe(400);
+	});
+
+	it('exclui um ponto e o remove da lista', async () => {
+		await storage.saveHub(hub('Para excluir'));
+		const created = await storage.backupNow();
+
+		const response = await DELETE_BACKUP(deleteEvent(created.entry.id));
+
+		expect(response.status).toBe(200);
+		const info = await storage.backupInfo();
+		expect(info.manual.some((entry) => entry.id === created.entry.id)).toBe(false);
+	});
+
+	it('rejeita exclusão de id inválido', async () => {
+		const response = await DELETE_BACKUP(deleteEvent('../hub.json'));
 		expect(response.status).toBe(400);
 	});
 });

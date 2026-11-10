@@ -69,9 +69,11 @@
   - `POST /api/backup` cria `data/backups/manual-<timestamp>/` com `hub.json`, `estado.json`, `feed-cache.json` e todas as gerações `.bak`, sob lock;
   - `GET /api/backup` lista os pontos com data, **caminho absoluto**, arquivos e tamanho;
   - `POST /api/backup/restore` valida o ponto, cria um **ponto de segurança** do estado atual e restaura hub/estado/cache;
+  - `DELETE /api/backup/[id]` exclui o ponto manual (id validado, 400 se inválido/inexistente);
   - `GET /api/backup/download/[id]` baixa o ponto como JSON importável.
 - Mantém os **10 pontos manuais mais recentes**; os mais antigos são removidos ao criar um novo.
-- Gerenciar → “Pontos de restauração”: criar, copiar caminho, baixar, restaurar (com confirmação e reload).
+- **Aba Backups** no Gerenciar (`/gerenciar?tab=backups`): criar, copiar caminho, baixar, restaurar e **excluir**.
+- Excluir remove apenas a pasta `manual-*` escolhida; os `.bak` automáticos não são afetados.
 - `GET /api/backup` também informa idade do backup automático e gerações.
 
 ### DATA-10 — Fallback na interface
@@ -81,13 +83,14 @@
 
 ## Verificação
 
-- `npm test`: **283/283** em 34 arquivos.
+- `npm test`: **287/287** em 34 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
 - Servidor real:
   - 10 leituras concorrentes preservadas (e desfeitas depois);
   - ponto criado, listado com caminho absoluto, restaurado com ponto de segurança e baixado como JSON importável;
+  - ponto de teste excluído pela API e removido da lista/disco;
   - restauração rejeitou `../hub.json` com 400;
   - preview do próprio export sem mudanças e sem conflito de settings;
   - fonte temporária criada e removida com cache consistente;
@@ -103,6 +106,6 @@
 
 ## Nota sobre CSRF em POSTs
 
-Os POSTs da interface enviam `content-type: application/json`. O SvelteKit trata POST sem `content-type` (ou `text/plain`/form) como submissão de formulário e responde **403 Cross-site POST form submissions are forbidden** antes de chegar ao handler.
+Os POSTs e DELETEs da interface enviam `content-type: application/json`. O SvelteKit trata escrita sem `content-type` (ou `text/plain`/form) como submissão de formulário e responde **403 Cross-site POST form submissions are forbidden** antes de chegar ao handler.
 
-O botão “Backup agora” passou por esse problema em 10/11/2026: ele fazia `fetch('/api/backup', { method: 'POST' })` sem corpo. A correção envia `{}` com JSON e usa `readJsonResponse` para mostrar o status/corpo real quando a resposta não for JSON. Não desative o CSRF para “resolver” isso.
+O botão “Criar ponto de restauração” passou por esse problema em 10/11/2026 (POST vazio) e o “Excluir” também (DELETE sem header). A correção envia o header JSON e usa `readJsonResponse` para mostrar o status/corpo real quando a resposta não for JSON. Não desative o CSRF para “resolver” isso.

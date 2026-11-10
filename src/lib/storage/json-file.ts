@@ -637,6 +637,12 @@ export class JsonFileStorage implements HubStorage {
 
 		return { restored: entry, safety: safety.entry };
 	}
+
+	async deleteBackup(id: string): Promise<{ id: string }> {
+		const entry = await this.requireManualBackup(id);
+		await rm(entry.path, { recursive: true, force: true });
+		return { id: entry.id };
+	}
 }
 
 export function isSafeBackupId(value: string): boolean {

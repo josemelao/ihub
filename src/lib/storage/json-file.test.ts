@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { JsonFileStorage } from './json-file';
@@ -735,5 +735,26 @@ describe('JsonFileStorage', () => {
 
 		const info = await storage.backupInfo();
 		expect(info.manual).toHaveLength(10);
+	});
+
+	it('exclui um ponto manual e preserva os backups automáticos', async () => {
+		await storage.saveHub(hub('A'));
+		const first = await storage.backupNow();
+		await storage.saveHub(hub('B'));
+		const second = await storage.backupNow();
+
+		await storage.deleteBackup(first.entry.id);
+
+		const info = await storage.backupInfo();
+		expect(info.manual.map((entry) => entry.id)).toEqual([second.entry.id]);
+		await expect(stat(first.entry.path)).rejects.toThrow();
+		expect(await storage.loadHubFromBackup()).not.toBeNull();
+	});
+
+	it('não exclui ponto inexistente ou com id inválido', async () => {
+		await expect(storage.deleteBackup('../hub.json')).rejects.toThrow(HubValidationError);
+		await expect(storage.deleteBackup('manual-2020-01-01T00-00-00-000Z')).rejects.toThrow(
+			HubValidationError
+		);
 	});
 });

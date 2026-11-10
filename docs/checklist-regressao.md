@@ -107,10 +107,12 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] Cache inválido impede a remoção da fonte.
 - [x] Nenhum `.tmp-*` fica em `data/` após salvar.
 - [x] Existem 7 gerações de `.bak` após gravações suficientes.
-- [x] “Backup agora” cria pasta datada e o Gerenciar mostra a idade.
+- [x] “Criar ponto de restauração” cria pasta datada e o Gerenciar mostra a idade.
+- [x] Aba Backups concentra a área e `?tab=backups` abre direto.
 - [x] Pontos de restauração listam data, caminho absoluto, arquivos e tamanho.
 - [x] “Restaurar” pede confirmação, cria ponto de segurança e recarrega a página.
 - [x] “Baixar” gera um JSON importável daquele ponto.
+- [x] “Excluir” remove o ponto com confirmação e não afeta os `.bak` automáticos.
 - [x] Restauração rejeita id com travessia de caminho e hub inválido.
 - [x] Só os 10 pontos manuais mais recentes são mantidos.
 - [x] Preview de importação mostra novos/atualizados/removidos.

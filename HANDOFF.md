@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 283 testes
+npm test        # 287 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **283/283 testes, 34 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **287/287 testes, 34 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -356,6 +356,14 @@ Detalhes em [`docs/data.md`](docs/data.md). Adiados: DATA-03 (progresso por font
 - `GET /api/backup/download/[id]` baixa o ponto como JSON importável.
 - Gerenciar mostra a lista com **Copiar caminho**, **Baixar** e **Restaurar**; restaurar pede confirmação e recarrega.
 - Retenção: 10 pontos manuais mais recentes.
+
+### Aba Backups e exclusão (v0.11.0)
+
+- A área de backups virou aba própria (`/gerenciar?tab=backups`), com contador e sem poluir o cabeçalho.
+- `DELETE /api/backup/[id]` remove um ponto manual; id inválido/inexistente retorna 400.
+- A lista ganhou **Excluir** com `ConfirmDialog`; `.bak` automáticos não são tocados.
+- Escritas usam `content-type: application/json` também no DELETE (CSRF do SvelteKit).
+- `npm run verify` verde com **287/287 testes**.
 
 ### Correção pós-fase: “Backup agora” com 403
 

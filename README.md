@@ -200,8 +200,8 @@ Eles não fazem parte do build do app.
 - CSP está em **Report-Only** com allowlist para YouTube, Reddit, Google Fonts e imagens; a troca para enforce fica para depois da revisão do console.
 - Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
 - Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
-- Backups automáticos mantêm `.bak` + 6 gerações rotativas. “Pontos de restauração” criam cópias datadas em `data/backups/`, listadas no Gerenciar com caminho absoluto, download e restauração (com ponto de segurança antes).
-- POSTs da interface enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST vazio/form com **403** (proteção intencional).
+- Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão.
+- Escritas da interface (POST/DELETE) enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST/DELETE vazio ou form com **403** (proteção intencional).
 - Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
 - `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.
 - Sem login, sem versão online, sem tema claro.

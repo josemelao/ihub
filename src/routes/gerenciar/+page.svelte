@@ -165,10 +165,11 @@
 		reddit: 'Reddit'
 	};
 
-	type Tab = 'fontes' | 'itens' | 'grupos' | 'categorias' | 'filtros' | 'aparencia';
+	type Tab = 'fontes' | 'itens' | 'grupos' | 'categorias' | 'filtros' | 'backups' | 'aparencia';
 	type EditorKind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
 
 	let tab = $state<Tab>('fontes');
+	let backupInfo = $state<BackupInfo | null>(null);
 	let itemTypeFilter = $state<'todos' | 'link' | 'app'>('todos');
 	let sourceQuery = $state('');
 	let itemQuery = $state('');
@@ -202,6 +203,7 @@
 		{ id: 'grupos' as const, label: `Grupos · ${hub.groups.length}` },
 		{ id: 'categorias' as const, label: `Categorias · ${hub.categories.length}` },
 		{ id: 'filtros' as const, label: `Filtros salvos · ${hub.savedFilters.length}` },
+		{ id: 'backups' as const, label: `Backups · ${backupInfo?.manual.length ?? 0}` },
 		{ id: 'aparencia' as const, label: 'Aparência' }
 	]);
 
@@ -240,7 +242,15 @@
 	onMount(() => {
 		const params = page.url.searchParams;
 		const requestedTab = params.get('tab');
-		const validTabs: Tab[] = ['fontes', 'itens', 'grupos', 'categorias', 'filtros', 'aparencia'];
+		const validTabs: Tab[] = [
+			'fontes',
+			'itens',
+			'grupos',
+			'categorias',
+			'filtros',
+			'backups',
+			'aparencia'
+		];
 		if (requestedTab && validTabs.includes(requestedTab as Tab)) {
 			tab = requestedTab as Tab;
 		}
@@ -376,12 +386,13 @@
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
 
-	let backupInfo = $state<BackupInfo | null>(null);
 	let backupBusy = $state(false);
 	let backupMessage = $state('');
 	let backupFailed = $state(false);
 	let restoringId = $state<string | null>(null);
 	let confirmingBackup = $state<BackupEntry | null>(null);
+	let deletingBackupId = $state<string | null>(null);
+	let confirmingBackupDelete = $state<BackupEntry | null>(null);
 	let copiedBackupId = $state<string | null>(null);
 
 	function formatBytes(value: number): string {
@@ -490,6 +501,40 @@
 			backupFailed = true;
 		} finally {
 			restoringId = null;
+		}
+	}
+
+	async function confirmDeleteBackup(): Promise<void> {
+		if (!confirmingBackupDelete) return;
+		const entry = confirmingBackupDelete;
+		confirmingBackupDelete = null;
+		deletingBackupId = entry.id;
+		backupMessage = '';
+		backupFailed = false;
+
+		try {
+			const response = await fetch(`/api/backup/${encodeURIComponent(entry.id)}`, {
+				method: 'DELETE',
+				headers: { 'content-type': 'application/json' }
+			});
+			const result = await readJsonResponse<{ ok?: boolean; error?: string }>(response);
+
+			if (!response.ok || !result.ok) {
+				backupMessage = result.error ?? 'Falha ao excluir o ponto.';
+				backupFailed = true;
+				return;
+			}
+
+			backupMessage = `Ponto ${entry.id} excluído.`;
+			await loadBackupInfo();
+		} catch (caught) {
+			backupMessage =
+				caught instanceof HttpResponseError
+					? `Falha ao excluir: ${caught.message}`
+					: `Falha de rede ao excluir: ${(caught as Error).message}`;
+			backupFailed = true;
+		} finally {
+			deletingBackupId = null;
 		}
 	}
 
@@ -724,7 +769,7 @@
 				<Icon name="plus" size={16} />
 				App
 			</button>
-		{:else if tab !== 'aparencia'}
+		{:else if tab !== 'aparencia' && tab !== 'backups'}
 			<button class="btn btn-primary" type="button" onclick={() => openEditor(addKind)}>
 				<Icon name="plus" size={16} />
 				{addLabel}
@@ -746,18 +791,6 @@
 		<Icon name="refresh" size={16} />
 		{refreshing ? 'Atualizando...' : 'Atualizar feed'}
 	</button>
-	<button class="btn" type="button" onclick={runBackup} disabled={backupBusy}>
-		<Icon name="download" size={16} />
-		{backupBusy ? 'Criando ponto...' : 'Criar ponto de restauração'}
-	</button>
-	{#if backupInfo?.lastAutomaticAt}
-		<span class="muted small">
-			Último backup automático: {relativeTime(backupInfo.lastAutomaticAt)}
-			{#if backupInfo.generations > 1}
-				· {backupInfo.generations} gerações
-			{/if}
-		</span>
-	{/if}
 	<input
 		bind:this={fileInput}
 		type="file"
@@ -765,60 +798,6 @@
 		onchange={onFileChange}
 		hidden
 	/>
-</div>
-
-{#if backupMessage}
-	<div class:alert={backupFailed} class:notice={!backupFailed} role="status">
-		{backupMessage}
-	</div>
-{/if}
-
-<div class="panel section">
-	<div class="section-head">
-		<h2 style="font-size: 16px">Pontos de restauração</h2>
-		<span class="muted small">
-			{backupInfo?.manual.length ?? 0} de {backupInfo?.manualRetention ?? 10}
-		</span>
-	</div>
-	<p class="muted small" style="margin-top: 4px">
-		Cópias locais em <code>{backupInfo?.root ?? 'data/backups'}</code>. Os backups automáticos
-		continuam a cada gravação.
-	</p>
-
-	{#if backupInfo?.manual.length}
-		<ul class="restore-list">
-			{#each backupInfo.manual as entry (entry.id)}
-				<li class="restore-item">
-					<div class="restore-meta">
-						<strong>{relativeTime(entry.createdAt)}</strong>
-						<code class="restore-path">{entry.path}</code>
-						<span class="muted small">
-							{entry.files} arquivos · {formatBytes(entry.sizeBytes)}
-						</span>
-					</div>
-					<div class="chips">
-						<button class="btn" type="button" onclick={() => copyBackupPath(entry)}>
-							{copiedBackupId === entry.id ? 'Copiado' : 'Copiar caminho'}
-						</button>
-						<a class="btn" href={resolve('/api/backup/download/[id]', { id: entry.id })} download>
-							<Icon name="download" size={16} />
-							Baixar
-						</a>
-						<button
-							class="btn"
-							type="button"
-							onclick={() => (confirmingBackup = entry)}
-							disabled={restoringId !== null}
-						>
-							{restoringId === entry.id ? 'Restaurando...' : 'Restaurar'}
-						</button>
-					</div>
-				</li>
-			{/each}
-		</ul>
-	{:else}
-		<span class="muted small"> Nenhum ponto manual ainda. Crie um antes de mudanças grandes. </span>
-	{/if}
 </div>
 
 {#if refreshMessage}
@@ -1358,6 +1337,73 @@
 			</p>
 		{/if}
 	</div>
+{:else if tab === 'backups'}
+	<div class="section-head">
+		<h2 style="font-size: 16px">Pontos de restauração</h2>
+		<div class="chips">
+			<button class="btn btn-primary" type="button" onclick={runBackup} disabled={backupBusy}>
+				<Icon name="download" size={16} />
+				{backupBusy ? 'Criando ponto...' : 'Criar ponto de restauração'}
+			</button>
+		</div>
+	</div>
+	<p class="muted small" style="margin-top: 4px">
+		Cópias locais em <code>{backupInfo?.root ?? 'data/backups'}</code>.
+		{#if backupInfo?.lastAutomaticAt}
+			Último backup automático: {relativeTime(backupInfo.lastAutomaticAt)} ·
+			{backupInfo.generations} gerações.
+		{/if}
+		{backupInfo?.manual.length ?? 0} de {backupInfo?.manualRetention ?? 10} pontos usados.
+	</p>
+
+	{#if backupMessage}
+		<div class:alert={backupFailed} class:notice={!backupFailed} role="status">
+			{backupMessage}
+		</div>
+	{/if}
+
+	{#if backupInfo?.manual.length}
+		<ul class="restore-list">
+			{#each backupInfo.manual as entry (entry.id)}
+				<li class="restore-item">
+					<div class="restore-meta">
+						<strong>{relativeTime(entry.createdAt)}</strong>
+						<code class="restore-path">{entry.path}</code>
+						<span class="muted small">
+							{entry.files} arquivos · {formatBytes(entry.sizeBytes)}
+						</span>
+					</div>
+					<div class="chips">
+						<button class="btn" type="button" onclick={() => copyBackupPath(entry)}>
+							{copiedBackupId === entry.id ? 'Copiado' : 'Copiar caminho'}
+						</button>
+						<a class="btn" href={resolve('/api/backup/download/[id]', { id: entry.id })} download>
+							<Icon name="download" size={16} />
+							Baixar
+						</a>
+						<button
+							class="btn"
+							type="button"
+							onclick={() => (confirmingBackup = entry)}
+							disabled={restoringId !== null || deletingBackupId !== null}
+						>
+							{restoringId === entry.id ? 'Restaurando...' : 'Restaurar'}
+						</button>
+						<button
+							class="btn"
+							type="button"
+							onclick={() => (confirmingBackupDelete = entry)}
+							disabled={restoringId !== null || deletingBackupId !== null}
+						>
+							{deletingBackupId === entry.id ? 'Excluindo...' : 'Excluir'}
+						</button>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<p class="muted">Nenhum ponto manual ainda. Crie um antes de mudanças grandes.</p>
+	{/if}
 {:else}
 	<div class="appearance-card">
 		<span class="appearance-preview" style="background: {accent}" aria-hidden="true"></span>
@@ -1416,5 +1462,15 @@
 		confirmLabel="Restaurar"
 		onconfirm={confirmRestoreBackup}
 		oncancel={() => (confirmingBackup = null)}
+	/>
+{/if}
+
+{#if confirmingBackupDelete}
+	<ConfirmDialog
+		title="Excluir este ponto?"
+		message={`A pasta ${confirmingBackupDelete.id} será removida de data/backups e não poderá ser recuperada.`}
+		confirmLabel="Excluir"
+		onconfirm={confirmDeleteBackup}
+		oncancel={() => (confirmingBackupDelete = null)}
 	/>
 {/if}
