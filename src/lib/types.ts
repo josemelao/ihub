@@ -27,6 +27,7 @@ interface ItemBase {
 	tags: string[];
 	pinned: boolean;
 	order: number;
+	icon?: string;
 }
 
 export interface LinkItem extends ItemBase {

@@ -40,6 +40,55 @@ export function itemKind(item: HubItem): string {
 	return item.type === 'app' ? 'App do PC' : 'Site';
 }
 
+export function itemPlatform(item: HubItem): 'PC' | 'Web' {
+	return item.type === 'app' ? 'PC' : 'Web';
+}
+
+const APP_ICON_SLUGS: Record<string, string> = {
+	steam: 'steam',
+	discord: 'discord',
+	vscode: 'visualstudiocode',
+	obsidian: 'obsidian',
+	spotify: 'spotify',
+	slack: 'slack',
+	notion: 'notion',
+	figma: 'figma',
+	zoom: 'zoom',
+	telegram: 'telegram',
+	whatsapp: 'whatsapp',
+	'ms-word': 'microsoftword',
+	'ms-excel': 'microsoftexcel',
+	'ms-powerpoint': 'microsoftpowerpoint',
+	'ms-outlook': 'microsoftoutlook'
+};
+
+export function faviconUrl(url: string): string | null {
+	try {
+		const hostname = new URL(url).hostname;
+		if (!hostname) return null;
+		return `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
+	} catch {
+		return null;
+	}
+}
+
+export function appIconUrl(value: string, color = '#C9D2E3'): string | null {
+	const scheme = value.split(':')[0]?.toLowerCase() ?? '';
+	const slug = APP_ICON_SLUGS[scheme];
+	if (!slug) return null;
+	return `https://cdn.simpleicons.org/${slug}/${color.replace('#', '')}`;
+}
+
+export function itemIconUrl(item: HubItem, color = '#C9D2E3'): string | null {
+	const custom = item.icon?.trim();
+	if (custom) {
+		return /^https?:\/\//i.test(custom)
+			? custom
+			: `https://cdn.simpleicons.org/${custom}/${color.replace('#', '')}`;
+	}
+	return item.type === 'link' ? faviconUrl(item.url) : appIconUrl(item.launch.value, color);
+}
+
 export function itemHref(item: HubItem): string {
 	return item.type === 'app' ? item.launch.value : item.url;
 }

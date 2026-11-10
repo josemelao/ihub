@@ -4,6 +4,7 @@
 	import type {
 		Category,
 		FeedSource,
+		Group,
 		HubData,
 		HubItem,
 		SavedFilter,
@@ -11,7 +12,7 @@
 	} from '#lib/types';
 	import Icon from './Icon.svelte';
 
-	type Kind = 'link' | 'app' | 'source' | 'category' | 'filter';
+	type Kind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
 
 	let {
 		kind,
@@ -21,7 +22,7 @@
 	}: {
 		kind: Kind;
 		hub: HubData;
-		initial?: HubItem | FeedSource | Category | SavedFilter | null;
+		initial?: HubItem | FeedSource | Category | Group | SavedFilter | null;
 		onclose: () => void;
 	} = $props();
 
@@ -31,6 +32,7 @@
 		name: string;
 		url: string;
 		launchValue: string;
+		icon: string;
 		categoryId: string;
 		groupId: string;
 		tags: string;
@@ -49,7 +51,7 @@
 	}
 
 	function buildSeed(
-		source: HubItem | FeedSource | Category | SavedFilter | null,
+		source: HubItem | FeedSource | Category | Group | SavedFilter | null,
 		data: HubData
 	): Seed {
 		const isFeedSource =
@@ -63,6 +65,7 @@
 			name: (source && 'name' in source ? source.name : '') || '',
 			url: item?.type === 'link' ? item.url : '',
 			launchValue: item?.type === 'app' ? item.launch.value : '',
+			icon: item?.icon ?? '',
 			categoryId:
 				(source && 'categoryId' in source ? source.categoryId : data.categories[0]?.id) ?? '',
 			groupId: (source && 'groupId' in source ? source.groupId : '') ?? '',
@@ -87,6 +90,7 @@
 	let name = $state(seed.name);
 	let url = $state(seed.url);
 	let launchValue = $state(seed.launchValue);
+	let icon = $state(seed.icon);
 	let categoryId = $state(seed.categoryId);
 	let groupId = $state(seed.groupId);
 	let tags = $state(seed.tags);
@@ -122,7 +126,9 @@
 					? 'app'
 					: kind === 'category'
 						? 'categoria'
-						: 'filtro'
+						: kind === 'group'
+							? 'grupo'
+							: 'filtro'
 	);
 	const title = $derived(`${isEdit ? 'Editar' : 'Adicionar'} ${kindLabel}`);
 
@@ -204,6 +210,7 @@
 				name,
 				categoryId,
 				...(groupId ? { groupId } : {}),
+				...(icon.trim() ? { icon: icon.trim() } : {}),
 				tags: parseList(tags),
 				pinned
 			};
@@ -217,6 +224,7 @@
 						patch: {
 							...base,
 							groupId: groupId || null,
+							icon: icon.trim() || null,
 							...(kind === 'link' ? { url } : { launchValue })
 						}
 					}
@@ -251,6 +259,14 @@
 						category: { name, color }
 					}
 				: { action: 'add-category', category: { name, color } };
+		} else if (kind === 'group') {
+			payload = isEdit
+				? {
+						action: 'update-group',
+						id: (initial as Group).id,
+						groupPatch: { name, categoryId }
+					}
+				: { action: 'add-group', group: { name, categoryId } };
 		} else {
 			const filter = {
 				label: filterLabel,
@@ -325,6 +341,15 @@
 					<span class="muted small">Ex.: steam://, discord://, vscode://, obsidian://</span>
 				</div>
 			{/if}
+
+			<div class="field">
+				<label for="e-icon">Ícone (opcional)</label>
+				<input id="e-icon" bind:value={icon} placeholder="github ou https://..." />
+				<span class="muted small">
+					Slug do Simple Icons (ex.: <code>steam</code>) ou URL de uma imagem. Vazio usa o favicon
+					(links) ou o ícone do protocolo (apps).
+				</span>
+			</div>
 
 			<div class="editor-row">
 				<div class="field">
@@ -460,6 +485,19 @@
 			<div class="field">
 				<label for="e-cat-color">Cor</label>
 				<input id="e-cat-color" type="color" bind:value={color} />
+			</div>
+		{:else if kind === 'group'}
+			<div class="field">
+				<label for="e-group-name">Nome do grupo</label>
+				<input id="e-group-name" bind:value={name} required maxlength="80" />
+			</div>
+			<div class="field">
+				<label for="e-group-cat">Categoria</label>
+				<select id="e-group-cat" bind:value={categoryId} required>
+					{#each hub.categories as category (category.id)}
+						<option value={category.id}>{category.name}</option>
+					{/each}
+				</select>
 			</div>
 		{:else}
 			<div class="field">

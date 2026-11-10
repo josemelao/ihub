@@ -15,6 +15,10 @@ import {
 	updateItem,
 	updateSource,
 	updateSavedFilter,
+	addGroup,
+	updateGroup,
+	removeGroup,
+	moveGroup,
 	moveCategory,
 	type CategoryInput,
 	type SavedFilterInput,
@@ -123,6 +127,15 @@ describe('updateItem e removeItem', () => {
 			name: 'Wiki nova',
 			url: 'https://example.com/new'
 		});
+	});
+
+	it('define e remove ícone do item', () => {
+		const withIcon = updateItem(base(), 'wiki', { icon: 'steam' });
+		expect(withIcon.items.find((item) => item.id === 'wiki')?.icon).toBe('steam');
+
+		const cleared = updateItem(withIcon, 'wiki', { icon: null });
+		expect(cleared.items.find((item) => item.id === 'wiki')?.icon).toBeUndefined();
+		expect(() => parseHub(cleared)).not.toThrow();
 	});
 
 	it('remove item', () => {
@@ -282,5 +295,51 @@ describe('categorias e filtros', () => {
 	it('não permite trocar o id da fonte via patch', () => {
 		const hub = updateSource(base(), 'reddit-patch', { id: 'outro' } as SourcePatch);
 		expect(hub.feedSources[0].id).toBe('reddit-patch');
+	});
+});
+
+describe('grupos', () => {
+	it('cria grupo no fim da categoria', () => {
+		const hub = addGroup(base(), { name: 'Risk of Rain', categoryId: 'jogos' });
+		const created = hub.groups.find((group) => group.name === 'Risk of Rain');
+		expect(created?.id).toBe('risk-of-rain');
+		expect(created?.order).toBe(2);
+	});
+
+	it('renomeia grupo e move categoria dos itens/fontes junto', () => {
+		const hub = updateGroup(base(), 'darktide', {
+			name: 'Darktide novo',
+			categoryId: 'trabalho'
+		});
+		expect(hub.groups.find((group) => group.id === 'darktide')).toMatchObject({
+			name: 'Darktide novo',
+			categoryId: 'trabalho',
+			order: 1
+		});
+		expect(hub.items.every((item) => item.categoryId === 'trabalho')).toBe(true);
+		expect(hub.feedSources[0].categoryId).toBe('trabalho');
+	});
+
+	it('não remove grupo em uso', () => {
+		expect(() => removeGroup(base(), 'darktide')).toThrow(/em uso/i);
+	});
+
+	it('não remove grupo usado só por fonte', () => {
+		const withGroup = addGroup(base(), { name: 'Só fonte', categoryId: 'jogos' });
+		const withSource = updateSource(withGroup, 'reddit-patch', { groupId: 'so-fonte' });
+		expect(() => removeGroup(withSource, 'so-fonte')).toThrow(/em uso/i);
+	});
+
+	it('remove grupo vazio', () => {
+		const withGroup = addGroup(base(), { name: 'Vazio', categoryId: 'jogos' });
+		const removed = removeGroup(withGroup, 'vazio');
+		expect(removed.groups.map((group) => group.id)).not.toContain('vazio');
+	});
+
+	it('reordena grupos dentro da categoria', () => {
+		const withGroup = addGroup(base(), { name: 'Segundo', categoryId: 'jogos' });
+		const moved = moveGroup(withGroup, 'segundo', 'up');
+		expect(moved.groups.find((group) => group.id === 'segundo')?.order).toBe(1);
+		expect(moved.groups.find((group) => group.id === 'darktide')?.order).toBe(2);
 	});
 });

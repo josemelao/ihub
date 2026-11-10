@@ -56,9 +56,9 @@
 					<span class="badge">{savedCount}</span>
 				{/if}
 			</a>
-			<a class="nav-link" class:active={active('/apps')} href={resolve('/apps')}>
+			<a class="nav-link" class:active={active('/biblioteca')} href={resolve('/biblioteca')}>
 				<Icon name="monitor" />
-				Apps do PC
+				Biblioteca
 			</a>
 		</div>
 

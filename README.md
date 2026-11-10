@@ -53,6 +53,17 @@ Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não qu
 
 O schema e as referências (categoria/grupo inexistente, id duplicado, URL inválida, protocolo inseguro) são validados por Zod em `src/lib/schema.ts`.
 
+### Biblioteca e ícones
+
+A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo lugar:
+
+- Abas **Todos / Apps do PC / Navegador** e busca local por nome, grupo, categoria ou tag.
+- Organização por **categoria → grupo**. Um grupo pode combinar serviços do mesmo assunto (ex.: Darktide = app na Steam + site de builds + wiki + subreddit), e cada item mantém seu `type` (`app` ou `link`).
+- Itens sem grupo aparecem em **“Sem grupo”**.
+- **Ícones**: links usam o favicon do domínio (via DuckDuckGo) e apps usam o ícone do protocolo (Simple Icons, ex.: `steam://` → Steam). Se a imagem falhar, aparecem as iniciais.
+- O campo opcional `icon` sobrescreve o ícone: use um slug do Simple Icons (`github`) ou uma URL `https://...`.
+- A rota antiga `/apps` redireciona para `/biblioteca`.
+
 ### Feed (M3)
 
 - Busca automática a cada ~60 s apenas nas fontes cujo intervalo venceu, e também pelo botão **Atualizar agora** (home, categoria, feed e Gerenciar).
@@ -84,7 +95,8 @@ Na tela **Gerenciar**:
 Em **Gerenciar**, as abas são funcionais:
 
 - **Fontes do feed**: adicionar, editar, remover e ligar/desligar; status de cada fonte.
-- **Links** e **Apps do PC**: adicionar, editar, remover e reordenar (↑/↓).
+- **Links** e **Apps do PC**: adicionar, editar, remover e reordenar (↑/↓), com ícone opcional (slug do Simple Icons ou URL).
+- **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens).
 - **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso).
 - **Regras do feed**: adicionar/remover filtros salvos.
 
@@ -111,8 +123,9 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 | `/c/[slug]`          | Categoria: grupos, links/apps e feed restrito à categoria                               |
 | `/feed`              | Feed completo com filtros e fontes cadastradas                                          |
 | `/favoritos`         | Posts salvos para depois, com busca e ordenação por salvos/publicados                   |
-| `/apps`              | Apps do PC por categoria (abrem por protocolo)                                          |
-| `/gerenciar`         | Fontes/links/apps, edição, status do feed, exportar/importar                            |
+| `/biblioteca`        | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps            |
+| `/apps`              | Redireciona para `/biblioteca`                                                          |
+| `/gerenciar`         | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                     |
 | `/api/hub`           | JSON do hub validado (GET) e mutações validadas (POST)                                  |
 | `/api/export`        | Download do bundle (hub + estado)                                                       |
 | `/api/import`        | Importação validada (substituir/mesclar)                                                |

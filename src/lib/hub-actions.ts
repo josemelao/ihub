@@ -1,22 +1,27 @@
 import {
 	addApp,
 	addCategory,
+	addGroup,
 	addLink,
 	addSavedFilter,
 	addSource,
 	moveCategory,
+	moveGroup,
 	moveItem,
 	removeCategory,
+	removeGroup,
 	removeItem,
 	removeSavedFilter,
 	removeSource,
 	toggleSource,
 	updateCategory,
+	updateGroup,
 	updateItem,
 	updateSource,
 	updateSavedFilter,
 	type AppInput,
 	type CategoryInput,
+	type GroupInput,
 	type ItemPatch,
 	type LinkInput,
 	type SavedFilterInput,
@@ -34,6 +39,8 @@ export interface HubPayload {
 	source?: SourceInput;
 	sourcePatch?: SourcePatch;
 	category?: CategoryInput;
+	group?: GroupInput;
+	groupPatch?: Partial<GroupInput>;
 	filter?: SavedFilterInput;
 }
 
@@ -83,6 +90,19 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 		case 'add-category':
 			if (!payload.category) throw new Error('Informe a categoria.');
 			return addCategory(hub, payload.category);
+
+		case 'add-group':
+			if (!payload.group) throw new Error('Informe o grupo.');
+			return addGroup(hub, payload.group);
+
+		case 'update-group':
+			return updateGroup(hub, requireId(payload), payload.groupPatch ?? {});
+
+		case 'delete-group':
+			return removeGroup(hub, requireId(payload));
+
+		case 'move-group':
+			return moveGroup(hub, requireId(payload), requireDirection(payload));
 
 		case 'delete-category':
 			return removeCategory(hub, requireId(payload));

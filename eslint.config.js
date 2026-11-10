@@ -41,7 +41,7 @@ export default defineConfig(
 			'src/lib/components/ItemRow.svelte',
 			'src/lib/components/QuickAccess.svelte',
 			'src/lib/components/FeedCard.svelte',
-			'src/routes/apps/+page.svelte',
+			'src/lib/components/LibraryCard.svelte',
 			'src/routes/+page.svelte'
 		],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }

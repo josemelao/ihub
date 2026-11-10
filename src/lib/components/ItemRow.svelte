@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { initials, itemHref, itemKind, tint } from '#lib/display';
+	import { itemHref, itemKind } from '#lib/display';
 	import type { HubItem } from '#lib/types';
+	import ItemIcon from './ItemIcon.svelte';
 
 	let { item, color }: { item: HubItem; color: string } = $props();
 
@@ -13,9 +14,7 @@
 	target={item.type === 'link' ? '_blank' : undefined}
 	rel="noopener noreferrer"
 >
-	<span class="item-avatar" style="background: {tint(color, 0.16)}; color: {color}">
-		{initials(item.name)}
-	</span>
+	<ItemIcon {item} {color} size={30} />
 	<span class="item-name">{item.name}</span>
 	<span class="item-kind">{itemKind(item)}</span>
 </a>

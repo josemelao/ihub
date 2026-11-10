@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { initials, tint, categoryItemCounts, relativeTime } from './display';
-import type { HubData } from './types';
+import {
+	appIconUrl,
+	categoryItemCounts,
+	faviconUrl,
+	initials,
+	itemIconUrl,
+	relativeTime,
+	tint
+} from './display';
+import type { HubData, HubItem } from './types';
 
 describe('initials', () => {
 	it('usa as iniciais das duas primeiras palavras', () => {
@@ -91,5 +99,57 @@ describe('categoryItemCounts', () => {
 		} as HubData;
 
 		expect(categoryItemCounts(hub)).toEqual({ a: 2, b: 1 });
+	});
+});
+
+describe('ícones', () => {
+	const link: HubItem = {
+		id: 'github',
+		type: 'link',
+		name: 'GitHub',
+		url: 'https://github.com/user',
+		categoryId: 'ferramentas',
+		tags: [],
+		pinned: false,
+		order: 0
+	};
+
+	const app: HubItem = {
+		id: 'steam',
+		type: 'app',
+		name: 'Steam',
+		launch: { kind: 'protocol', value: 'steam://open/main' },
+		categoryId: 'jogos',
+		tags: [],
+		pinned: false,
+		order: 0
+	};
+
+	it('gera favicon pelo host do link', () => {
+		expect(faviconUrl('https://github.com/user')).toBe(
+			'https://icons.duckduckgo.com/ip3/github.com.ico'
+		);
+		expect(faviconUrl('url-invalida')).toBeNull();
+	});
+
+	it('mapeia protocolo de app para o Simple Icons', () => {
+		expect(appIconUrl('steam://open/main', '#8AA4FF')).toBe(
+			'https://cdn.simpleicons.org/steam/8AA4FF'
+		);
+		expect(appIconUrl('desconhecido://')).toBeNull();
+	});
+
+	it('prioriza o ícone personalizado', () => {
+		expect(itemIconUrl({ ...link, icon: 'github' })).toBe(
+			'https://cdn.simpleicons.org/github/C9D2E3'
+		);
+		expect(itemIconUrl({ ...link, icon: 'https://example.com/a.png' })).toBe(
+			'https://example.com/a.png'
+		);
+	});
+
+	it('usa favicon para link e protocolo para app', () => {
+		expect(itemIconUrl(link)).toContain('icons.duckduckgo.com');
+		expect(itemIconUrl(app, '#8AA4FF')).toContain('cdn.simpleicons.org/steam');
 	});
 });

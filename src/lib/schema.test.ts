@@ -110,4 +110,27 @@ describe('parseHub', () => {
 
 		expect(() => parseHub(invalid)).toThrow(HubValidationError);
 	});
+
+	it('aceita ícone como slug ou URL', () => {
+		const slug = parseHub({
+			...structuredClone(base),
+			items: [{ ...structuredClone(base).items[0], icon: 'steam' }]
+		});
+		expect(slug.items[0].icon).toBe('steam');
+
+		const url = parseHub({
+			...structuredClone(base),
+			items: [{ ...structuredClone(base).items[0], icon: 'https://example.com/icon.png' }]
+		});
+		expect(url.items[0].icon).toBe('https://example.com/icon.png');
+	});
+
+	it('rejeita ícone inválido', () => {
+		const invalid = {
+			...structuredClone(base),
+			items: [{ ...structuredClone(base).items[0], icon: 'javascript:alert(1)' }]
+		};
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+	});
 });

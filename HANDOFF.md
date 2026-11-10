@@ -79,7 +79,7 @@ src/
     +layout.svelte             # shell, sidebar, palette, skip link
     +page.svelte               # Início
     c/[slug]/                  # categoria
-    feed/ favoritos/ apps/ gerenciar/
+    feed/ favoritos/ biblioteca/ apps/ gerenciar/
     api/                       # hub, feed, refresh, state, export, import, discover-feed
 data/
   hub.example.json             # seed versionado
@@ -107,10 +107,10 @@ data/
 - Sidebar esquerda **sticky** (100vh, rolagem interna), rodapé fixo com Gerenciar e engrenagem no cabeçalho; responsiva.
 - Início: **painel geral** com 3 cards (Acesso rápido, Resumo do dia, Ações rápidas), só as **5 últimas notícias** e “Ver feed completo”; barra direita fixa com Fontes, Filtros salvos, Salvos recentemente e Nota rápida.
 - Category: grupos, links/apps e feed da categoria.
-- Feed, Favoritos, Apps do PC e Gerenciar.
+- Feed, Favoritos, Biblioteca e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
 - **Favoritos**: lista focada nos posts salvos, com contador, busca local e ordenação por **salvos/publicados**; sem atalhos ou filtros duplicados. A sidebar mostra um badge com a quantidade de salvos.
-- **Apps do PC**: grade de apps por categoria, mostrando o protocolo e ação de abrir.
+- **Biblioteca**: abas **Todos / Apps do PC / Navegador**, busca local e organização por **categoria → grupo**. Um grupo reúne links e apps do mesmo assunto (ex.: jogo = app Steam + builds + wiki + subreddit). Itens sem grupo caem em “Sem grupo”. Links usam favicon e apps usam ícone do protocolo, com fallback para iniciais; `icon` opcional sobrescreve. `/apps` redireciona para `/biblioteca`.
 
 ### Acesso rápido
 
@@ -158,14 +158,15 @@ data/
 
 ### Gerenciar / edição
 
-- Abas funcionais: Fontes, Links, Apps, Categorias, Regras.
+- Abas funcionais: Fontes, Links, Apps, Grupos, Categorias, Regras.
 - Painel lateral com `<dialog>` nativo (foco, Esc, backdrop).
 - Adicionar/editar/remover:
-  - Links e apps (com checkbox de acesso rápido).
+  - Links e apps (com checkbox de acesso rápido e campo de ícone opcional).
+  - Grupos (nome + categoria; mudar de categoria move junto os itens e fontes do grupo; remover bloqueia se tiver itens).
   - Fontes (tipo, alvo, categoria, grupo, intervalo, include/exclude, liga/desliga).
   - Categorias (nome/cor, remover se não estiver em uso).
   - Filtros salvos (adicionar/editar/remover), com Incluir, Excluir e Modo.
-- Reordenar itens e categorias com ↑/↓.
+- Reordenar itens, grupos e categorias com ↑/↓.
 - Detecção automática de RSS pela URL da página.
 - Toda mutação passa por `hub-actions.ts` → mutação pura → `parseHub` → `saveHub`.
 
@@ -248,7 +249,6 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 10. Limitações conhecidas / pendências
 
-- Não há UI para **criar/editar grupos**; categoria com grupos não pode ser removida (a mensagem orienta mover, mas não há ferramenta).
 - **Concorrência**: duas escritas simultâneas usam “última vence”; não há fila/otimistic lock.
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
@@ -259,12 +259,12 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-1. Gerenciamento de grupos (criar/editar/mover) para liberar remoção de categorias.
-2. Fila de escrita/otimistic lock no storage.
-3. Validar `bundle.state` antes de importar.
-4. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
-5. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
-6. Testes de componente/e2e para as visualizações.
+1. Fila de escrita/otimistic lock no storage.
+2. Validar `bundle.state` antes de importar.
+3. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
+4. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
+5. Testes de componente/e2e para as visualizações e para a Biblioteca.
+6. Página própria por grupo (`/g/[slug]`) com feed do grupo, se necessário.
 
 ## 12. Notas para o próximo agente
 

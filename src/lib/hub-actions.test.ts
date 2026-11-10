@@ -80,6 +80,17 @@ describe('applyHubAction', () => {
 		expect(result.categories[1]).toMatchObject({ name: 'Trabalho novo', color: '#123456' });
 	});
 
+	it('adiciona e reordena grupo', () => {
+		const added = applyHubAction(base(), {
+			action: 'add-group',
+			group: { name: 'Novo', categoryId: 'jogos' }
+		});
+		expect(added.groups.map((group) => group.id)).toContain('novo');
+
+		const moved = applyHubAction(added, { action: 'move-group', id: 'novo', direction: 'up' });
+		expect(moved.groups.find((group) => group.id === 'novo')?.order).toBe(1);
+	});
+
 	it('rejeita direção inválida', () => {
 		expect(() =>
 			applyHubAction(base(), {

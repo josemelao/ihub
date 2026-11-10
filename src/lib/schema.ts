@@ -27,6 +27,24 @@ const urlSchema = z.string().refine(
 	{ message: 'URL inválida (use http:// ou https://)' }
 );
 
+const iconSchema = z
+	.string()
+	.trim()
+	.refine(
+		(value) => {
+			if (/^https?:\/\//i.test(value)) {
+				try {
+					new URL(value);
+					return true;
+				} catch {
+					return false;
+				}
+			}
+			return /^[a-z0-9][a-z0-9-]*$/i.test(value);
+		},
+		{ message: 'Ícone inválido: use uma URL http(s) ou um slug do Simple Icons' }
+	);
+
 const matchModeSchema = z.enum(['any', 'all']).default('any');
 
 const categorySchema = z.object({
@@ -50,7 +68,8 @@ const itemBase = {
 	groupId: z.string().optional(),
 	tags: z.array(z.string()).default([]),
 	pinned: z.boolean().default(false),
-	order: z.number().int().default(0)
+	order: z.number().int().default(0),
+	icon: iconSchema.optional()
 };
 
 const linkItemSchema = z.object({

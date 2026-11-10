@@ -2,13 +2,15 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
+	import ItemIcon from '#lib/components/ItemIcon.svelte';
 	import ManageEditor from '#lib/components/ManageEditor.svelte';
-	import { initials, relativeTime, tint } from '#lib/display';
+	import { relativeTime } from '#lib/display';
 	import { HubValidationError, parseHub } from '#lib/schema';
 	import type {
 		Category,
 		ExportBundle,
 		FeedSource,
+		Group,
 		HubItem,
 		HubState,
 		SavedFilter,
@@ -26,6 +28,16 @@
 	const linkCount = $derived(hub.items.filter((item) => item.type === 'link').length);
 	const appCount = $derived(hub.items.filter((item) => item.type === 'app').length);
 	const sortedCategories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
+	const groupSections = $derived(
+		sortedCategories
+			.map((category) => ({
+				category,
+				groups: hub.groups
+					.filter((group) => group.categoryId === category.id)
+					.sort((a, b) => a.order - b.order)
+			}))
+			.filter((section) => section.groups.length > 0)
+	);
 
 	const typeLabels: Record<string, string> = {
 		rss: 'RSS / Atom',
@@ -33,13 +45,13 @@
 		reddit: 'Reddit'
 	};
 
-	type Tab = 'fontes' | 'links' | 'apps' | 'categorias' | 'regras';
-	type EditorKind = 'link' | 'app' | 'source' | 'category' | 'filter';
+	type Tab = 'fontes' | 'links' | 'apps' | 'grupos' | 'categorias' | 'regras';
+	type EditorKind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
 
 	let tab = $state<Tab>('fontes');
 	let editor = $state<{
 		kind: EditorKind;
-		initial: HubItem | FeedSource | Category | SavedFilter | null;
+		initial: HubItem | FeedSource | Category | Group | SavedFilter | null;
 		key: number;
 	} | null>(null);
 
@@ -51,6 +63,7 @@
 		{ id: 'fontes' as const, label: `Fontes do feed · ${hub.feedSources.length}` },
 		{ id: 'links' as const, label: `Links · ${linkCount}` },
 		{ id: 'apps' as const, label: `Apps do PC · ${appCount}` },
+		{ id: 'grupos' as const, label: `Grupos · ${hub.groups.length}` },
 		{ id: 'categorias' as const, label: `Categorias · ${hub.categories.length}` },
 		{ id: 'regras' as const, label: `Regras do feed · ${hub.savedFilters.length}` }
 	]);
@@ -62,9 +75,11 @@
 				? 'link'
 				: tab === 'apps'
 					? 'app'
-					: tab === 'categorias'
-						? 'category'
-						: 'filter'
+					: tab === 'grupos'
+						? 'group'
+						: tab === 'categorias'
+							? 'category'
+							: 'filter'
 	);
 
 	const addLabel = $derived(
@@ -74,14 +89,16 @@
 				? 'Adicionar link'
 				: tab === 'apps'
 					? 'Adicionar app'
-					: tab === 'categorias'
-						? 'Adicionar categoria'
-						: 'Adicionar filtro'
+					: tab === 'grupos'
+						? 'Adicionar grupo'
+						: tab === 'categorias'
+							? 'Adicionar categoria'
+							: 'Adicionar filtro'
 	);
 
 	function openEditor(
 		kind: EditorKind,
-		initial: HubItem | FeedSource | Category | SavedFilter | null = null
+		initial: HubItem | FeedSource | Category | Group | SavedFilter | null = null
 	): void {
 		editor = { kind, initial, key: Date.now() };
 	}
@@ -117,7 +134,7 @@
 	}
 
 	function removeEntry(
-		kind: 'item' | 'source' | 'category' | 'filter',
+		kind: 'item' | 'source' | 'category' | 'group' | 'filter',
 		id: string,
 		label: string
 	): void {
@@ -491,14 +508,7 @@
 	<div class="manage-list">
 		{#each itemsOf(tab === 'links' ? 'link' : 'app') as item (item.id)}
 			<div class="manage-row">
-				<span
-					class="item-avatar"
-					style="background: {tint(colors[item.categoryId] ?? '#8AA4FF', 0.16)}; color: {colors[
-						item.categoryId
-					] ?? '#8AA4FF'}"
-				>
-					{initials(item.name)}
-				</span>
+				<ItemIcon {item} color={colors[item.categoryId] ?? '#8AA4FF'} size={34} />
 				<span class="manage-main">
 					<span class="manage-name">{item.name}</span>
 					<span class="manage-sub">
@@ -543,6 +553,67 @@
 		{/each}
 		{#if itemsOf(tab === 'links' ? 'link' : 'app').length === 0}
 			<p class="muted">Nenhum {tab === 'links' ? 'link' : 'app'} cadastrado.</p>
+		{/if}
+	</div>
+{:else if tab === 'grupos'}
+	<div class="manage-list">
+		{#each groupSections as section (section.category.id)}
+			<div class="manage-group">
+				<div class="manage-group-head">
+					<span class="dot" style="background: {section.category.color}"></span>
+					<span>{section.category.name}</span>
+					<span class="muted small">{section.groups.length} grupos</span>
+				</div>
+				{#each section.groups as group (group.id)}
+					{@const itemCount = hub.items.filter((item) => item.groupId === group.id).length}
+					{@const sourceCount = hub.feedSources.filter(
+						(source) => source.groupId === group.id
+					).length}
+					<div class="manage-row">
+						<span class="dot" style="background: {section.category.color}"></span>
+						<span class="manage-main">
+							<span class="manage-name">{group.name}</span>
+							<span class="manage-sub">
+								{itemCount}
+								{itemCount === 1 ? 'item' : 'itens'} ·
+								{sourceCount}
+								{sourceCount === 1 ? 'fonte' : 'fontes'}
+							</span>
+						</span>
+						<div class="manage-actions">
+							<button
+								class="mini-btn"
+								type="button"
+								aria-label="Mover grupo para cima"
+								onclick={() => mutate({ action: 'move-group', id: group.id, direction: 'up' })}
+							>
+								↑
+							</button>
+							<button
+								class="mini-btn"
+								type="button"
+								aria-label="Mover grupo para baixo"
+								onclick={() => mutate({ action: 'move-group', id: group.id, direction: 'down' })}
+							>
+								↓
+							</button>
+							<button class="mini-btn" type="button" onclick={() => openEditor('group', group)}>
+								Editar
+							</button>
+							<button
+								class="mini-btn danger"
+								type="button"
+								onclick={() => removeEntry('group', group.id, group.name)}
+							>
+								Remover
+							</button>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{/each}
+		{#if groupSections.length === 0}
+			<p class="muted">Nenhum grupo cadastrado. Crie um para reunir serviços do mesmo assunto.</p>
 		{/if}
 	</div>
 {:else if tab === 'categorias'}

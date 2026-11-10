@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { initials, itemHref, itemKind, tint } from '#lib/display';
+	import { itemHref, itemKind } from '#lib/display';
 	import type { HubData } from '#lib/types';
+	import ItemIcon from './ItemIcon.svelte';
 
 	let {
 		hub,
@@ -34,9 +35,7 @@
 				target={item.type === 'link' ? '_blank' : undefined}
 				rel="noopener noreferrer"
 			>
-				<span class="quick-avatar" style="background: {tint(color, 0.16)}; color: {color}">
-					{initials(item.name)}
-				</span>
+				<ItemIcon {item} {color} size={34} />
 				<span class="quick-meta">
 					<span class="quick-name">{item.name}</span>
 					<span class="quick-kind">{itemKind(item)}</span>

@@ -1,6 +1,5 @@
 import type {
 	AppItem,
-	Category,
 	FeedSource,
 	HubData,
 	HubItem,
@@ -16,6 +15,7 @@ export interface LinkInput {
 	groupId?: string;
 	tags?: string[];
 	pinned?: boolean;
+	icon?: string;
 }
 
 export interface AppInput {
@@ -25,6 +25,7 @@ export interface AppInput {
 	groupId?: string;
 	tags?: string[];
 	pinned?: boolean;
+	icon?: string;
 }
 
 export interface ItemPatch {
@@ -35,6 +36,7 @@ export interface ItemPatch {
 	groupId?: string | null;
 	tags?: string[];
 	pinned?: boolean;
+	icon?: string | null;
 }
 
 export interface SourceInput {
@@ -55,7 +57,16 @@ export type SourcePatch = Partial<Omit<SourceInput, 'type' | 'groupId'>> & {
 	groupId?: string | null;
 };
 
-export type CategoryInput = Pick<Category, 'name' | 'color'>;
+export interface CategoryInput {
+	name: string;
+	color: string;
+}
+
+export interface GroupInput {
+	name: string;
+	categoryId: string;
+}
+
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
 
 function slugify(value: string): string {
@@ -88,12 +99,14 @@ function itemBase(input: {
 	groupId?: string;
 	tags?: string[];
 	pinned?: boolean;
+	icon?: string;
 }): Omit<LinkItem, 'type' | 'url'> {
 	return {
 		id: '',
 		name: input.name,
 		categoryId: input.categoryId,
 		...(input.groupId ? { groupId: input.groupId } : {}),
+		...(input.icon ? { icon: input.icon } : {}),
 		tags: input.tags ?? [],
 		pinned: input.pinned ?? false,
 		order: 0
@@ -135,6 +148,12 @@ export function updateItem(hub: HubData, id: string, patch: ItemPatch): HubData 
 			if (patch.categoryId !== undefined) next.categoryId = patch.categoryId;
 			if (patch.tags !== undefined) next.tags = patch.tags;
 			if (patch.pinned !== undefined) next.pinned = patch.pinned;
+
+			if (patch.icon === null || patch.icon === '') {
+				delete (next as { icon?: string }).icon;
+			} else if (patch.icon !== undefined) {
+				next.icon = patch.icon;
+			}
 
 			if (patch.groupId === null) {
 				delete (next as { groupId?: string }).groupId;
@@ -256,6 +275,81 @@ export function addCategory(hub: HubData, input: CategoryInput): HubData {
 	return {
 		...hub,
 		categories: [...hub.categories, { id, name: input.name, color: input.color, order }]
+	};
+}
+
+export function addGroup(hub: HubData, input: GroupInput): HubData {
+	const id = uniqueId(slugify(input.name), new Set(hub.groups.map((group) => group.id)));
+	const order =
+		hub.groups
+			.filter((group) => group.categoryId === input.categoryId)
+			.reduce((max, group) => Math.max(max, group.order), 0) + 1;
+	return {
+		...hub,
+		groups: [...hub.groups, { id, name: input.name, categoryId: input.categoryId, order }]
+	};
+}
+
+export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>): HubData {
+	const current = hub.groups.find((group) => group.id === id);
+	if (!current) return hub;
+
+	const categoryId = patch.categoryId ?? current.categoryId;
+	const categoryChanged = categoryId !== current.categoryId;
+	const order = categoryChanged
+		? hub.groups
+				.filter((group) => group.categoryId === categoryId)
+				.reduce((max, group) => Math.max(max, group.order), 0) + 1
+		: current.order;
+
+	return {
+		...hub,
+		groups: hub.groups.map((group) =>
+			group.id === id ? { ...group, name: patch.name ?? group.name, categoryId, order } : group
+		),
+		items: categoryChanged
+			? hub.items.map((item) => (item.groupId === id ? { ...item, categoryId } : item))
+			: hub.items,
+		feedSources: categoryChanged
+			? hub.feedSources.map((source) =>
+					source.groupId === id ? { ...source, categoryId } : source
+				)
+			: hub.feedSources
+	};
+}
+
+export function removeGroup(hub: HubData, id: string): HubData {
+	if (
+		hub.items.some((item) => item.groupId === id) ||
+		hub.feedSources.some((source) => source.groupId === id)
+	) {
+		throw new Error('Grupo em uso: mova ou remova os itens e fontes antes.');
+	}
+	return { ...hub, groups: hub.groups.filter((group) => group.id !== id) };
+}
+
+export function moveGroup(hub: HubData, id: string, direction: 'up' | 'down'): HubData {
+	const target = hub.groups.find((group) => group.id === id);
+	if (!target) return hub;
+
+	const siblings = hub.groups
+		.filter((group) => group.categoryId === target.categoryId)
+		.sort((a, b) => a.order - b.order);
+	const index = siblings.findIndex((group) => group.id === id);
+	const swapWith = direction === 'up' ? index - 1 : index + 1;
+	if (swapWith < 0 || swapWith >= siblings.length) return hub;
+
+	const other = siblings[swapWith];
+	const orderById = new Map([
+		[target.id, other.order],
+		[other.id, target.order]
+	]);
+
+	return {
+		...hub,
+		groups: hub.groups.map((group) =>
+			orderById.has(group.id) ? { ...group, order: orderById.get(group.id)! } : group
+		)
 	};
 }
 
