@@ -69,46 +69,28 @@
 	}
 </script>
 
-<article class="feed-card variant-{variant}" class:no-image={!hasImage} class:read={entry.read}>
-	{#if hasImage}
-		<a
-			class="feed-thumb"
-			href={entry.item.url}
-			target="_blank"
-			rel="noopener noreferrer"
-			aria-label={`Abrir: ${entry.item.title}`}
-			style={thumbStyle}
-		>
-			<img
-				src={entry.item.thumbnail ?? ''}
-				alt=""
-				loading="lazy"
-				onload={onImageLoad}
-				onerror={() => (imageFailed = true)}
-			/>
-		</a>
-	{/if}
-
-	<div class="feed-body">
-		<div class="feed-meta">
-			<span class="feed-source" style="color: {color}">
-				<span class="dot" style="background: {color}; border-radius: 50%"></span>
-				{entry.source.name}
+{#if variant === 'compact'}
+	<a
+		class="feed-card variant-compact compact-link"
+		class:no-image={!hasImage}
+		class:read={entry.read}
+		href={entry.item.url}
+		target="_blank"
+		rel="noopener noreferrer"
+		title={entry.item.title}
+	>
+		{#if hasImage}
+			<span class="feed-thumb" style={thumbStyle}>
+				<img
+					src={entry.item.thumbnail ?? ''}
+					alt=""
+					loading="lazy"
+					onload={onImageLoad}
+					onerror={() => (imageFailed = true)}
+				/>
 			</span>
-			<span>·</span>
-			<span>{relativeTime(entry.item.publishedAt)}</span>
-			{#if entry.category}
-				<span class="tag">{entry.category.name}</span>
-			{/if}
-			{#if entry.read}
-				<span class="tag muted">lido</span>
-			{/if}
-			{#if entry.saved}
-				<span class="tag">salvo</span>
-			{/if}
-		</div>
-
-		<h3 class="feed-title">
+		{/if}
+		<h3 class="feed-title compact-title">
 			{#each splitHighlights(entry.item.title, terms) as segment, index (index)}
 				{#if segment.highlight}
 					<mark>{segment.text}</mark>
@@ -117,60 +99,111 @@
 				{/if}
 			{/each}
 		</h3>
-
-		{#if entry.item.summary}
-			<p
-				bind:this={summaryEl}
-				class="feed-summary"
-				class:clamped={variant === 'completo' && !expanded}
-			>
-				{entry.item.summary}
-			</p>
-			{#if canExpand}
-				<button
-					class="expand-btn"
-					type="button"
-					aria-expanded={expanded}
-					onclick={() => (expanded = !expanded)}
-				>
-					{expanded ? 'Recolher' : 'Expandir'}
-				</button>
-			{/if}
-		{/if}
-
-		<div class="feed-actions">
+	</a>
+{:else}
+	<article class="feed-card variant-{variant}" class:no-image={!hasImage} class:read={entry.read}>
+		{#if hasImage}
 			<a
-				class="icon-action"
+				class="feed-thumb"
 				href={entry.item.url}
 				target="_blank"
 				rel="noopener noreferrer"
-				aria-label="Abrir"
-				title="Abrir"
+				aria-label={`Abrir: ${entry.item.title}`}
+				style={thumbStyle}
 			>
-				<Icon name="external" size={18} />
+				<img
+					src={entry.item.thumbnail ?? ''}
+					alt=""
+					loading="lazy"
+					onload={onImageLoad}
+					onerror={() => (imageFailed = true)}
+				/>
 			</a>
-			<button
-				class="icon-action"
-				class:saved={entry.saved}
-				type="button"
-				aria-pressed={entry.saved}
-				aria-label={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
-				title={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
-				onclick={onsave}
-			>
-				<Icon name="bookmark" size={18} />
-			</button>
-			<button
-				class="icon-action"
-				class:read={entry.read}
-				type="button"
-				aria-pressed={entry.read}
-				aria-label={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
-				title={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
-				onclick={onread}
-			>
-				<Icon name={entry.read ? 'check-circle' : 'circle'} size={18} />
-			</button>
+		{/if}
+
+		<div class="feed-body">
+			<div class="feed-meta">
+				<span class="feed-source" style="color: {color}">
+					<span class="dot" style="background: {color}; border-radius: 50%"></span>
+					{entry.source.name}
+				</span>
+				<span>·</span>
+				<span>{relativeTime(entry.item.publishedAt)}</span>
+				{#if entry.category}
+					<span class="tag">{entry.category.name}</span>
+				{/if}
+				{#if entry.read}
+					<span class="tag muted">lido</span>
+				{/if}
+				{#if entry.saved}
+					<span class="tag">salvo</span>
+				{/if}
+			</div>
+
+			<h3 class="feed-title">
+				{#each splitHighlights(entry.item.title, terms) as segment, index (index)}
+					{#if segment.highlight}
+						<mark>{segment.text}</mark>
+					{:else}
+						{segment.text}
+					{/if}
+				{/each}
+			</h3>
+
+			{#if entry.item.summary}
+				<p
+					bind:this={summaryEl}
+					class="feed-summary"
+					class:clamped={variant === 'completo' && !expanded}
+				>
+					{entry.item.summary}
+				</p>
+				{#if canExpand}
+					<button
+						class="expand-btn"
+						type="button"
+						aria-expanded={expanded}
+						onclick={() => (expanded = !expanded)}
+					>
+						{expanded ? 'Recolher' : 'Expandir'}
+					</button>
+				{/if}
+			{/if}
+
+			<div class="feed-actions">
+				<a
+					class="icon-action"
+					href={entry.item.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="Abrir"
+					title="Abrir"
+				>
+					<Icon name="external" size={18} />
+				</a>
+				<button
+					class="icon-action"
+					class:saved={entry.saved}
+					type="button"
+					aria-pressed={entry.saved}
+					aria-label={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
+					title={entry.saved ? 'Remover dos salvos' : 'Salvar para depois'}
+					onclick={onsave}
+				>
+					<Icon name="bookmark" size={18} />
+				</button>
+				<button
+					class="icon-action"
+					class:read={entry.read}
+					type="button"
+					aria-pressed={entry.read}
+					aria-label={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
+					title={entry.read ? 'Marcar como não lido' : 'Marcar como lido'}
+					onclick={onread}
+				>
+					<Icon name={entry.read ? 'check-circle' : 'circle'} size={18} />
+				</button>
+			</div>
 		</div>
-	</div>
-</article>
+	</article>
+{/if}
