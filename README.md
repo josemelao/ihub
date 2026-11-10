@@ -165,12 +165,15 @@ PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
 ## Qualidade
 
 ```powershell
-npm test        # Vitest (schema, storage, helpers, edição, feed e seed)
+npm run verify  # check + lint + testes + build
+npm test        # Vitest (schema, storage, helpers, edição, feed, players e seed)
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 ```
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
+
+O plano de evolução e as decisões do Sprint 0 ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 

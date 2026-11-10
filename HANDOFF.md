@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
-Data: 2026-11-09
-Estado: **M0–M5 concluídos + iteração final de layout do feed**. Projeto local, funcional e com testes verdes.
+Data: 2026-11-10
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline e preparação)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -211,14 +211,15 @@ data/
 ## 8. Qualidade e verificação
 
 ```powershell
-npm test        # 113 testes
+npm run verify  # check + lint + testes + build
+npm test        # 172 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **113/113 testes, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **172/172 testes, 18 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -283,3 +284,20 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 - O Bento usa posicionamento absoluto via `use:masonry`; se mudar o DOM, garanta que os cards sejam filhos diretos de `.feed-layout`.
 - Ao mexer no parser, rode os testes de `parse.test.ts` (entidades, imagens, YouTube, Reddit).
 - Dados pessoais: nunca comite `data/hub.json`, `estado.json` ou `feed-cache.json`.
+
+## 13. Sprint 0 — baseline e preparação
+
+Executado em 10/11/2026 sobre o commit `d799914`.
+
+- Tag de baseline: **`v0.6.0`**.
+- Backup completo de `data/` em `data/backups/sprint-0-20261110-114313/` (ignorado pelo Git).
+- `data/backups/` adicionado ao `.gitignore`.
+- Script local **`npm run verify`** (check + lint + testes + build).
+- Baseline: 5 categorias, 8 grupos, 31 itens, 4 fontes, 51 posts no cache, 2 salvos, 18 arquivos de teste, **172 testes**, 2.176 linhas de CSS.
+- Plano completo versionado em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md).
+- Decisões e baseline em [`docs/sprint-0.md`](docs/sprint-0.md).
+- Checklist manual em [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+
+Decisões principais: busca inclui posts na palette; terminologia **Favoritos**/“Salvar para depois”/“Biblioteca”/“Fontes”; notas em `notes.json`; reader mode adiado; sync por pasta; autostart via Startup; LAN só `127.0.0.1`; tema somente dark; retenção de lidos 90 dias; backups 7 gerações; SQLite só no critério; CSP com allowlist para YouTube/Reddit/fontes/imagens; migração versionada só para mudanças quebrantes; CI local via `npm run verify`.
+
+Próximo: Sprint 1 — P0 de UX, conforme o plano versionado.
