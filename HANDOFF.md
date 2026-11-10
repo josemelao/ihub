@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 177 testes
+npm test        # 201 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **177/177 testes, 19 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **201/201 testes, 23 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -317,3 +317,17 @@ Executado em 10/11/2026 sobre o Sprint 0.
 - `npm run verify` verde com **177/177 testes**.
 
 Detalhes em [`docs/sprint-1.md`](docs/sprint-1.md). Próximo foco: segurança (SEC-01, SEC-03, SEC-04, SEC-05) e depois CSP com allowlist de iframes/imagens.
+
+## 15. Fase de segurança
+
+Executada em 10/11/2026 sobre `v0.7.1`.
+
+- **SEC-01**: allowlist `http(s)` para links de feed, thumbnails e snapshots; parser e `/api/state` rejeitam esquemas perigosos.
+- **SEC-03**: Zod para `HubState`, `FeedCache`, `FeedItem` e snapshots; load tenta `.bak` e avisa no layout; import valida `bundle.state` antes de gravar.
+- **SEC-04**: `readJsonLimited` com 2 MB para hub/state, 10 MB para import e 64 KB para APIs pequenas; excesso retorna 413.
+- **SEC-05**: refresh usa `fetchPublicText`, bloqueando loopback/IP privado, validando redirects e limitando a 5 MB.
+- **SEC-02**: headers de segurança + CSP em **Report-Only** com allowlist para YouTube, Reddit, Google Fonts e imagens.
+- Teste real: SSRF para `127.0.0.1` bloqueado; snapshot inválido 400; corpo de 2,1 MB 413.
+- `npm run verify` verde com **201/201 testes**.
+
+Detalhes em [`docs/security.md`](docs/security.md). Pendências: CSP enforce, nonce/hash para scripts, fontes/ícones locais e DATA-01/DATA-02.

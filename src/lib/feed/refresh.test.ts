@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import { fetchPublicText } from '../net/safe-fetch';
+import { fetchPublicText, type FetchTextOptions } from '../net/safe-fetch';
 import { refreshFeed, type Fetcher } from './refresh';
 import type { FeedCache, FeedItem, FeedSource, HubData } from '../types';
 
@@ -8,6 +8,12 @@ vi.mock('../net/safe-fetch', () => ({
 }));
 
 const fetchTextMock = vi.mocked(fetchPublicText);
+const defaultFetchText = async (target: string, options: FetchTextOptions = {}) => {
+	const fetcher = options.fetcher ?? fetch;
+	const response = await fetcher(target);
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	return { text: await response.text(), finalUrl: target };
+};
 
 const rss = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -55,6 +61,7 @@ const now = () => new Date('2026-11-09T12:00:00.000Z');
 
 beforeEach(() => {
 	fetchTextMock.mockReset();
+	fetchTextMock.mockImplementation(defaultFetchText);
 });
 
 describe('refreshFeed', () => {
@@ -193,10 +200,11 @@ describe('refreshFeed', () => {
 
 	it('resolve @handle do YouTube antes de buscar o feed', async () => {
 		const channelId = 'UCy7DyzEEC9h81lmwg6H5rlw';
-		fetchTextMock.mockResolvedValue({
-			text: `<meta itemprop="identifier" content="${channelId}">`,
-			finalUrl: 'https://www.youtube.com/@canal'
-		});
+		fetchTextMock.mockImplementation(async (target, options) =>
+			String(target).includes('youtube.com/@canal')
+				? { text: `<meta itemprop="identifier" content="${channelId}">`, finalUrl: String(target) }
+				: defaultFetchText(String(target), options)
+		);
 		const calls: string[] = [];
 		const fetcher: Fetcher = async (input) => {
 			calls.push(String(input));

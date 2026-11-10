@@ -1,9 +1,12 @@
 import { json } from '@sveltejs/kit';
 import { removeSourceFromCache, sourceCacheIsStale } from '#lib/feed/cache';
 import { applyHubAction, type HubPayload } from '#lib/hub-actions';
+import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { HubValidationError, parseHub } from '#lib/schema';
 import { getStorage } from '#lib/storage';
 import type { RequestHandler } from './$types';
+
+const MAX_BODY_BYTES = 2_000_000;
 
 export const GET: RequestHandler = async () => {
 	try {
@@ -19,8 +22,11 @@ export const GET: RequestHandler = async () => {
 export const POST: RequestHandler = async ({ request }) => {
 	let payload: HubPayload;
 	try {
-		payload = (await request.json()) as HubPayload;
-	} catch {
+		payload = (await readJsonLimited(request, MAX_BODY_BYTES)) as HubPayload;
+	} catch (error) {
+		if (error instanceof RequestBodyError) {
+			return json({ ok: false, error: error.message }, { status: error.status });
+		}
 		return json({ ok: false, error: 'Corpo JSON inválido.' }, { status: 400 });
 	}
 

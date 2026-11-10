@@ -56,6 +56,24 @@
 			</div>
 		{/if}
 
+		{#if data.stateError || data.cacheError}
+			<div class="alert" role="alert">
+				<strong>Dados auxiliares inválidos</strong>
+				{#if data.stateError}
+					<div>
+						estado.json: {data.stateError.message}
+						{data.stateError.usingBackup ? 'Usando o backup.' : 'Usando estado vazio.'}
+					</div>
+				{/if}
+				{#if data.cacheError}
+					<div>
+						feed-cache.json: {data.cacheError.message}
+						{data.cacheError.usingBackup ? 'Usando o backup.' : 'Usando cache vazio.'}
+					</div>
+				{/if}
+			</div>
+		{/if}
+
 		{@render children()}
 	</main>
 </div>

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
+import { toSafeHttpUrl } from '../net/url';
 import type { FeedItem } from '../types';
 
 const parser = new XMLParser({
@@ -98,12 +99,12 @@ function thumbnailOf(item: Record<string, unknown>, link: string): string | null
 	if (media) {
 		const youtubeMedia = /youtube\.com\/(?:v|vi)\/([\w-]{11})/i.exec(media);
 		if (youtubeMedia) return `https://i.ytimg.com/vi/${youtubeMedia[1]}/hqdefault.jpg`;
-		return media;
+		return toSafeHttpUrl(media);
 	}
 
 	const html = textOf(item['content:encoded'] ?? item.description ?? item.content ?? item.summary);
 	const image = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(html);
-	if (image) return image[1];
+	if (image) return toSafeHttpUrl(image[1]);
 
 	const youtube = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i.exec(
 		link
@@ -159,7 +160,7 @@ export function parseFeed(xml: string, sourceId: string): FeedItem[] {
 		const item = raw as Record<string, unknown>;
 
 		const title = stripTags(textOf(item.title));
-		const url = linkOf(item.link);
+		const url = toSafeHttpUrl(linkOf(item.link));
 		if (!title || !url) continue;
 
 		const summary = stripTags(

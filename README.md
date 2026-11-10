@@ -173,7 +173,7 @@ npm run lint    # Prettier + ESLint
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 
@@ -192,7 +192,12 @@ Eles não fazem parte do build do app.
 
 - Servidor só em `127.0.0.1`, com allowlist de Host/Origin; CSRF nativo do SvelteKit.
 - Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
-- O feed só busca as fontes cadastradas no `hub.json`, com timeout, User-Agent identificado e limite de tamanho.
+- URLs de itens de feed, thumbnails e snapshots só aceitam `http(s)`; itens perigosos são descartados/rejeitados.
+- `estado.json` e `feed-cache.json` são validados por Zod; arquivo inválido tenta `.bak` e avisa no layout.
+- APIs têm limite de corpo: 2 MB em hub/state, 10 MB em import e 64 KB nas APIs pequenas; excesso retorna 413.
+- O refresh de feeds usa fetch seguro: timeout, 5 MB, bloqueio de loopback/IP privado e validação de redirects.
+- Headers de segurança ativos: `nosniff`, `no-referrer`, `X-Frame-Options: DENY` e `Permissions-Policy`.
+- CSP está em **Report-Only** com allowlist para YouTube, Reddit, Google Fonts e imagens; a troca para enforce fica para depois da revisão do console.
 - Sem login, sem versão online, sem tema claro.
 - Escrita de links/fontes pela interface é validada e restrita ao `hub.json`.
 - O descobridor de feeds só acessa `http(s)` públicos (bloqueia loopback/redes privadas) e limita o tamanho da resposta.

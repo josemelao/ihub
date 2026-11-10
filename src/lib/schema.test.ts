@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseHub, HubValidationError } from './schema';
+import { parseHub, parseHubState, parseFeedCache, HubValidationError } from './schema';
 
 const base = {
 	version: 1,
@@ -210,5 +210,101 @@ describe('parseHub', () => {
 		};
 
 		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+	});
+});
+
+describe('parseHubState', () => {
+	const item = {
+		id: 'post-1',
+		sourceId: 'src',
+		title: 'Post',
+		summary: '',
+		url: 'https://example.com/post',
+		publishedAt: '2026-11-09T12:00:00Z',
+		thumbnail: null
+	};
+
+	it('aceita estado válido e aplica defaults', () => {
+		const state = parseHubState({
+			saved: ['post-1'],
+			savedItems: {
+				'post-1': {
+					item,
+					sourceId: 'src',
+					sourceName: 'Fonte',
+					savedAt: '2026-11-09T12:00:00Z'
+				}
+			}
+		});
+		expect(state.read).toEqual({});
+		expect(state.savedItems['post-1'].item.url).toBe('https://example.com/post');
+	});
+
+	it('rejeita snapshot com URL perigosa', () => {
+		expect(() =>
+			parseHubState({
+				savedItems: {
+					'post-1': {
+						item: { ...item, url: 'javascript:alert(1)' },
+						sourceId: 'src',
+						sourceName: 'Fonte',
+						savedAt: ''
+					}
+				}
+			})
+		).toThrow(HubValidationError);
+	});
+
+	it('rejeita snapshot cuja chave não bate com o item', () => {
+		expect(() =>
+			parseHubState({
+				savedItems: {
+					outra: {
+						item,
+						sourceId: 'src',
+						sourceName: 'Fonte',
+						savedAt: ''
+					}
+				}
+			})
+		).toThrow(HubValidationError);
+	});
+});
+
+describe('parseFeedCache', () => {
+	it('aceita cache válido e aplica defaults', () => {
+		const cache = parseFeedCache({
+			items: [
+				{
+					id: 'post-1',
+					sourceId: 'src',
+					title: 'Post',
+					url: 'https://example.com/post',
+					publishedAt: '2026-11-09T12:00:00Z',
+					thumbnail: null
+				}
+			],
+			sources: { src: { error: null, count: 1 } }
+		});
+		expect(cache.items).toHaveLength(1);
+		expect(cache.items[0].summary).toBe('');
+		expect(cache.sources.src.lastFetchedAt).toBe('');
+	});
+
+	it('rejeita item com URL perigosa', () => {
+		expect(() =>
+			parseFeedCache({
+				items: [
+					{
+						id: 'post-1',
+						sourceId: 'src',
+						title: 'Post',
+						url: 'data:text/html,oi',
+						publishedAt: '',
+						thumbnail: null
+					}
+				]
+			})
+		).toThrow(HubValidationError);
 	});
 });

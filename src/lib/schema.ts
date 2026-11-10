@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import type { HubData, ValidationIssue } from './types';
+import type { FeedCache, HubData, HubState, ValidationIssue } from './types';
 
 export class HubValidationError extends Error {
 	readonly issues: ValidationIssue[];
 
-	constructor(issues: ValidationIssue[]) {
-		super(`hub.json inválido: ${issues.length} problema(s) encontrado(s)`);
+	constructor(issues: ValidationIssue[], label = 'hub.json') {
+		super(`${label} inválido: ${issues.length} problema(s) encontrado(s)`);
 		this.name = 'HubValidationError';
 		this.issues = issues;
 	}
@@ -46,6 +46,10 @@ const iconSchema = z
 	);
 
 const matchModeSchema = z.enum(['any', 'all']).default('any');
+
+const localeSchema = z
+	.string()
+	.regex(/^[a-z]{2}(?:[-_][A-Za-z]{2,8})*$/, 'Locale inválido (ex.: en, pt-BR)');
 
 const categorySchema = z.object({
 	id: z.string().min(1),
@@ -109,10 +113,7 @@ const feedSourceSchema = z.object({
 	groupId: z.string().optional(),
 	intervalMinutes: z.number().int().min(1).default(30),
 	maxItems: z.number().int().min(1).max(200).optional(),
-	locale: z
-		.string()
-		.regex(/^[a-z]{2}(?:[-_][A-Za-z]{2,8})*$/, 'Locale inválido (ex.: en, pt-BR)')
-		.optional(),
+	locale: localeSchema.optional(),
 	enabled: z.boolean().default(true),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),
@@ -204,15 +205,86 @@ export const hubSchema = z
 		checkReferences(ctx, hub.feedSources, 'feedSources', categoryIds, groupCategories);
 	});
 
+const feedItemSchema = z.object({
+	id: z.string().min(1),
+	sourceId: z.string().min(1),
+	title: z.string().min(1),
+	summary: z.string().default(''),
+	url: urlSchema,
+	publishedAt: z.string().default(''),
+	thumbnail: urlSchema.nullable().default(null)
+});
+
+const sourceStatusSchema = z.object({
+	lastFetchedAt: z.string().default(''),
+	error: z.string().nullable().default(null),
+	count: z.number().int().nonnegative().default(0)
+});
+
+const savedSnapshotSchema = z.object({
+	item: feedItemSchema,
+	sourceId: z.string().min(1),
+	sourceName: z.string().min(1),
+	categoryId: z.string().optional(),
+	categoryName: z.string().optional(),
+	color: colorSchema.optional(),
+	locale: localeSchema.optional(),
+	savedAt: z.string().default('')
+});
+
+export const stateSchema = z
+	.object({
+		version: z.number().int().positive().default(1),
+		read: z.record(z.string(), z.string()).default({}),
+		saved: z.array(z.string()).default([]),
+		savedItems: z.record(z.string(), savedSnapshotSchema).default({})
+	})
+	.superRefine((state, ctx) => {
+		for (const [key, snapshot] of Object.entries(state.savedItems)) {
+			if (snapshot.item.id !== key) {
+				addIssue(
+					ctx,
+					['savedItems', key, 'item', 'id'],
+					`O snapshot '${key}' aponta para o item '${snapshot.item.id}'`
+				);
+			}
+		}
+	});
+
+export const feedCacheSchema = z.object({
+	version: z.number().int().positive().default(1),
+	updatedAt: z.string().default(new Date(0).toISOString()),
+	items: z.array(feedItemSchema).default([]),
+	sources: z.record(z.string(), sourceStatusSchema).default({})
+});
+
+function issuesFrom(error: z.ZodError): ValidationIssue[] {
+	return error.issues.map((issue) => ({
+		path: issue.path as (string | number)[],
+		message: issue.message
+	}));
+}
+
 export function parseHub(input: unknown): HubData {
 	const result = hubSchema.safeParse(input);
 	if (!result.success) {
-		throw new HubValidationError(
-			result.error.issues.map((issue) => ({
-				path: issue.path as (string | number)[],
-				message: issue.message
-			}))
-		);
+		throw new HubValidationError(issuesFrom(result.error));
 	}
 	return result.data as HubData;
+}
+
+export function parseHubState(input: unknown): HubState {
+	const result = stateSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'estado.json');
+	}
+	return result.data as HubState;
+}
+
+export function parseFeedCache(input: unknown): FeedCache {
+	const result = feedCacheSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'feed-cache.json');
+	}
+	return result.data as FeedCache;
 }

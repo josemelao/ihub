@@ -109,7 +109,7 @@ export async function readTextLimited(response: Response, maxBytes: number): Pro
 export interface FetchTextOptions {
 	maxBytes?: number;
 	timeoutMs?: number;
-	fetcher?: typeof fetch;
+	fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
 }
 
 export async function fetchPublicText(

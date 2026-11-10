@@ -133,4 +133,32 @@ describe('parseFeed', () => {
 		expect(summary).not.toContain('submitted by');
 		expect(summary).not.toContain('&#32;');
 	});
+
+	it('descarta itens com link perigoso', () => {
+		const dangerous = `<rss version="2.0"><channel>
+			<item><title>JS</title><link>javascript:alert(1)</link></item>
+			<item><title>Data</title><link>data:text/html,oi</link></item>
+			<item><title>File</title><link>file:///C:/Windows</link></item>
+			<item><title>Ok</title><link>https://example.com/ok</link></item>
+		</channel></rss>`;
+		const items = parseFeed(dangerous, 'x');
+		expect(items).toHaveLength(1);
+		expect(items[0].url).toBe('https://example.com/ok');
+	});
+
+	it('descarta thumbnails com esquema perigoso', () => {
+		const dangerous = `<rss version="2.0"><channel><item>
+			<title>Post</title>
+			<link>https://example.com/post</link>
+			<media:thumbnail url="javascript:alert(1)" />
+		</item></channel></rss>`;
+		expect(parseFeed(dangerous, 'x')[0].thumbnail).toBeNull();
+
+		const dangerousImage = `<rss version="2.0"><channel><item>
+			<title>Post</title>
+			<link>https://example.com/post</link>
+			<description><![CDATA[<img src="data:text/html,oi" />]]></description>
+		</item></channel></rss>`;
+		expect(parseFeed(dangerousImage, 'x')[0].thumbnail).toBeNull();
+	});
 });

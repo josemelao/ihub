@@ -68,7 +68,7 @@ export async function resolveYouTubeChannelId(
 	if (direct) return direct[1];
 
 	const { text } = await fetchPublicText(url.toString(), {
-		fetcher: options.fetcher as typeof fetch | undefined,
+		fetcher: options.fetcher,
 		timeoutMs: options.timeoutMs
 	});
 	const channelId = parseYouTubeChannelId(text);

@@ -1,8 +1,11 @@
 import { json } from '@sveltejs/kit';
+import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
 import type { ExportBundle } from '#lib/types';
 import type { RequestHandler } from './$types';
+
+const MAX_BODY_BYTES = 10_000_000;
 
 interface ImportPayload {
 	bundle?: ExportBundle;
@@ -13,8 +16,11 @@ export const POST: RequestHandler = async ({ request }) => {
 	let payload: ImportPayload;
 
 	try {
-		payload = (await request.json()) as ImportPayload;
-	} catch {
+		payload = (await readJsonLimited(request, MAX_BODY_BYTES)) as ImportPayload;
+	} catch (error) {
+		if (error instanceof RequestBodyError) {
+			return json({ ok: false, error: error.message }, { status: error.status });
+		}
 		return json({ ok: false, error: 'Corpo da requisição não é um JSON válido.' }, { status: 400 });
 	}
 

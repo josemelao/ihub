@@ -1,15 +1,8 @@
 import { copyFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { HubValidationError, parseHub } from '../schema';
+import { EMPTY_FEED_CACHE, EMPTY_STATE } from '../defaults';
+import { HubValidationError, parseFeedCache, parseHub, parseHubState } from '../schema';
 import type { ExportBundle, FeedCache, HubData, HubState, HubStorage } from '../types';
-
-const EMPTY_STATE: HubState = { version: 1, read: {}, saved: [], savedItems: {} };
-const EMPTY_CACHE: FeedCache = {
-	version: 1,
-	updatedAt: new Date(0).toISOString(),
-	items: [],
-	sources: {}
-};
 
 function isMissingFile(error: unknown): boolean {
 	return (
@@ -107,13 +100,7 @@ export class JsonFileStorage implements HubStorage {
 
 	async loadState(): Promise<HubState> {
 		try {
-			const value = (await this.readJson('estado.json')) as Partial<HubState>;
-			return {
-				version: value.version ?? 1,
-				read: value.read ?? {},
-				saved: value.saved ?? [],
-				savedItems: value.savedItems ?? {}
-			};
+			return parseHubState(await this.readJson('estado.json'));
 		} catch (error) {
 			if (isMissingFile(error)) {
 				return structuredClone(EMPTY_STATE);
@@ -122,29 +109,53 @@ export class JsonFileStorage implements HubStorage {
 		}
 	}
 
+	async loadStateFromBackup(): Promise<HubState | null> {
+		try {
+			return parseHubState(await this.readJson('estado.json.bak'));
+		} catch {
+			return null;
+		}
+	}
+
 	async saveState(state: HubState): Promise<void> {
-		await this.writeJsonAtomic('estado.json', state);
+		await this.writeJsonAtomic('estado.json', parseHubState(state), (value) => {
+			try {
+				parseHubState(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
 	}
 
 	async loadFeedCache(): Promise<FeedCache> {
 		try {
-			const value = (await this.readJson('feed-cache.json')) as Partial<FeedCache>;
-			return {
-				version: value.version ?? 1,
-				updatedAt: value.updatedAt ?? EMPTY_CACHE.updatedAt,
-				items: value.items ?? [],
-				sources: value.sources ?? {}
-			};
+			return parseFeedCache(await this.readJson('feed-cache.json'));
 		} catch (error) {
 			if (isMissingFile(error)) {
-				return structuredClone(EMPTY_CACHE);
+				return structuredClone(EMPTY_FEED_CACHE);
 			}
 			throw error;
 		}
 	}
 
+	async loadFeedCacheFromBackup(): Promise<FeedCache | null> {
+		try {
+			return parseFeedCache(await this.readJson('feed-cache.json.bak'));
+		} catch {
+			return null;
+		}
+	}
+
 	async saveFeedCache(cache: FeedCache): Promise<void> {
-		await this.writeJsonAtomic('feed-cache.json', cache);
+		await this.writeJsonAtomic('feed-cache.json', parseFeedCache(cache), (value) => {
+			try {
+				parseFeedCache(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
 	}
 
 	async exportBundle(): Promise<ExportBundle> {
@@ -153,10 +164,11 @@ export class JsonFileStorage implements HubStorage {
 
 	async importBundle(bundle: ExportBundle, mode: 'replace' | 'merge'): Promise<void> {
 		const incoming = parseHub(bundle.hub);
+		const incomingState = bundle.state ? parseHubState(bundle.state) : null;
 
 		if (mode === 'replace') {
 			await this.saveHub(incoming);
-			if (bundle.state) await this.saveState(normalizeState(bundle.state));
+			if (incomingState) await this.saveState(incomingState);
 			return;
 		}
 
@@ -182,9 +194,8 @@ export class JsonFileStorage implements HubStorage {
 
 		await this.saveHub(mergeByIdAll(current, incoming));
 
-		if (bundle.state) {
+		if (incomingState) {
 			const state = await this.loadState();
-			const incomingState = normalizeState(bundle.state);
 			const mergedSaved = [...new Set([...state.saved, ...incomingState.saved])];
 			const savedItems = { ...state.savedItems, ...incomingState.savedItems };
 			for (const id of Object.keys(savedItems)) {
@@ -199,15 +210,6 @@ export class JsonFileStorage implements HubStorage {
 			});
 		}
 	}
-}
-
-function normalizeState(state: HubState): HubState {
-	return {
-		version: state.version ?? 1,
-		read: state.read ?? {},
-		saved: state.saved ?? [],
-		savedItems: state.savedItems ?? {}
-	};
 }
 
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {

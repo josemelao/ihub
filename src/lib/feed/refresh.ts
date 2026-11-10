@@ -1,3 +1,4 @@
+import { fetchPublicText } from '../net/safe-fetch';
 import type { FeedCache, FeedItem, FeedSourceStatus, HubData } from '../types';
 import { parseFeed } from './parse';
 import { resolveFeedUrl } from './sources';
@@ -90,24 +91,11 @@ export async function refreshFeed(
 
 		try {
 			const url = await resolveFeedUrl(source, { fetcher, timeoutMs });
-			const response = await fetcher(url, {
-				headers: {
-					'user-agent': 'MeuHub/0.1 (hub pessoal local)',
-					accept:
-						'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5'
-				},
-				signal: AbortSignal.timeout(timeoutMs)
+			const { text } = await fetchPublicText(url, {
+				fetcher,
+				timeoutMs,
+				maxBytes: MAX_RESPONSE_BYTES
 			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP ${response.status}`);
-			}
-
-			const text = await response.text();
-			if (text.length > MAX_RESPONSE_BYTES) {
-				throw new Error('Resposta muito grande (acima de 5 MB)');
-			}
-
 			const parsed = parseFeed(text, source.id);
 			const previous = itemsBySource.get(source.id) ?? [];
 			const chosen = parsed.length > 0 ? parsed : previous;

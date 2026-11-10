@@ -88,10 +88,13 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] Layout em 375 px sem sidebar ocupando a tela inteira.
 - [ ] Textos essenciais legíveis; cards lidos continuam distinguíveis.
 
-## Segurança (quando CSP/headers entrarem)
+## Segurança
 
-- [ ] CSP não bloqueia Google Fonts, thumbnails, YouTube ou Reddit.
-- [ ] `frame-src` permite `youtube-nocookie.com` e `redditmedia.com`.
-- [ ] `img-src` permite as imagens dos feeds.
-- [ ] `Referrer-Policy` não quebra os players.
-- [ ] Testar em Report-Only antes de enforce.
+- [x] CSP não bloqueia Google Fonts, thumbnails, YouTube ou Reddit.
+- [x] `frame-src` permite `youtube-nocookie.com` e `redditmedia.com`.
+- [x] `img-src` permite as imagens dos feeds.
+- [x] `Referrer-Policy` não quebra os players.
+- [ ] Trocar Report-Only por enforce após revisar o console.
+- [ ] Remover `'unsafe-inline'` de `script-src` com nonce/hash.
+- [ ] Confirmar URL de feed/snapshot só `http(s)`.
+- [ ] Confirmar limite de corpo (413) e SSRF no refresh.

@@ -1,16 +1,21 @@
 import { json } from '@sveltejs/kit';
 import { discoverFeedUrl } from '#lib/feed/discover';
 import { youtubeFeedUrl, youtubePageUrlFor } from '#lib/feed/sources';
+import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { fetchPublicText } from '#lib/net/safe-fetch';
 import type { RequestHandler } from './$types';
 
 const MAX_RESPONSE_BYTES = 5_000_000;
+const MAX_BODY_BYTES = 64_000;
 
 export const POST: RequestHandler = async ({ request }) => {
 	let payload: { url?: string };
 	try {
-		payload = (await request.json()) as { url?: string };
-	} catch {
+		payload = (await readJsonLimited(request, MAX_BODY_BYTES)) as { url?: string };
+	} catch (error) {
+		if (error instanceof RequestBodyError) {
+			return json({ ok: false, error: error.message }, { status: error.status });
+		}
 		return json({ ok: false, error: 'Corpo JSON inválido.' }, { status: 400 });
 	}
 

@@ -109,6 +109,107 @@ describe('JsonFileStorage', () => {
 		expect(cache.version).toBe(1);
 	});
 
+	it('rejeita estado inválido e oferece backup válido', async () => {
+		const valid = {
+			version: 1,
+			read: { post: '2026-11-09T12:00:00Z' },
+			saved: [],
+			savedItems: {}
+		};
+		await storage.saveState(valid);
+		await storage.saveState(valid);
+		await writeFile(join(dir, 'estado.json'), JSON.stringify({ savedItems: 'quebrado' }), 'utf-8');
+
+		await expect(storage.loadState()).rejects.toThrow(HubValidationError);
+		await expect(storage.loadStateFromBackup()).resolves.toEqual(valid);
+	});
+
+	it('rejeita cache inválido', async () => {
+		await writeFile(
+			join(dir, 'feed-cache.json'),
+			JSON.stringify({
+				items: [
+					{
+						id: 'x',
+						sourceId: 's',
+						title: 'X',
+						url: 'javascript:alert(1)',
+						publishedAt: '',
+						thumbnail: null
+					}
+				]
+			}),
+			'utf-8'
+		);
+
+		await expect(storage.loadFeedCache()).rejects.toThrow(HubValidationError);
+	});
+
+	it('não grava estado com snapshot de URL perigosa', async () => {
+		await expect(
+			storage.saveState({
+				version: 1,
+				read: {},
+				saved: ['x'],
+				savedItems: {
+					x: {
+						item: {
+							id: 'x',
+							sourceId: 's',
+							title: 'X',
+							summary: '',
+							url: 'javascript:alert(1)',
+							publishedAt: '',
+							thumbnail: null
+						},
+						sourceId: 's',
+						sourceName: 'Fonte',
+						savedAt: ''
+					}
+				}
+			})
+		).rejects.toThrow(HubValidationError);
+	});
+
+	it('aborta importação com estado inválido antes de gravar o hub', async () => {
+		await storage.saveHub(hub('Original'));
+		const incoming = hub('Novo');
+		incoming.categories[0].id = 'ferramentas';
+
+		await expect(
+			storage.importBundle(
+				{
+					hub: incoming,
+					state: {
+						version: 1,
+						read: {},
+						saved: ['x'],
+						savedItems: {
+							x: {
+								item: {
+									id: 'x',
+									sourceId: 's',
+									title: 'X',
+									summary: '',
+									url: 'data:text/html,oi',
+									publishedAt: '',
+									thumbnail: null
+								},
+								sourceId: 's',
+								sourceName: 'Fonte',
+								savedAt: ''
+							}
+						}
+					}
+				},
+				'replace'
+			)
+		).rejects.toThrow(HubValidationError);
+
+		const loaded = await storage.loadHub();
+		expect(loaded.categories[0].name).toBe('Original');
+	});
+
 	it('exporta hub e estado juntos', async () => {
 		await storage.saveHub(hub('Jogos'));
 		await storage.saveState({

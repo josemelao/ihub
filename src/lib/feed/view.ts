@@ -7,6 +7,7 @@ import type {
 	HubState,
 	SavedItemSnapshot
 } from '../types';
+import { toSafeHttpUrl } from '../net/url';
 import { matchesSourceRules } from './filter';
 
 export interface FeedViewItem {
@@ -32,16 +33,20 @@ export function buildFeedView(
 	for (const item of cache.items) {
 		const source = sourceById.get(item.sourceId);
 		if (!source || !source.enabled) continue;
+		const safeUrl = toSafeHttpUrl(item.url);
+		if (!safeUrl) continue;
+		const safeThumbnail = item.thumbnail ? toSafeHttpUrl(item.thumbnail) : null;
+		const safeItem = { ...item, url: safeUrl, thumbnail: safeThumbnail };
 		if (options.categoryId && source.categoryId !== options.categoryId) continue;
-		if (!options.savedOnly && !matchesSourceRules(item, source)) continue;
-		if (options.savedOnly && !saved.has(item.id)) continue;
+		if (!options.savedOnly && !matchesSourceRules(safeItem, source)) continue;
+		if (options.savedOnly && !saved.has(safeItem.id)) continue;
 
 		result.push({
-			item,
+			item: safeItem,
 			source,
 			category: categoryById.get(source.categoryId),
-			read: Boolean(state.read[item.id]),
-			saved: saved.has(item.id)
+			read: Boolean(state.read[safeItem.id]),
+			saved: saved.has(safeItem.id)
 		});
 	}
 
@@ -70,10 +75,15 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 	for (const id of state.saved) {
 		const liveItem = itemById.get(id);
 		const liveSource = liveItem ? sourceById.get(liveItem.sourceId) : undefined;
+		const liveUrl = liveItem ? toSafeHttpUrl(liveItem.url) : null;
 
-		if (liveItem && liveSource) {
+		if (liveItem && liveSource && liveUrl) {
 			result.push({
-				item: liveItem,
+				item: {
+					...liveItem,
+					url: liveUrl,
+					thumbnail: liveItem.thumbnail ? toSafeHttpUrl(liveItem.thumbnail) : null
+				},
 				source: liveSource,
 				category: categoryById.get(liveSource.categoryId),
 				read: Boolean(state.read[id]),
@@ -85,6 +95,14 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 
 		const snapshot = state.savedItems?.[id];
 		if (!snapshot) continue;
+
+		const snapshotUrl = toSafeHttpUrl(snapshot.item.url);
+		if (!snapshotUrl) continue;
+		const snapshotItem = {
+			...snapshot.item,
+			url: snapshotUrl,
+			thumbnail: snapshot.item.thumbnail ? toSafeHttpUrl(snapshot.item.thumbnail) : null
+		};
 
 		const knownCategory = snapshot.categoryId ? categoryById.get(snapshot.categoryId) : undefined;
 		const category: Category = knownCategory ?? {
@@ -108,7 +126,7 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 		};
 
 		result.push({
-			item: snapshot.item,
+			item: snapshotItem,
 			source,
 			category,
 			read: Boolean(state.read[id]),

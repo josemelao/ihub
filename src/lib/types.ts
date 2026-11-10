@@ -133,10 +133,13 @@ export interface ValidationIssue {
 
 export interface HubStorage {
 	loadHub(): Promise<HubData>;
+	loadHubFromBackup(): Promise<HubData | null>;
 	saveHub(data: HubData): Promise<void>;
 	loadState(): Promise<HubState>;
+	loadStateFromBackup(): Promise<HubState | null>;
 	saveState(state: HubState): Promise<void>;
 	loadFeedCache(): Promise<FeedCache>;
+	loadFeedCacheFromBackup(): Promise<FeedCache | null>;
 	saveFeedCache(cache: FeedCache): Promise<void>;
 	exportBundle(): Promise<ExportBundle>;
 	importBundle(bundle: ExportBundle, mode: 'replace' | 'merge'): Promise<void>;
