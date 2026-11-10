@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { discoverFeedUrl } from '#lib/feed/discover';
+import { youtubeFeedUrl, youtubePageUrlFor } from '#lib/feed/sources';
 import { fetchPublicText } from '#lib/net/safe-fetch';
 import type { RequestHandler } from './$types';
 
@@ -18,9 +19,21 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ ok: false, error: 'Informe a URL da página ou do feed.' }, { status: 400 });
 	}
 
+	if (/^UC[\w-]{20,}$/.test(target)) {
+		return json({ ok: true, feedUrl: youtubeFeedUrl(target) });
+	}
+
+	const normalized =
+		target.startsWith('@') || /^(www\.)?youtube\.com\//i.test(target)
+			? youtubePageUrlFor(target)
+			: target;
+	if (!normalized) {
+		return json({ ok: false, error: 'URL inválida.' }, { status: 400 });
+	}
+
 	let parsed: URL;
 	try {
-		parsed = new URL(target);
+		parsed = new URL(normalized);
 	} catch {
 		return json({ ok: false, error: 'URL inválida.' }, { status: 400 });
 	}

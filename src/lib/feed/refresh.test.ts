@@ -1,6 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { fetchPublicText } from '../net/safe-fetch';
 import { refreshFeed, type Fetcher } from './refresh';
 import type { FeedCache, FeedItem, FeedSource, HubData } from '../types';
+
+vi.mock('../net/safe-fetch', () => ({
+	fetchPublicText: vi.fn()
+}));
+
+const fetchTextMock = vi.mocked(fetchPublicText);
 
 const rss = `<?xml version="1.0"?>
 <rss version="2.0"><channel>
@@ -45,6 +52,10 @@ const cache = (items: FeedItem[] = [], sources: FeedCache['sources'] = {}): Feed
 });
 
 const now = () => new Date('2026-11-09T12:00:00.000Z');
+
+beforeEach(() => {
+	fetchTextMock.mockReset();
+});
 
 describe('refreshFeed', () => {
 	it('atualiza fontes boas e isola a falha das ruins', async () => {
@@ -178,5 +189,28 @@ describe('refreshFeed', () => {
 		});
 
 		expect(calls).toEqual(['https://other.test/feed']);
+	});
+
+	it('resolve @handle do YouTube antes de buscar o feed', async () => {
+		const channelId = 'UCy7DyzEEC9h81lmwg6H5rlw';
+		fetchTextMock.mockResolvedValue({
+			text: `<meta itemprop="identifier" content="${channelId}">`,
+			finalUrl: 'https://www.youtube.com/@canal'
+		});
+		const calls: string[] = [];
+		const fetcher: Fetcher = async (input) => {
+			calls.push(String(input));
+			return new Response(rss, { status: 200 });
+		};
+
+		const result = await refreshFeed(
+			hub([source({ id: 'yt', type: 'youtube', name: 'YT', target: '@canal' })]),
+			cache(),
+			{ fetcher, now, force: true }
+		);
+
+		expect(calls[0]).toBe(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`);
+		expect(result.cache.items).toHaveLength(1);
+		expect(result.results[0].ok).toBe(true);
 	});
 });

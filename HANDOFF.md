@@ -257,7 +257,7 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 - **Concorrência**: duas escritas simultâneas usam “última vence”; não há fila/otimistic lock.
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
-- YouTube exige ID do canal (`UC...`) ou URL de feed; `@handle` não é resolvido.
+- YouTube aceita `@handle`, URL do canal, ID `UC...` ou URL de feed; o ID é resolvido automaticamente no refresh e pelo botão **Detectar**.
 - Fontes de feed não têm reordenação (modelo não tem `order`).
 - `npm audit` completo tem avisos em dependências de desenvolvimento (ESLint).
 - O feed é sempre por data; não há ordenação alternativa.

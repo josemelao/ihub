@@ -1,6 +1,6 @@
 import type { FeedCache, FeedItem, FeedSourceStatus, HubData } from '../types';
 import { parseFeed } from './parse';
-import { feedUrlFor } from './sources';
+import { resolveFeedUrl } from './sources';
 
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -89,7 +89,7 @@ export async function refreshFeed(
 		}
 
 		try {
-			const url = feedUrlFor(source);
+			const url = await resolveFeedUrl(source, { fetcher, timeoutMs });
 			const response = await fetcher(url, {
 				headers: {
 					'user-agent': 'MeuHub/0.1 (hub pessoal local)',

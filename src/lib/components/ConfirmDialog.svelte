@@ -1,5 +1,11 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
+	import {
+		registerBackdropPointerDown,
+		resetBackdropPointer,
+		shouldCloseOnBackdropClick,
+		type BackdropPointerState
+	} from '#lib/dialog-backdrop';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -19,6 +25,7 @@
 	} = $props();
 
 	let dialogEl = $state<HTMLDialogElement | null>(null);
+	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
 
 	onMount(() => {
 		dialogEl?.showModal();
@@ -34,7 +41,15 @@
 	}
 
 	function handleBackdropClick(event: MouseEvent): void {
-		if (event.target === dialogEl) oncancel();
+		if (shouldCloseOnBackdropClick(backdropState, event.target, dialogEl)) oncancel();
+	}
+
+	function handlePointerDown(event: PointerEvent): void {
+		registerBackdropPointerDown(backdropState, event.target, dialogEl);
+	}
+
+	function handlePointerCancel(): void {
+		resetBackdropPointer(backdropState);
 	}
 </script>
 
@@ -44,6 +59,8 @@
 	aria-label={title}
 	oncancel={handleCancel}
 	onclick={handleBackdropClick}
+	onpointerdown={handlePointerDown}
+	onpointercancel={handlePointerCancel}
 >
 	<div class="confirm-body">
 		<div class="confirm-head">

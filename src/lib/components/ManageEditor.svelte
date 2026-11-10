@@ -10,6 +10,12 @@
 		SavedFilter,
 		ValidationIssue
 	} from '#lib/types';
+	import {
+		registerBackdropPointerDown,
+		resetBackdropPointer,
+		shouldCloseOnBackdropClick,
+		type BackdropPointerState
+	} from '#lib/dialog-backdrop';
 	import Icon from './Icon.svelte';
 	import ItemIcon from './ItemIcon.svelte';
 
@@ -122,6 +128,7 @@
 	let notice = $state('');
 	let detecting = $state(false);
 	let dialogEl = $state<HTMLDialogElement | null>(null);
+	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
 	const currentColor = $derived(
@@ -174,7 +181,15 @@
 	}
 
 	function handleBackdropClick(event: MouseEvent): void {
-		if (event.target === dialogEl) onclose();
+		if (shouldCloseOnBackdropClick(backdropState, event.target, dialogEl)) onclose();
+	}
+
+	function handlePointerDown(event: PointerEvent): void {
+		registerBackdropPointerDown(backdropState, event.target, dialogEl);
+	}
+
+	function handlePointerCancel(): void {
+		resetBackdropPointer(backdropState);
 	}
 
 	function onCategoryChange(): void {
@@ -199,11 +214,24 @@
 		issues = [];
 		notice = '';
 
+		const original = target.trim();
+		let lookup = original;
+		if (
+			sourceType === 'youtube' &&
+			lookup &&
+			!/^https?:\/\//i.test(lookup) &&
+			!lookup.startsWith('@') &&
+			!/^(www\.)?youtube\.com\//i.test(lookup) &&
+			!/^UC[\w-]{20,}$/.test(lookup)
+		) {
+			lookup = `@${lookup}`;
+		}
+
 		try {
 			const response = await fetch('/api/discover-feed', {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ url: target })
+				body: JSON.stringify({ url: lookup })
 			});
 			const result = (await response.json()) as { ok?: boolean; feedUrl?: string; error?: string };
 
@@ -213,7 +241,14 @@
 			}
 
 			target = result.feedUrl;
-			if (!name) name = new URL(result.feedUrl).hostname;
+			if (!name) {
+				if (sourceType === 'youtube') {
+					const handle = original.match(/@([^/?#]+)/)?.[1] ?? original.replace(/^@/, '');
+					name = handle && !/^UC[\w-]{20,}$/.test(handle) ? `YouTube · @${handle}` : 'YouTube';
+				} else {
+					name = new URL(result.feedUrl).hostname;
+				}
+			}
 			notice = 'Feed detectado automaticamente.';
 		} catch {
 			error = 'Falha de rede ao detectar o feed.';
@@ -343,6 +378,8 @@
 	tabindex="-1"
 	oncancel={handleCancel}
 	onclick={handleBackdropClick}
+	onpointerdown={handlePointerDown}
+	onpointercancel={handlePointerCancel}
 >
 	<div class="editor-head">
 		<h2>{title}</h2>
@@ -449,7 +486,7 @@
 							{sourceType === 'reddit'
 								? 'Subreddit ou URL do .rss'
 								: sourceType === 'youtube'
-									? 'ID do canal (UC...) ou URL do feed'
+									? 'Canal (@handle, ID UC... ou URL do feed)'
 									: 'URL do feed ou da página'}
 						</label>
 						<div class="field-inline">
@@ -460,10 +497,10 @@
 								placeholder={sourceType === 'reddit'
 									? 'Darktide'
 									: sourceType === 'youtube'
-										? 'UC...'
+										? '@canal ou UC...'
 										: 'https://exemplo.com/feed.xml'}
 							/>
-							{#if sourceType === 'rss'}
+							{#if sourceType === 'rss' || sourceType === 'youtube'}
 								<button
 									type="button"
 									class="btn"
@@ -474,6 +511,11 @@
 								</button>
 							{/if}
 						</div>
+						{#if sourceType === 'youtube'}
+							<span class="muted small">
+								Ex.: @MisterEtide, https://youtube.com/@canal ou UCy7DyzEEC9h81lmwg6H5rlw
+							</span>
+						{/if}
 					</div>
 
 					<div class="field">

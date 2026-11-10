@@ -1,6 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { feedUrlFor } from './sources';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { fetchPublicText } from '../net/safe-fetch';
+import {
+	feedUrlFor,
+	parseYouTubeChannelId,
+	resolveFeedUrl,
+	resolveYouTubeChannelId
+} from './sources';
 import type { FeedSource } from '../types';
+
+vi.mock('../net/safe-fetch', () => ({
+	fetchPublicText: vi.fn()
+}));
+
+const fetchTextMock = vi.mocked(fetchPublicText);
+const CHANNEL_ID = 'UCy7DyzEEC9h81lmwg6H5rlw';
+const channelHtml = `<html><meta itemprop="identifier" content="${CHANNEL_ID}"></html>`;
 
 const source = (overrides: Partial<FeedSource>): FeedSource => ({
 	id: 's',
@@ -14,6 +28,10 @@ const source = (overrides: Partial<FeedSource>): FeedSource => ({
 	exclude: [],
 	matchMode: 'any',
 	...overrides
+});
+
+beforeEach(() => {
+	fetchTextMock.mockReset();
 });
 
 describe('feedUrlFor', () => {
@@ -37,8 +55,8 @@ describe('feedUrlFor', () => {
 	});
 
 	it('monta o feed do YouTube a partir do channel ID', () => {
-		expect(feedUrlFor(source({ type: 'youtube', target: 'UCBJycsmduvYEL83R_U4JriQ' }))).toBe(
-			'https://www.youtube.com/feeds/videos.xml?channel_id=UCBJycsmduvYEL83R_U4JriQ'
+		expect(feedUrlFor(source({ type: 'youtube', target: CHANNEL_ID }))).toBe(
+			`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`
 		);
 	});
 
@@ -47,15 +65,58 @@ describe('feedUrlFor', () => {
 			feedUrlFor(
 				source({
 					type: 'youtube',
-					target: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC12345678901234567890'
+					target: `https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`
 				})
 			)
-		).toBe('https://www.youtube.com/feeds/videos.xml?channel_id=UC12345678901234567890');
+		).toBe(`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`);
 	});
 
 	it('explica quando o alvo do YouTube é inválido', () => {
 		expect(() =>
 			feedUrlFor(source({ type: 'youtube', target: 'https://youtube.com/@canal' }))
-		).toThrow(/ID do canal/i);
+		).toThrow(/@handle/i);
+	});
+});
+
+describe('YouTube', () => {
+	it('extrai o channel ID do HTML', () => {
+		expect(parseYouTubeChannelId(channelHtml)).toBe(CHANNEL_ID);
+		expect(parseYouTubeChannelId(`"channelId":"${CHANNEL_ID}"`)).toBe(CHANNEL_ID);
+		expect(parseYouTubeChannelId('sem canal')).toBeNull();
+	});
+
+	it('extrai o channel ID direto de /channel/ sem buscar a página', async () => {
+		const id = await resolveYouTubeChannelId(`https://www.youtube.com/channel/${CHANNEL_ID}`);
+		expect(id).toBe(CHANNEL_ID);
+		expect(fetchTextMock).not.toHaveBeenCalled();
+	});
+
+	it('resolve @handle buscando a página do canal', async () => {
+		fetchTextMock.mockResolvedValue({ text: channelHtml, finalUrl: 'https://youtube.com/' });
+
+		await expect(resolveYouTubeChannelId('@MisterEtide')).resolves.toBe(CHANNEL_ID);
+		expect(fetchTextMock).toHaveBeenCalledTimes(1);
+		expect(fetchTextMock.mock.calls[0][0]).toBe('https://www.youtube.com/@MisterEtide');
+	});
+
+	it('resolve o feed a partir de @handle', async () => {
+		fetchTextMock.mockResolvedValue({ text: channelHtml, finalUrl: 'https://youtube.com/' });
+
+		await expect(resolveFeedUrl(source({ type: 'youtube', target: '@MisterEtide' }))).resolves.toBe(
+			`https://www.youtube.com/feeds/videos.xml?channel_id=${CHANNEL_ID}`
+		);
+	});
+
+	it('rejeita domínio que não é do YouTube sem fazer requisição', async () => {
+		await expect(resolveYouTubeChannelId('https://example.com/@canal')).rejects.toThrow(
+			/canal do YouTube/i
+		);
+		expect(fetchTextMock).not.toHaveBeenCalled();
+	});
+
+	it('explica quando não encontra o ID na página', async () => {
+		fetchTextMock.mockResolvedValue({ text: '<html></html>', finalUrl: 'https://youtube.com/' });
+
+		await expect(resolveYouTubeChannelId('@canal')).rejects.toThrow(/ID do canal/i);
 	});
 });
