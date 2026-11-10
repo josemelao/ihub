@@ -3,7 +3,7 @@ import { getStorage } from '#lib/storage';
 import type { HubState, SavedItemSnapshot } from '#lib/types';
 import type { RequestHandler } from './$types';
 
-type StateAction = 'read' | 'unread' | 'save' | 'unsave' | 'mark-all-read';
+type StateAction = 'read' | 'unread' | 'save' | 'unsave' | 'mark-all-read' | 'mark-unread';
 
 interface StatePayload {
 	action?: StateAction;
@@ -63,6 +63,13 @@ export const POST: RequestHandler = async ({ request }) => {
 			if (!Array.isArray(payload.ids)) return invalid('Envie a lista de ids.');
 			for (const id of payload.ids) {
 				if (typeof id === 'string') state.read[id] = now;
+			}
+			break;
+
+		case 'mark-unread':
+			if (!Array.isArray(payload.ids)) return invalid('Envie a lista de ids.');
+			for (const id of payload.ids) {
+				if (typeof id === 'string') delete state.read[id];
 			}
 			break;
 

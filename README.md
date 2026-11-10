@@ -173,7 +173,7 @@ npm run lint    # Prettier + ESLint
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões do Sprint 0 ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 

@@ -723,6 +723,11 @@ button {
 	border: 1px solid var(--line);
 }
 
+.manage-row.focused {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
 .manage-main {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -1120,7 +1125,7 @@ h3 {
 }
 
 .quick-kind {
-	font-size: 11px;
+	font-size: 12px;
 	color: var(--mut);
 }
 
@@ -1343,7 +1348,7 @@ h3 {
 }
 
 .feed-card.read {
-	opacity: 0.72;
+	border-color: #222834;
 }
 
 .feed-card.variant-bento {
@@ -1742,6 +1747,24 @@ h3 {
 	justify-content: flex-end;
 }
 
+/* Toast */
+.toast {
+	position: fixed;
+	left: 50%;
+	bottom: 20px;
+	transform: translateX(-50%);
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 14px;
+	border-radius: 12px;
+	border: 1px solid var(--line);
+	background: var(--panel2);
+	color: var(--tx);
+	box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
 .feed-body {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -1773,6 +1796,21 @@ h3 {
 	line-height: 1.35;
 }
 
+.feed-title a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.feed-title a:hover {
+	color: #ffffff;
+}
+
+.feed-title a:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: 3px;
+}
+
 .feed-card.variant-completo .feed-title {
 	display: -webkit-box;
 	-webkit-line-clamp: 3;
@@ -1781,7 +1819,7 @@ h3 {
 }
 
 .feed-title mark {
-	background: rgba(138, 164, 255, 0.25);
+	background: color-mix(in srgb, var(--accent) 28%, transparent);
 	color: var(--tx);
 	border-radius: 4px;
 	padding: 0 3px;
@@ -1869,7 +1907,7 @@ h3 {
 }
 
 .tag {
-	font-size: 11px;
+	font-size: 12px;
 	border: 1px solid var(--line);
 	border-radius: 99px;
 	padding: 1px 8px;
@@ -1916,6 +1954,11 @@ h3 {
 	border-radius: 10px;
 	border: 1px solid var(--line);
 	background: var(--panel2);
+	transition: border-color var(--motion-fast) var(--ease-motion);
+}
+
+.metric:hover {
+	border-color: var(--accent);
 }
 
 .metric-value {
@@ -1925,7 +1968,7 @@ h3 {
 }
 
 .metric-label {
-	font-size: 11px;
+	font-size: 12px;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: var(--mut);
@@ -1999,6 +2042,10 @@ h3 {
 	display: flex;
 	align-items: center;
 	gap: 10px;
+}
+
+a.source-row:hover .soft {
+	color: var(--accent);
 }
 
 .source-row .count {
@@ -2383,7 +2430,7 @@ h3 {
 }
 
 .library-card-meta {
-	font-size: 11px;
+	font-size: 12px;
 	color: var(--mut);
 	white-space: nowrap;
 	overflow: hidden;
@@ -2398,8 +2445,8 @@ h3 {
 	font-weight: 600;
 	letter-spacing: 0.03em;
 	text-transform: uppercase;
-	background: rgba(138, 164, 255, 0.16);
-	color: #aab9ff;
+	background: color-mix(in srgb, var(--accent) 18%, transparent);
+	color: var(--accent);
 }
 
 .library-badge.pc {

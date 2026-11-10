@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSearchEntries, searchHub } from './search';
-import type { HubData } from './types';
+import type { FeedCache, HubData } from './types';
 
 const hub: HubData = {
 	version: 1,
@@ -45,7 +45,20 @@ const hub: HubData = {
 			order: 1
 		}
 	],
-	feedSources: [],
+	feedSources: [
+		{
+			id: 'reddit',
+			type: 'reddit',
+			name: 'r/Darktide',
+			target: 'Darktide',
+			categoryId: 'jogos',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		}
+	],
 	savedFilters: []
 };
 
@@ -91,5 +104,29 @@ describe('searchHub', () => {
 	it('respeita o limite de resultados', () => {
 		const results = searchHub(hub, 'a', 2);
 		expect(results.length).toBeLessThanOrEqual(2);
+	});
+
+	it('encontra posts do feed na palette', () => {
+		const feed: FeedCache = {
+			version: 1,
+			updatedAt: '2026-11-09T12:00:00Z',
+			items: [
+				{
+					id: 'post-especial',
+					sourceId: 'reddit',
+					title: 'Build secreta do Darktide',
+					summary: 'Uma build escondida',
+					url: 'https://www.reddit.com/r/Darktide/comments/abc/build/',
+					publishedAt: '2026-11-09T11:00:00Z',
+					thumbnail: null
+				}
+			],
+			sources: {}
+		};
+
+		const results = searchHub(hub, 'build secreta', 8, feed);
+		const post = results.find((entry) => entry.id === 'post:post-especial');
+		expect(post?.type).toBe('post');
+		expect(post?.href).toBe('https://www.reddit.com/r/Darktide/comments/abc/build/');
 	});
 });

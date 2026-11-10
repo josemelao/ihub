@@ -28,6 +28,16 @@ export function tint(hex: string, alpha = 0.15): string {
 	return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+export function contrastText(hex: string): '#0b1020' | '#ffffff' {
+	const { r, g, b } = hexToRgb(hex);
+	const channel = (value: number): number => {
+		const normalized = value / 255;
+		return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+	};
+	const luminance = 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+	return luminance > 0.179 ? '#0b1020' : '#ffffff';
+}
+
 export function categoryItemCounts(hub: HubData): Record<string, number> {
 	const counts: Record<string, number> = {};
 	for (const item of hub.items) {
@@ -45,11 +55,11 @@ export function categorySourceCounts(hub: HubData): Record<string, number> {
 }
 
 export function itemKind(item: HubItem): string {
-	return item.type === 'app' ? 'App do PC' : 'Site';
+	return item.type === 'app' ? 'App do PC' : 'Link';
 }
 
-export function itemPlatform(item: HubItem): 'PC' | 'Web' {
-	return item.type === 'app' ? 'PC' : 'Web';
+export function itemPlatform(item: HubItem): 'PC' | 'Link' {
+	return item.type === 'app' ? 'PC' : 'Link';
 }
 
 const APP_ICON_SLUGS: Record<string, string> = {

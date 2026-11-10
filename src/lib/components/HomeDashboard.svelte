@@ -17,8 +17,9 @@
 		).length;
 	});
 	const errors = $derived(
-		Object.values(feed.sources).filter((source) => source.error !== null).length
+		hub.feedSources.filter((source) => source.enabled && Boolean(feed.sources[source.id]?.error))
 	);
+	const errorNames = $derived(errors.map((source) => source.name).join(', '));
 	const updated = $derived(
 		feed.items.length > 0 ? relativeTime(feed.updatedAt) : 'nunca atualizado'
 	);
@@ -67,22 +68,26 @@
 	<section class="panel dashboard-card" aria-labelledby="d-resumo">
 		<h2 id="d-resumo" class="dashboard-title">Resumo do dia</h2>
 		<div class="metric-grid">
-			<div class="metric">
+			<a class="metric" href={resolve('/feed') + '?nao-lidos=1'}>
 				<span class="metric-value">{unread}</span>
 				<span class="metric-label">não lidos</span>
-			</div>
-			<div class="metric">
+			</a>
+			<a class="metric" href={resolve('/favoritos')}>
 				<span class="metric-value">{saved}</span>
 				<span class="metric-label">salvos</span>
-			</div>
-			<div class="metric">
+			</a>
+			<a class="metric" href={resolve('/feed')}>
 				<span class="metric-value">{today}</span>
 				<span class="metric-label">posts hoje</span>
-			</div>
-			<div class="metric">
-				<span class="metric-value">{errors}</span>
+			</a>
+			<a
+				class="metric"
+				href={resolve('/gerenciar') + '?tab=fontes&status=erro'}
+				title={errorNames || 'Nenhuma fonte ativa com erro'}
+			>
+				<span class="metric-value">{errors.length}</span>
 				<span class="metric-label">fontes com erro</span>
-			</div>
+			</a>
 		</div>
 		<span class="muted small">Atualizado {updated}</span>
 	</section>
@@ -104,7 +109,7 @@
 			</a>
 			<a class="action-row" href={resolve('/gerenciar')}>
 				<Icon name="settings" size={16} />
-				Gerenciar fontes e links
+				Gerenciar
 			</a>
 			<a class="action-row" href={resolve('/api/export')} download>
 				<Icon name="download" size={16} />

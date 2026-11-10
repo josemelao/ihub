@@ -3,6 +3,7 @@ import {
 	appIconUrl,
 	categoryItemCounts,
 	categorySourceCounts,
+	contrastText,
 	faviconUrl,
 	initials,
 	itemIconUrl,
@@ -26,6 +27,18 @@ describe('initials', () => {
 describe('tint', () => {
 	it('converte hex para rgba com transparência', () => {
 		expect(tint('#8AA4FF', 0.15)).toBe('rgba(138, 164, 255, 0.15)');
+	});
+});
+
+describe('contrastText', () => {
+	it('usa texto escuro em accent claro', () => {
+		expect(contrastText('#8AA4FF')).toBe('#0b1020');
+		expect(contrastText('#FFFFFF')).toBe('#0b1020');
+	});
+
+	it('usa texto branco em accent escuro', () => {
+		expect(contrastText('#101828')).toBe('#ffffff');
+		expect(contrastText('#B42318')).toBe('#ffffff');
 	});
 });
 

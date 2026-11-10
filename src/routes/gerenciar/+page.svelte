@@ -1,7 +1,8 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import ItemIcon from '#lib/components/ItemIcon.svelte';
@@ -57,6 +58,7 @@
 				sources: hub.feedSources.filter(
 					(source) =>
 						source.categoryId === category.id &&
+						(sourceStatusFilter === 'all' || Boolean(data.feed.sources[source.id]?.error)) &&
 						matchesQuery(
 							sourceQuery,
 							source.name,
@@ -169,6 +171,8 @@
 	let groupQuery = $state('');
 	let categoryQuery = $state('');
 	let filterQuery = $state('');
+	let sourceStatusFilter = $state<'all' | 'erro'>('all');
+	let focusedGroupId = $state<string | null>(null);
 	let accent = $state(untrack(() => data.hub.settings.accent));
 	let confirming = $state<{
 		kind: 'item' | 'source' | 'category' | 'group' | 'filter';
@@ -178,6 +182,7 @@
 	let editor = $state<{
 		kind: EditorKind;
 		initial: HubItem | FeedSource | Category | Group | SavedFilter | null;
+		preset: { categoryId?: string; groupId?: string };
 		key: number;
 	} | null>(null);
 
@@ -222,10 +227,67 @@
 
 	function openEditor(
 		kind: EditorKind,
-		initial: HubItem | FeedSource | Category | Group | SavedFilter | null = null
+		initial: HubItem | FeedSource | Category | Group | SavedFilter | null = null,
+		preset: { categoryId?: string; groupId?: string } = {}
 	): void {
-		editor = { kind, initial, key: Date.now() };
+		editor = { kind, initial, preset, key: Date.now() };
 	}
+
+	onMount(() => {
+		const params = page.url.searchParams;
+		const requestedTab = params.get('tab');
+		const validTabs: Tab[] = ['fontes', 'itens', 'grupos', 'categorias', 'filtros', 'aparencia'];
+		if (requestedTab && validTabs.includes(requestedTab as Tab)) {
+			tab = requestedTab as Tab;
+		}
+
+		if (params.get('status') === 'erro') sourceStatusFilter = 'erro';
+
+		const focus = params.get('focus');
+		if (focus) {
+			tab = 'grupos';
+			focusedGroupId = focus;
+			setTimeout(() => {
+				document
+					.getElementById(`group-${focus}`)
+					?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+			}, 80);
+			setTimeout(() => (focusedGroupId = null), 2400);
+		}
+
+		const add = params.get('add');
+		if (!add) return;
+		const kind: EditorKind | null =
+			add === 'link'
+				? 'link'
+				: add === 'app'
+					? 'app'
+					: add === 'source'
+						? 'source'
+						: add === 'group'
+							? 'group'
+							: add === 'filter'
+								? 'filter'
+								: add === 'category' || add === '1'
+									? 'category'
+									: null;
+		if (!kind) return;
+
+		tab =
+			kind === 'source'
+				? 'fontes'
+				: kind === 'link' || kind === 'app'
+					? 'itens'
+					: kind === 'group'
+						? 'grupos'
+						: kind === 'category'
+							? 'categorias'
+							: 'filtros';
+		openEditor(kind, null, {
+			categoryId: params.get('category') ?? undefined,
+			groupId: params.get('group') ?? undefined
+		});
+	});
 
 	async function mutate(payload: Record<string, unknown>): Promise<void> {
 		actionError = '';
@@ -454,7 +516,7 @@
 </a>
 
 <div class="section-head">
-	<h1>Gerenciar conteúdo</h1>
+	<h1>Gerenciar</h1>
 	<div class="chips">
 		{#if tab === 'itens'}
 			<button class="btn btn-primary" type="button" onclick={() => openEditor('link')}>
@@ -603,6 +665,13 @@
 		label="Buscar fontes"
 		placeholder="Buscar fonte, alvo, grupo ou categoria"
 	/>
+	{#if sourceStatusFilter === 'erro'}
+		<div class="chips">
+			<button class="chip active" type="button" onclick={() => (sourceStatusFilter = 'all')}>
+				Somente com erro ×
+			</button>
+		</div>
+	{/if}
 	<div class="manage-list">
 		{#each sourceSections as section (section.category.id)}
 			<div class="manage-group">
@@ -654,6 +723,8 @@
 							<button
 								class="switch-button"
 								type="button"
+								role="switch"
+								aria-checked={source.enabled}
 								aria-label={source.enabled ? 'Desligar fonte' : 'Ligar fonte'}
 								onclick={() => mutate({ action: 'toggle-source', id: source.id })}
 							>
@@ -820,7 +891,11 @@
 					{@const sourceCount = hub.feedSources.filter(
 						(source) => source.groupId === group.id
 					).length}
-					<div class="manage-row">
+					<div
+						class="manage-row"
+						class:focused={focusedGroupId === group.id}
+						id={`group-${group.id}`}
+					>
 						<span class="dot" style="background: {section.category.color}"></span>
 						<span class="manage-main">
 							<span class="manage-name">{group.name}</span>
@@ -1002,6 +1077,8 @@
 			kind={editor.kind}
 			hub={data.hub}
 			initial={editor.initial}
+			presetCategoryId={editor.preset.categoryId}
+			presetGroupId={editor.preset.groupId}
 			onclose={() => (editor = null)}
 		/>
 	{/key}

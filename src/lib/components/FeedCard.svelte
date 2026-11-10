@@ -354,13 +354,15 @@
 			</div>
 
 			<h3 class="feed-title">
-				{#each splitHighlights(entry.item.title, terms) as segment, index (index)}
-					{#if segment.highlight}
-						<mark>{segment.text}</mark>
-					{:else}
-						{segment.text}
-					{/if}
-				{/each}
+				<a href={entry.item.url} target="_blank" rel="noopener noreferrer">
+					{#each splitHighlights(entry.item.title, terms) as segment, index (index)}
+						{#if segment.highlight}
+							<mark>{segment.text}</mark>
+						{:else}
+							{segment.text}
+						{/if}
+					{/each}
+				</a>
 			</h3>
 
 			{#if entry.item.summary}
@@ -369,7 +371,13 @@
 					class="feed-summary"
 					class:clamped={variant === 'completo' && !expanded}
 				>
-					{entry.item.summary}
+					{#each splitHighlights(entry.item.summary, terms) as segment, index (index)}
+						{#if segment.highlight}
+							<mark>{segment.text}</mark>
+						{:else}
+							{segment.text}
+						{/if}
+					{/each}
 				</p>
 				{#if canExpand}
 					<button

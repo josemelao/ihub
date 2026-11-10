@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline e preparação)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 172 testes
+npm test        # 177 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **172/172 testes, 18 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **177/177 testes, 19 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -301,3 +301,19 @@ Executado em 10/11/2026 sobre o commit `d799914`.
 Decisões principais: busca inclui posts na palette; terminologia **Favoritos**/“Salvar para depois”/“Biblioteca”/“Fontes”; notas em `notes.json`; reader mode adiado; sync por pasta; autostart via Startup; LAN só `127.0.0.1`; tema somente dark; retenção de lidos 90 dias; backups 7 gerações; SQLite só no critério; CSP com allowlist para YouTube/Reddit/fontes/imagens; migração versionada só para mudanças quebrantes; CI local via `npm run verify`.
 
 Próximo: Sprint 1 — P0 de UX, conforme o plano versionado.
+
+## 14. Sprint 1 — P0 de UX
+
+Executado em 10/11/2026 sobre o Sprint 0.
+
+- Título clicável nas três visões, posts na palette, deep links de adicionar, foco de grupo.
+- Métricas/fontes da home clicáveis; filtros `?fonte=` e `?nao-lidos=1`.
+- Fontes com erro só ativas; cache limpo ao mudar `target`/`type` ou remover fonte.
+- Busca de salvos com resumo e destaque no resumo.
+- Confirmação + desfazer em “marcar tudo como lido”.
+- Palette com focus trap, clique fora, scroll lock e retorno de foco.
+- Switch de fonte com semântica de switch; editor com aviso de descarte.
+- Terminologia unificada, contraste melhorado, favicon e textos de filtro corrigidos.
+- `npm run verify` verde com **177/177 testes**.
+
+Detalhes em [`docs/sprint-1.md`](docs/sprint-1.md). Próximo foco: segurança (SEC-01, SEC-03, SEC-04, SEC-05) e depois CSP com allowlist de iframes/imagens.

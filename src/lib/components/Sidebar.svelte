@@ -28,12 +28,7 @@
 				<span class="brand-mark">H</span>
 				<span>Meu Hub</span>
 			</a>
-			<a
-				class="brand-gear"
-				href={resolve('/gerenciar')}
-				aria-label="Gerenciar fontes e links"
-				title="Gerenciar fontes e links"
-			>
+			<a class="brand-gear" href={resolve('/gerenciar')} aria-label="Gerenciar" title="Gerenciar">
 				<Icon name="settings" size={18} />
 			</a>
 		</div>
@@ -87,7 +82,11 @@
 					</span>
 				</a>
 			{/each}
-			<a class="nav-link" href={resolve('/gerenciar')} title="Adicione categorias em Gerenciar">
+			<a
+				class="nav-link"
+				href={resolve('/gerenciar') + '?tab=categorias&add=1'}
+				title="Crie categorias em Gerenciar"
+			>
 				<Icon name="plus" size={16} />
 				Nova categoria
 			</a>
@@ -97,7 +96,7 @@
 	<div class="sidebar-footer">
 		<a class="nav-link" class:active={active('/gerenciar')} href={resolve('/gerenciar')}>
 			<Icon name="settings" />
-			Gerenciar fontes e links
+			Gerenciar
 		</a>
 		<div class="sidebar-footnote">Feed com atualização automática</div>
 	</div>

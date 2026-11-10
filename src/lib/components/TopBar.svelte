@@ -6,8 +6,14 @@
 	let {
 		placeholder = 'Buscar links, apps e posts do feed',
 		action = 'Adicionar',
-		actionTitle = 'Abre o gerenciador'
-	}: { placeholder?: string; action?: string; actionTitle?: string } = $props();
+		actionTitle = 'Abre o gerenciador',
+		actionHref = resolve('/gerenciar')
+	}: {
+		placeholder?: string;
+		action?: string;
+		actionTitle?: string;
+		actionHref?: string;
+	} = $props();
 </script>
 
 <header class="topbar">
@@ -23,7 +29,7 @@
 	</button>
 	<div class="topbar-actions">
 		<a class="btn" href={resolve('/gerenciar')} title={actionTitle}>Editar</a>
-		<a class="btn btn-primary" href={resolve('/gerenciar')} title={actionTitle}>
+		<a class="btn btn-primary" href={actionHref} title={actionTitle}>
 			<Icon name="plus" size={16} />
 			{action}
 		</a>

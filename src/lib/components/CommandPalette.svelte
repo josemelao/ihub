@@ -3,18 +3,27 @@
 	import { onMount } from 'svelte';
 	import { initials, tint } from '#lib/display';
 	import { searchHub, type SearchEntry } from '#lib/search';
-	import type { HubData } from '#lib/types';
+	import type { FeedCache, HubData } from '#lib/types';
 	import Icon from './Icon.svelte';
 
-	let { hub, onclose }: { hub: HubData; onclose: () => void } = $props();
+	let { hub, feed, onclose }: { hub: HubData; feed?: FeedCache; onclose: () => void } = $props();
 
 	let query = $state('');
 	let active = $state(0);
 	let inputEl = $state<HTMLInputElement | null>(null);
+	let paletteEl = $state<HTMLElement | null>(null);
 
-	const results = $derived(searchHub(hub, query, 8));
+	const results = $derived(searchHub(hub, query, 8, feed));
 
-	onMount(() => inputEl?.focus());
+	onMount(() => {
+		const previousFocus = document.activeElement as HTMLElement | null;
+		inputEl?.focus();
+		document.body.style.overflow = 'hidden';
+		return () => {
+			document.body.style.overflow = '';
+			previousFocus?.focus();
+		};
+	});
 
 	$effect(() => {
 		if (active > results.length - 1) {
@@ -30,7 +39,7 @@
 			void goto(entry.href);
 			return;
 		}
-		if (entry.type === 'link') {
+		if (entry.type === 'link' || entry.type === 'post') {
 			window.open(entry.href, '_blank', 'noopener,noreferrer');
 			return;
 		}
@@ -41,7 +50,29 @@
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			onclose();
-		} else if (event.key === 'ArrowDown') {
+			return;
+		}
+
+		if (event.key === 'Tab') {
+			const focusables = paletteEl?.querySelectorAll<HTMLElement>(
+				'input, button, a[href], [tabindex]:not([tabindex="-1"])'
+			);
+			if (!focusables || focusables.length === 0) return;
+			const first = focusables[0];
+			const last = focusables[focusables.length - 1];
+			if (event.shiftKey && document.activeElement === first) {
+				event.preventDefault();
+				last.focus();
+			} else if (!event.shiftKey && document.activeElement === last) {
+				event.preventDefault();
+				first.focus();
+			}
+			return;
+		}
+
+		if (results.length === 0) return;
+
+		if (event.key === 'ArrowDown') {
 			event.preventDefault();
 			active = Math.min(active + 1, results.length - 1);
 		} else if (event.key === 'ArrowUp') {
@@ -53,27 +84,44 @@
 		}
 	}
 
+	function handleBackdrop(event: MouseEvent): void {
+		if (event.target === event.currentTarget) onclose();
+	}
+
 	function typeLabel(entry: SearchEntry): string {
-		return entry.type === 'category' ? 'Categoria' : entry.type === 'app' ? 'App do PC' : 'Site';
+		return entry.type === 'category'
+			? 'Categoria'
+			: entry.type === 'app'
+				? 'App do PC'
+				: entry.type === 'post'
+					? 'Post'
+					: 'Link';
 	}
 </script>
 
-<div class="palette-backdrop">
-	<div class="palette" role="dialog" aria-modal="true" aria-label="Busca rápida">
+<div class="palette-backdrop" role="presentation" onclick={handleBackdrop}>
+	<div
+		bind:this={paletteEl}
+		class="palette"
+		role="dialog"
+		aria-modal="true"
+		aria-label="Busca rápida"
+		tabindex="-1"
+		onkeydown={onKeydown}
+	>
 		<div class="palette-search">
 			<Icon name="search" />
 			<input
 				bind:this={inputEl}
 				bind:value={query}
 				oninput={() => (active = 0)}
-				onkeydown={onKeydown}
-				placeholder="Buscar links, apps e categorias"
+				placeholder="Buscar links, apps, posts e categorias"
 				role="combobox"
 				aria-expanded="true"
 				aria-controls="palette-list"
 				aria-autocomplete="list"
 				aria-activedescendant={results[active] ? `palette-option-${results[active].id}` : undefined}
-				aria-label="Buscar links, apps e categorias"
+				aria-label="Buscar links, apps, posts e categorias"
 				autocomplete="off"
 			/>
 			<button type="button" class="palette-close" aria-label="Fechar busca" onclick={onclose}>

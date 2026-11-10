@@ -160,7 +160,11 @@
 	<title>Biblioteca · Meu Hub</title>
 </svelte:head>
 
-<TopBar placeholder="Buscar na biblioteca" action="Adicionar item" />
+<TopBar
+	placeholder="Buscar na biblioteca"
+	action="Adicionar item"
+	actionHref={`${resolve('/gerenciar')}?tab=itens&add=link`}
+/>
 
 <div class="section-head">
 	<h1>Biblioteca</h1>
@@ -261,7 +265,7 @@
 							<span class="muted small">{group.items.length} serviços</span>
 							<a
 								class="library-group-edit"
-								href={resolve('/gerenciar')}
+								href={resolve('/gerenciar') + '?tab=grupos&focus=' + group.id}
 								title="Gerenciar grupos e itens"
 							>
 								editar

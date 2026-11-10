@@ -17,6 +17,7 @@
 		type BackdropPointerState
 	} from '#lib/dialog-backdrop';
 	import Icon from './Icon.svelte';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import ItemIcon from './ItemIcon.svelte';
 
 	type Kind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
@@ -25,11 +26,15 @@
 		kind,
 		hub,
 		initial = null,
+		presetCategoryId,
+		presetGroupId,
 		onclose
 	}: {
 		kind: Kind;
 		hub: HubData;
 		initial?: HubItem | FeedSource | Category | Group | SavedFilter | null;
+		presetCategoryId?: string;
+		presetGroupId?: string;
 		onclose: () => void;
 	} = $props();
 
@@ -62,7 +67,9 @@
 
 	function buildSeed(
 		source: HubItem | FeedSource | Category | Group | SavedFilter | null,
-		data: HubData
+		data: HubData,
+		presetCategoryId?: string,
+		presetGroupId?: string
 	): Seed {
 		const isFeedSource =
 			source !== null &&
@@ -70,6 +77,19 @@
 			(source.type === 'rss' || source.type === 'youtube' || source.type === 'reddit');
 		const feedSource = isFeedSource ? (source as FeedSource) : null;
 		const item = source !== null && 'type' in source && !isFeedSource ? (source as HubItem) : null;
+		const presetCategory =
+			presetCategoryId && data.categories.some((category) => category.id === presetCategoryId)
+				? presetCategoryId
+				: undefined;
+		const categoryId =
+			(source && 'categoryId' in source ? source.categoryId : presetCategory) ??
+			data.categories[0]?.id ??
+			'';
+		const presetGroup =
+			presetGroupId &&
+			data.groups.some((group) => group.id === presetGroupId && group.categoryId === categoryId)
+				? presetGroupId
+				: '';
 
 		return {
 			name: (source && 'name' in source ? source.name : '') || '',
@@ -77,9 +97,8 @@
 			url: item?.type === 'link' ? item.url : '',
 			launchValue: item?.type === 'app' ? item.launch.value : '',
 			icon: item?.icon ?? '',
-			categoryId:
-				(source && 'categoryId' in source ? source.categoryId : data.categories[0]?.id) ?? '',
-			groupId: (source && 'groupId' in source ? source.groupId : '') ?? '',
+			categoryId,
+			groupId: (source && 'groupId' in source ? source.groupId : presetGroup) ?? '',
 			tags: item ? item.tags.join(', ') : '',
 			pinned: item?.pinned ?? false,
 			sourceType: feedSource?.type ?? 'rss',
@@ -98,7 +117,7 @@
 		};
 	}
 
-	const seed = untrack(() => buildSeed(initial, hub));
+	const seed = untrack(() => buildSeed(initial, hub, presetCategoryId, presetGroupId));
 
 	let name = $state(seed.name);
 	let description = $state(seed.description);
@@ -124,6 +143,38 @@
 	let filterLabel = $state(seed.filterLabel);
 	let filterInclude = $state(seed.filterInclude);
 	let filterExclude = $state(seed.filterExclude);
+
+	let confirmDiscard = $state(false);
+
+	function currentValues() {
+		return {
+			name,
+			description,
+			url,
+			launchValue,
+			icon,
+			categoryId,
+			groupId,
+			tags,
+			pinned,
+			sourceType,
+			target,
+			intervalMinutes,
+			maxItems,
+			redditEnglish,
+			enabled,
+			include,
+			exclude,
+			matchMode,
+			color,
+			filterLabel,
+			filterInclude,
+			filterExclude
+		};
+	}
+
+	const initialValues = untrack(() => currentValues());
+	const dirty = $derived(JSON.stringify(currentValues()) !== JSON.stringify(initialValues));
 
 	let busy = $state(false);
 	let error = $state('');
@@ -178,13 +229,26 @@
 		dialogEl?.close();
 	});
 
-	function handleCancel(event: Event): void {
-		event.preventDefault();
+	function requestClose(): void {
+		if (dirty) {
+			confirmDiscard = true;
+			return;
+		}
 		onclose();
 	}
 
+	function discardAndClose(): void {
+		confirmDiscard = false;
+		onclose();
+	}
+
+	function handleCancel(event: Event): void {
+		event.preventDefault();
+		requestClose();
+	}
+
 	function handleBackdropClick(event: MouseEvent): void {
-		if (shouldCloseOnBackdropClick(backdropState, event.target, dialogEl)) onclose();
+		if (shouldCloseOnBackdropClick(backdropState, event.target, dialogEl)) requestClose();
 	}
 
 	function handlePointerDown(event: PointerEvent): void {
@@ -394,7 +458,7 @@
 >
 	<div class="editor-head">
 		<h2>{title}</h2>
-		<button type="button" class="palette-close" aria-label="Fechar painel" onclick={onclose}>
+		<button type="button" class="palette-close" aria-label="Fechar painel" onclick={requestClose}>
 			<Icon name="x" size={16} />
 		</button>
 	</div>
@@ -603,14 +667,16 @@
 					<span class="editor-section-label">Filtros</span>
 					<div class="editor-row">
 						<div class="field">
-							<label for="e-include">Destacar se contiver</label>
+							<label for="e-include">Mostrar somente se contiver</label>
 							<input id="e-include" bind:value={include} placeholder="patch, hotfix" />
 						</div>
 						<div class="field">
-							<label for="e-exclude">Silenciar se contiver</label>
+							<label for="e-exclude">Ocultar se contiver</label>
 							<input id="e-exclude" bind:value={exclude} placeholder="promoção" />
 						</div>
 					</div>
+
+					<span class="muted small">Aplica um filtro na exibição; não altera o cache.</span>
 
 					<div class="field">
 						<label for="e-mode">Regra</label>
@@ -692,10 +758,21 @@
 		</div>
 
 		<div class="editor-actions">
-			<button class="btn" type="button" onclick={onclose} disabled={busy}>Cancelar</button>
+			<button class="btn" type="button" onclick={requestClose} disabled={busy}>Cancelar</button>
 			<button class="btn btn-primary" type="submit" disabled={busy}>
 				{busy ? 'Salvando...' : isEdit ? 'Salvar alterações' : 'Adicionar'}
 			</button>
 		</div>
 	</form>
 </dialog>
+
+{#if confirmDiscard}
+	<ConfirmDialog
+		title="Descartar alterações?"
+		message="As alterações não salvas serão perdidas."
+		confirmLabel="Descartar"
+		cancelLabel="Continuar editando"
+		onconfirm={discardAndClose}
+		oncancel={() => (confirmDiscard = false)}
+	/>
+{/if}

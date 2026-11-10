@@ -1,10 +1,10 @@
 import Fuse from 'fuse.js';
-import { itemHref, itemKind } from './display';
-import type { HubData } from './types';
+import { itemHref, itemKind, relativeTime } from './display';
+import type { FeedCache, HubData } from './types';
 
 export interface SearchEntry {
 	id: string;
-	type: 'category' | 'link' | 'app';
+	type: 'category' | 'link' | 'app' | 'post';
 	name: string;
 	description: string;
 	href: string;
@@ -14,7 +14,7 @@ export interface SearchEntry {
 	color: string;
 }
 
-export function buildSearchEntries(hub: HubData): SearchEntry[] {
+export function buildSearchEntries(hub: HubData, feed?: FeedCache): SearchEntry[] {
 	const categoryById = new Map(hub.categories.map((category) => [category.id, category]));
 	const groupById = new Map(hub.groups.map((group) => [group.id, group]));
 
@@ -55,7 +55,27 @@ export function buildSearchEntries(hub: HubData): SearchEntry[] {
 			color: category.color
 		}));
 
-	return [...pinned, ...categories, ...rest];
+	const sourceById = new Map(hub.feedSources.map((source) => [source.id, source]));
+	const posts: SearchEntry[] = (feed?.items ?? [])
+		.slice()
+		.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''))
+		.slice(0, 20)
+		.map((item) => {
+			const source = sourceById.get(item.sourceId);
+			const category = source ? categoryById.get(source.categoryId) : undefined;
+			return {
+				id: `post:${item.id}`,
+				type: 'post',
+				name: item.title,
+				description: [source?.name, relativeTime(item.publishedAt)].filter(Boolean).join(' · '),
+				href: item.url,
+				tags: [],
+				categoryName: category?.name ?? '',
+				color: category?.color ?? '#8AA4FF'
+			};
+		});
+
+	return [...pinned, ...categories, ...rest, ...posts];
 }
 
 function createFuse(entries: SearchEntry[]): Fuse<SearchEntry> {
@@ -75,8 +95,8 @@ function createFuse(entries: SearchEntry[]): Fuse<SearchEntry> {
 	});
 }
 
-export function searchHub(hub: HubData, query: string, limit = 8): SearchEntry[] {
-	const entries = buildSearchEntries(hub);
+export function searchHub(hub: HubData, query: string, limit = 8, feed?: FeedCache): SearchEntry[] {
+	const entries = buildSearchEntries(hub, feed);
 	const trimmed = query.trim();
 
 	if (!trimmed) {

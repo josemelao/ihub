@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { relativeTime } from '#lib/display';
 	import { buildFeedView } from '#lib/feed/view';
@@ -13,6 +14,8 @@
 	const enabledCount = $derived(sources.filter((source) => source.enabled).length);
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 	const initialFilterId = $derived(page.url.searchParams.get('filtro'));
+	const initialSourceId = $derived(page.url.searchParams.get('fonte'));
+	const initialUnreadOnly = $derived(page.url.searchParams.get('nao-lidos') === '1');
 	const updatedLabel = $derived(
 		data.feed.items.length > 0
 			? `atualizado ${relativeTime(data.feed.updatedAt)}`
@@ -40,6 +43,8 @@
 	categories={hub.categories}
 	showCategoryChips
 	{initialFilterId}
+	{initialSourceId}
+	{initialUnreadOnly}
 />
 
 <section class="panel section" aria-labelledby="t-todas-fontes">
@@ -52,7 +57,7 @@
 				style="background: {hub.categories.find((c) => c.id === source.categoryId)?.color ??
 					'#8AA4FF'}; border-radius: 50%"
 			></span>
-			<span class="soft">{source.name}</span>
+			<a class="soft" href={resolve('/feed') + '?fonte=' + source.id}>{source.name}</a>
 			<span class="tag">{source.enabled ? 'ativa' : 'desligada'}</span>
 			<span class="muted small">{catName[source.categoryId] ?? source.categoryId}</span>
 			<span class="count" title={status?.error ?? 'Última atualização'}>

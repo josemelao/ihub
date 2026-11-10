@@ -2,6 +2,7 @@
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import GroupCard from '#lib/components/GroupCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { resolve } from '$app/paths';
 	import { buildFeedView } from '#lib/feed/view';
 	import type { HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
@@ -35,7 +36,11 @@
 	<title>{category.name} · Meu Hub</title>
 </svelte:head>
 
-<TopBar placeholder={`Buscar em ${category.name}`} action={`Adicionar em ${category.name}`} />
+<TopBar
+	placeholder={`Buscar em ${category.name}`}
+	action={`Adicionar em ${category.name}`}
+	actionHref={`${resolve('/gerenciar')}?tab=itens&add=link&category=${category.id}`}
+/>
 
 <div class="cat-header">
 	<div class="cat-identity">

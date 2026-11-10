@@ -1,7 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import CommandPalette from '#lib/components/CommandPalette.svelte';
 	import Sidebar from '#lib/components/Sidebar.svelte';
+	import CommandPalette from '#lib/components/CommandPalette.svelte';
+	import { contrastText } from '#lib/display';
 	import { ui } from '#lib/ui.svelte';
 	import type { LayoutProps } from './$types';
 
@@ -28,7 +29,12 @@
 
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-<div class="app-shell" style="--accent: {data.hub.settings.accent}">
+<div
+	class="app-shell"
+	style="--accent: {data.hub.settings.accent}; --on-accent: {contrastText(
+		data.hub.settings.accent
+	)}"
+>
 	<Sidebar hub={data.hub} {unread} savedCount={data.state.saved.length} />
 
 	<main class="main" id="conteudo">
@@ -55,5 +61,5 @@
 </div>
 
 {#if ui.paletteOpen}
-	<CommandPalette hub={data.hub} onclose={() => ui.closePalette()} />
+	<CommandPalette hub={data.hub} feed={data.feed} onclose={() => ui.closePalette()} />
 {/if}

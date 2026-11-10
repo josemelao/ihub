@@ -9,6 +9,7 @@
 	import type { FeedViewItem } from '#lib/feed/view';
 	import { snapshotFromEntry } from '#lib/feed/view';
 	import type { Category, SavedFilter } from '#lib/types';
+	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
 
@@ -25,7 +26,9 @@
 		emptyHint = '',
 		overview = false,
 		saved = false,
-		initialFilterId = null
+		initialFilterId = null,
+		initialSourceId = null,
+		initialUnreadOnly = false
 	}: {
 		entries: FeedViewItem[];
 		savedFilters?: SavedFilter[];
@@ -38,6 +41,8 @@
 		overview?: boolean;
 		saved?: boolean;
 		initialFilterId?: string | null;
+		initialSourceId?: string | null;
+		initialUnreadOnly?: boolean;
 	} = $props();
 
 	const viewOptions: { id: FeedView; label: string }[] = [
@@ -51,14 +56,22 @@
 	let modeChoice = $state<'any' | 'all'>('any');
 	let activeFilterId = $state<string | null>(untrack(() => initialFilterId));
 	let lastInitialFilterId = untrack(() => initialFilterId);
-	let unreadOnly = $state(false);
+	let unreadOnly = $state(untrack(() => initialUnreadOnly));
+	let lastInitialUnreadOnly = untrack(() => initialUnreadOnly);
 	let categoryFilter = $state('all');
+	let sourceFilter = $state<string>(untrack(() => initialSourceId ?? 'all'));
+	let lastInitialSourceId = untrack(() => initialSourceId);
 	let savedQuery = $state('');
 	let savedSort = $state<'saved' | 'published'>('saved');
 	let limit = $state(10);
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
 	let refreshFailed = $state(false);
+	let confirmMarkAll = $state(false);
+	let pendingMarkAllIds = $state<string[]>([]);
+	let undoIds = $state<string[]>([]);
+	let toastMessage = $state('');
+	let undoTimer: ReturnType<typeof setTimeout> | undefined;
 	let reduceMotion = $state(false);
 	let viewReady = $state(false);
 	let animationsEnabled = $state(false);
@@ -93,6 +106,7 @@
 		return () => {
 			clearTimeout(timer);
 			clearTimeout(viewTimer);
+			clearTimeout(undoTimer);
 		};
 	});
 
@@ -120,9 +134,11 @@
 	const mode = $derived(activeFilter?.matchMode ?? modeChoice);
 
 	const base = $derived(
-		categoryFilter === 'all'
-			? entries
-			: entries.filter((entry) => entry.source.categoryId === categoryFilter)
+		entries.filter(
+			(entry) =>
+				(categoryFilter === 'all' || entry.source.categoryId === categoryFilter) &&
+				(sourceFilter === 'all' || entry.source.id === sourceFilter)
+		)
 	);
 	const filtered = $derived(
 		base.filter((entry) => {
@@ -130,11 +146,21 @@
 			return matchesFilter(`${entry.item.title}\n${entry.item.summary}`, terms, exclude, mode);
 		})
 	);
+	const activeSource = $derived(
+		sourceFilter === 'all'
+			? null
+			: (entries.find((entry) => entry.source.id === sourceFilter)?.source ?? null)
+	);
 	const savedTerms = $derived(savedQuery.trim().split(/\s+/).filter(Boolean));
 	const savedFiltered = $derived(
 		[...entries]
 			.filter((entry) =>
-				matchesFilter(`${entry.item.title}\n${entry.source.name}`, savedTerms, [], 'any')
+				matchesFilter(
+					`${entry.item.title}\n${entry.item.summary}\n${entry.source.name}`,
+					savedTerms,
+					[],
+					'any'
+				)
 			)
 			.sort((a, b) =>
 				savedSort === 'saved'
@@ -152,6 +178,22 @@
 		if (initialFilterId !== lastInitialFilterId) {
 			lastInitialFilterId = initialFilterId;
 			activeFilterId = initialFilterId;
+			limit = 10;
+		}
+	});
+
+	$effect(() => {
+		if (initialSourceId !== lastInitialSourceId) {
+			lastInitialSourceId = initialSourceId;
+			sourceFilter = initialSourceId ?? 'all';
+			limit = 10;
+		}
+	});
+
+	$effect(() => {
+		if (initialUnreadOnly !== lastInitialUnreadOnly) {
+			lastInitialUnreadOnly = initialUnreadOnly;
+			unreadOnly = initialUnreadOnly;
 			limit = 10;
 		}
 	});
@@ -237,13 +279,14 @@
 		}
 	}
 
-	async function postState(body: unknown): Promise<void> {
+	async function postState(body: unknown): Promise<boolean> {
 		const response = await fetch('/api/state', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify(body)
 		});
 		if (response.ok) await invalidateAll();
+		return response.ok;
 	}
 
 	function toggleRead(entry: FeedViewItem): void {
@@ -258,9 +301,35 @@
 		);
 	}
 
-	function markAllRead(): void {
+	function requestMarkAllRead(): void {
 		const ids = filtered.filter((entry) => !entry.read).map((entry) => entry.item.id);
-		if (ids.length > 0) void postState({ action: 'mark-all-read', ids });
+		if (ids.length === 0) return;
+		pendingMarkAllIds = ids;
+		confirmMarkAll = true;
+	}
+
+	async function confirmMarkAllRead(): Promise<void> {
+		const ids = pendingMarkAllIds;
+		confirmMarkAll = false;
+		if (ids.length === 0) return;
+		const ok = await postState({ action: 'mark-all-read', ids });
+		if (!ok) return;
+		undoIds = ids;
+		toastMessage = `${ids.length} ${ids.length === 1 ? 'post marcado' : 'posts marcados'} como lidos.`;
+		clearTimeout(undoTimer);
+		undoTimer = setTimeout(() => {
+			toastMessage = '';
+			undoIds = [];
+		}, 10_000);
+	}
+
+	async function undoMarkAllRead(): Promise<void> {
+		const ids = undoIds;
+		undoIds = [];
+		toastMessage = '';
+		clearTimeout(undoTimer);
+		if (ids.length === 0) return;
+		await postState({ action: 'mark-unread', ids });
 	}
 
 	async function refresh(): Promise<void> {
@@ -326,7 +395,9 @@
 			{#if overview || saved}
 				<a class="chip link" href={resolve('/feed')}>Ver feed completo</a>
 			{:else}
-				<button class="chip link" type="button" onclick={markAllRead}>Marcar tudo como lido</button>
+				<button class="chip link" type="button" onclick={requestMarkAllRead}>
+					Marcar tudo como lido
+				</button>
 				<button class="chip link" type="button" onclick={refresh} disabled={refreshing}>
 					{refreshing ? 'Atualizando...' : 'Atualizar agora'}
 				</button>
@@ -432,6 +503,19 @@
 			</div>
 
 			<div class="chips">
+				{#if sourceFilter !== 'all'}
+					<button
+						class="chip active"
+						type="button"
+						title="Remover filtro de fonte"
+						onclick={() => {
+							sourceFilter = 'all';
+							resetLimit();
+						}}
+					>
+						Fonte: {activeSource?.name ?? sourceFilter} ×
+					</button>
+				{/if}
 				{#if savedFilters.length > 0}
 					<span class="muted small">Filtros salvos</span>
 					{#each savedFilters as filter (filter.id)}
@@ -565,7 +649,7 @@
 				>
 					<FeedCard
 						{entry}
-						{terms}
+						terms={saved ? savedTerms : terms}
 						variant={view}
 						onread={() => toggleRead(entry)}
 						onsave={() => toggleSave(entry)}
@@ -606,3 +690,24 @@
 		</button>
 	{/if}
 </section>
+
+{#if confirmMarkAll}
+	<ConfirmDialog
+		title={`Marcar ${pendingMarkAllIds.length} ${
+			pendingMarkAllIds.length === 1 ? 'post' : 'posts'
+		} como lidos?`}
+		message="Você pode desfazer por 10 segundos depois."
+		confirmLabel="Marcar como lido"
+		onconfirm={confirmMarkAllRead}
+		oncancel={() => (confirmMarkAll = false)}
+	/>
+{/if}
+
+{#if toastMessage}
+	<div class="toast" role="status">
+		<span>{toastMessage}</span>
+		{#if undoIds.length > 0}
+			<button class="chip" type="button" onclick={undoMarkAllRead}>Desfazer</button>
+		{/if}
+	</div>
+{/if}

@@ -63,14 +63,14 @@
 		<section class="panel section" aria-labelledby="t-fontes">
 			<h2 id="t-fontes" style="font-size: 15px">Fontes do feed</h2>
 			{#each sources as source (source.id)}
-				<div class="source-row">
+				<a class="source-row" href={`${resolve('/feed')}?fonte=${source.id}`}>
 					<span
 						class="dot"
 						style="background: {colors[source.categoryId] ?? '#8AA4FF'}; border-radius: 50%"
 					></span>
 					<span class="soft">{source.name}</span>
 					<span class="count" title="Posts não lidos">{unreadFor(source.id)}</span>
-				</div>
+				</a>
 			{/each}
 			{#if sources.length === 0}
 				<p class="muted small">Nenhuma fonte ativa no hub.json.</p>
