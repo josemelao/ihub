@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
+	import { youtubeVideoId } from '#lib/feed/youtube';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import Icon from './Icon.svelte';
+	import VideoPlayerDialog from './VideoPlayerDialog.svelte';
 
 	let {
 		entry,
@@ -19,9 +21,11 @@
 	} = $props();
 
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
+	const videoId = $derived(youtubeVideoId(entry.item.url, entry.item.thumbnail));
 	let imageFailed = $state(false);
 	let naturalAspect = $state<number | null>(null);
 	let expanded = $state(false);
+	let playerOpen = $state(false);
 	let summaryEl = $state<HTMLElement | null>(null);
 	let overflowing = $state(false);
 	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
@@ -71,7 +75,29 @@
 
 {#if variant === 'compact'}
 	<article class="feed-card variant-compact" class:read={entry.read}>
-		{#if hasImage}
+		{#if videoId}
+			<button
+				class="feed-thumb feed-thumb-button"
+				class:compact-placeholder={!hasImage}
+				type="button"
+				aria-label={`Reproduzir: ${entry.item.title}`}
+				style={thumbStyle}
+				onclick={() => (playerOpen = true)}
+			>
+				{#if hasImage}
+					<img
+						src={entry.item.thumbnail ?? ''}
+						alt=""
+						loading="lazy"
+						onload={onImageLoad}
+						onerror={() => (imageFailed = true)}
+					/>
+				{:else}
+					<span>{entry.source.name}</span>
+				{/if}
+				<span class="feed-play" aria-hidden="true"><Icon name="play" size={20} /></span>
+			</button>
+		{:else if hasImage}
 			<a
 				class="feed-thumb"
 				href={entry.item.url}
@@ -163,7 +189,28 @@
 	</article>
 {:else}
 	<article class="feed-card variant-{variant}" class:no-image={!hasImage} class:read={entry.read}>
-		{#if hasImage}
+		{#if videoId}
+			<button
+				class="feed-thumb feed-thumb-button"
+				type="button"
+				aria-label={`Reproduzir: ${entry.item.title}`}
+				style={thumbStyle}
+				onclick={() => (playerOpen = true)}
+			>
+				{#if hasImage}
+					<img
+						src={entry.item.thumbnail ?? ''}
+						alt=""
+						loading="lazy"
+						onload={onImageLoad}
+						onerror={() => (imageFailed = true)}
+					/>
+				{:else}
+					<span class="feed-thumb-fallback">{entry.source.name}</span>
+				{/if}
+				<span class="feed-play" aria-hidden="true"><Icon name="play" size={22} /></span>
+			</button>
+		{:else if hasImage}
 			<a
 				class="feed-thumb"
 				href={entry.item.url}
@@ -267,4 +314,8 @@
 			</div>
 		</div>
 	</article>
+{/if}
+
+{#if playerOpen && videoId}
+	<VideoPlayerDialog {videoId} title={entry.item.title} onclose={() => (playerOpen = false)} />
 {/if}

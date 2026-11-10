@@ -67,5 +67,7 @@
 	{:else if name === 'check-circle'}
 		<circle cx="12" cy="12" r="9" />
 		<path d="M8 12l3 3 5-6" />
+	{:else if name === 'play'}
+		<path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none" />
 	{/if}
 </svg>
