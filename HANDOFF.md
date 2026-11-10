@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 272 testes
+npm test        # 283 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **272/272 testes, 33 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **283/283 testes, 34 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -345,9 +345,17 @@ Executada em 10/11/2026 sobre `v0.8.0`.
 - **DATA-09**: 7 gerações de `.bak`, fallback entre gerações, “Backup agora” datado e idade no Gerenciar.
 - **DATA-10**: `loadHubWithFallback` na interface; layout não conhece a implementação.
 - Teste real: 10 leituras concorrentes preservadas, backup manual criado, preview do próprio export limpo, fonte temporária removida com cache consistente e nenhum `.tmp-*`.
-- `npm run verify` verde com **272/272 testes**.
+- `npm run verify` verde com **283/283 testes**.
 
 Detalhes em [`docs/data.md`](docs/data.md). Adiados: DATA-03 (progresso por fonte/SSE) e DATA-07 (migrações, schema ainda em `version: 1`).
+
+### Pontos de restauração (v0.10.0)
+
+- `GET /api/backup` lista `manual-*` com data, caminho absoluto, arquivos e tamanho.
+- `POST /api/backup/restore` valida o ponto, cria um ponto de segurança do estado atual e restaura hub/estado/cache.
+- `GET /api/backup/download/[id]` baixa o ponto como JSON importável.
+- Gerenciar mostra a lista com **Copiar caminho**, **Baixar** e **Restaurar**; restaurar pede confirmação e recarrega.
+- Retenção: 10 pontos manuais mais recentes.
 
 ### Correção pós-fase: “Backup agora” com 403
 

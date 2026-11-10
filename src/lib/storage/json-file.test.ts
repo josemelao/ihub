@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { JsonFileStorage } from './json-file';
 import { HubValidationError } from '../schema';
 import type { HubData } from '../types';
@@ -637,5 +637,103 @@ describe('JsonFileStorage', () => {
 		await mkdir(join(dir, 'hub.json.bak'));
 
 		await expect(storage.loadHubFromBackup()).rejects.toThrow();
+	});
+
+	it('cria ponto de restauração com caminho absoluto e lista', async () => {
+		await storage.saveHub(hub('Ponto'));
+
+		const created = await storage.backupNow();
+		const info = await storage.backupInfo();
+
+		expect(created.entry.id).toMatch(/^manual-/);
+		expect(created.entry.path).toBe(resolve(created.directory));
+		expect(created.entry.hasHub).toBe(true);
+		expect(created.entry.files).toBeGreaterThan(0);
+		expect(created.entry.sizeBytes).toBeGreaterThan(0);
+		expect(info.root).toBe(resolve(join(dir, 'backups')));
+		expect(info.manual[0].id).toBe(created.entry.id);
+		expect(info.manualRetention).toBe(10);
+	});
+
+	it('restaura hub e estado de um ponto e cria ponto de segurança', async () => {
+		await storage.saveHub(hub('Antes'));
+		await storage.saveState({
+			version: 1,
+			read: { antigo: '2026-11-01T12:00:00Z' },
+			saved: [],
+			savedItems: {}
+		});
+		const point = await storage.backupNow();
+
+		await storage.saveHub(hub('Depois'));
+		await storage.saveState({
+			version: 1,
+			read: { novo: '2026-11-10T12:00:00Z' },
+			saved: [],
+			savedItems: {}
+		});
+
+		const result = await storage.restoreBackup(point.entry.id);
+
+		expect((await storage.loadHub()).categories[0].name).toBe('Antes');
+		expect(Object.keys((await storage.loadState()).read)).toEqual(['antigo']);
+		expect(result.restored.id).toBe(point.entry.id);
+		expect(result.safety.id).not.toBe(point.entry.id);
+		expect((await storage.backupInfo()).manual.length).toBeGreaterThanOrEqual(2);
+	});
+
+	it('rejeita id de backup com travessia de caminho', async () => {
+		await expect(storage.restoreBackup('../hub.json')).rejects.toThrow(HubValidationError);
+		await expect(storage.loadBackupBundle('../hub.json')).rejects.toThrow(HubValidationError);
+	});
+
+	it('não altera dados quando o ponto tem hub inválido', async () => {
+		await storage.saveHub(hub('Original'));
+		const created = await storage.backupNow();
+		await writeFile(join(created.directory, 'hub.json'), '{ quebrado', 'utf-8');
+
+		await expect(storage.restoreBackup(created.entry.id)).rejects.toThrow(HubValidationError);
+
+		expect((await storage.loadHub()).categories[0].name).toBe('Original');
+		const info = await storage.backupInfo();
+		expect(info.manual).toHaveLength(1);
+	});
+
+	it('baixa um bundle importável a partir do ponto', async () => {
+		await storage.saveHub(hub('Exportado'));
+		await storage.saveState({
+			version: 1,
+			read: { a: '2026-11-09T12:00:00Z' },
+			saved: [],
+			savedItems: {}
+		});
+		const point = await storage.backupNow();
+
+		const bundle = await storage.loadBackupBundle(point.entry.id);
+
+		expect(bundle.hub.categories[0].name).toBe('Exportado');
+		expect(Object.keys(bundle.state?.read ?? {})).toEqual(['a']);
+	});
+
+	it('lista apenas pastas manual-* válidas', async () => {
+		await mkdir(join(dir, 'backups', 'security-20260101'), { recursive: true });
+		await mkdir(join(dir, 'backups', 'manual-invalido'), { recursive: true });
+		await storage.saveHub(hub('Válido'));
+		const created = await storage.backupNow();
+
+		const info = await storage.backupInfo();
+
+		expect(info.manual.map((entry) => entry.id)).toEqual([created.entry.id]);
+	});
+
+	it('limita os pontos manuais aos 10 mais recentes', async () => {
+		await storage.saveHub(hub('Base'));
+
+		for (let index = 0; index < 12; index += 1) {
+			await storage.backupNow();
+		}
+
+		const info = await storage.backupInfo();
+		expect(info.manual).toHaveLength(10);
 	});
 });

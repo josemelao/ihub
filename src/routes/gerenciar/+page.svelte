@@ -13,6 +13,7 @@
 	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
 	import { HubValidationError, parseHub } from '#lib/schema';
 	import type {
+		BackupEntry,
 		BackupInfo,
 		Category,
 		ExportBundle,
@@ -379,6 +380,15 @@
 	let backupBusy = $state(false);
 	let backupMessage = $state('');
 	let backupFailed = $state(false);
+	let restoringId = $state<string | null>(null);
+	let confirmingBackup = $state<BackupEntry | null>(null);
+	let copiedBackupId = $state<string | null>(null);
+
+	function formatBytes(value: number): string {
+		if (value < 1024) return `${value} B`;
+		if (value < 1024 * 1024) return `${Math.round(value / 1024)} KB`;
+		return `${(value / 1024 / 1024).toFixed(1)} MB`;
+	}
 
 	async function loadBackupInfo(): Promise<void> {
 		try {
@@ -404,25 +414,82 @@
 			const result = await readJsonResponse<{
 				ok?: boolean;
 				error?: string;
-				backup?: { directory: string; files: string[] };
+				backup?: { directory: string; files: string[]; entry?: BackupEntry };
 			}>(response);
 
 			if (!response.ok || !result.ok) {
-				backupMessage = result.error ?? 'Falha ao criar backup.';
+				backupMessage = result.error ?? 'Falha ao criar ponto de restauração.';
 				backupFailed = true;
 				return;
 			}
 
-			backupMessage = `Backup criado em ${result.backup?.directory} (${result.backup?.files.length ?? 0} arquivos).`;
+			const path = result.backup?.entry?.path ?? result.backup?.directory;
+			backupMessage = `Ponto de restauração criado em ${path} (${result.backup?.files.length ?? 0} arquivos).`;
 			await loadBackupInfo();
 		} catch (caught) {
 			backupMessage =
 				caught instanceof HttpResponseError
-					? `Falha ao criar backup: ${caught.message}`
-					: `Falha de rede ao criar backup: ${(caught as Error).message}`;
+					? `Falha ao criar ponto de restauração: ${caught.message}`
+					: `Falha de rede ao criar ponto de restauração: ${(caught as Error).message}`;
 			backupFailed = true;
 		} finally {
 			backupBusy = false;
+		}
+	}
+
+	async function copyBackupPath(entry: BackupEntry): Promise<void> {
+		try {
+			await navigator.clipboard.writeText(entry.path);
+			copiedBackupId = entry.id;
+			setTimeout(() => {
+				if (copiedBackupId === entry.id) copiedBackupId = null;
+			}, 2000);
+		} catch {
+			backupMessage = 'Não foi possível copiar o caminho.';
+			backupFailed = true;
+		}
+	}
+
+	async function confirmRestoreBackup(): Promise<void> {
+		if (!confirmingBackup) return;
+		const entry = confirmingBackup;
+		confirmingBackup = null;
+		restoringId = entry.id;
+		backupMessage = '';
+		backupFailed = false;
+
+		try {
+			const response = await fetch('/api/backup/restore', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ id: entry.id })
+			});
+			const result = await readJsonResponse<{
+				ok?: boolean;
+				error?: string;
+				restored?: BackupEntry;
+				safety?: BackupEntry;
+			}>(response);
+
+			if (!response.ok || !result.ok) {
+				backupMessage = result.error ?? 'Falha ao restaurar o ponto.';
+				backupFailed = true;
+				return;
+			}
+
+			backupMessage = `Ponto ${entry.id} restaurado. Ponto de segurança: ${
+				result.safety?.path ?? 'criado'
+			}. Recarregando...`;
+			await loadBackupInfo();
+			setTimeout(() => location.reload(), 1400);
+		} catch (caught) {
+			backupMessage =
+				caught instanceof HttpResponseError
+					? `Falha ao restaurar: ${caught.message}`
+					: `Falha de rede ao restaurar: ${(caught as Error).message}`;
+			backupFailed = true;
+		} finally {
+			restoringId = null;
 		}
 	}
 
@@ -681,7 +748,7 @@
 	</button>
 	<button class="btn" type="button" onclick={runBackup} disabled={backupBusy}>
 		<Icon name="download" size={16} />
-		{backupBusy ? 'Criando backup...' : 'Backup agora'}
+		{backupBusy ? 'Criando ponto...' : 'Criar ponto de restauração'}
 	</button>
 	{#if backupInfo?.lastAutomaticAt}
 		<span class="muted small">
@@ -705,6 +772,54 @@
 		{backupMessage}
 	</div>
 {/if}
+
+<div class="panel section">
+	<div class="section-head">
+		<h2 style="font-size: 16px">Pontos de restauração</h2>
+		<span class="muted small">
+			{backupInfo?.manual.length ?? 0} de {backupInfo?.manualRetention ?? 10}
+		</span>
+	</div>
+	<p class="muted small" style="margin-top: 4px">
+		Cópias locais em <code>{backupInfo?.root ?? 'data/backups'}</code>. Os backups automáticos
+		continuam a cada gravação.
+	</p>
+
+	{#if backupInfo?.manual.length}
+		<ul class="restore-list">
+			{#each backupInfo.manual as entry (entry.id)}
+				<li class="restore-item">
+					<div class="restore-meta">
+						<strong>{relativeTime(entry.createdAt)}</strong>
+						<code class="restore-path">{entry.path}</code>
+						<span class="muted small">
+							{entry.files} arquivos · {formatBytes(entry.sizeBytes)}
+						</span>
+					</div>
+					<div class="chips">
+						<button class="btn" type="button" onclick={() => copyBackupPath(entry)}>
+							{copiedBackupId === entry.id ? 'Copiado' : 'Copiar caminho'}
+						</button>
+						<a class="btn" href={resolve('/api/backup/download/[id]', { id: entry.id })} download>
+							<Icon name="download" size={16} />
+							Baixar
+						</a>
+						<button
+							class="btn"
+							type="button"
+							onclick={() => (confirmingBackup = entry)}
+							disabled={restoringId !== null}
+						>
+							{restoringId === entry.id ? 'Restaurando...' : 'Restaurar'}
+						</button>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<span class="muted small"> Nenhum ponto manual ainda. Crie um antes de mudanças grandes. </span>
+	{/if}
+</div>
 
 {#if refreshMessage}
 	<div class:alert={refreshFailed} class:notice={!refreshFailed} role="status">
@@ -1291,5 +1406,15 @@
 		confirmLabel="Remover"
 		onconfirm={confirmRemove}
 		oncancel={() => (confirming = null)}
+	/>
+{/if}
+
+{#if confirmingBackup}
+	<ConfirmDialog
+		title="Restaurar este ponto?"
+		message={`Isso substitui o hub, o estado e o cache atuais pelo ponto ${confirmingBackup.id}. Um ponto de segurança do estado atual será criado antes.`}
+		confirmLabel="Restaurar"
+		onconfirm={confirmRestoreBackup}
+		oncancel={() => (confirmingBackup = null)}
 	/>
 {/if}

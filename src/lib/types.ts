@@ -132,17 +132,37 @@ export interface ImportOptions {
 	settingsPolicy?: 'keep' | 'incoming';
 }
 
+export interface BackupEntry {
+	id: string;
+	createdAt: string;
+	path: string;
+	files: number;
+	sizeBytes: number;
+	hasHub: boolean;
+	hasState: boolean;
+	hasCache: boolean;
+}
+
 export interface BackupInfo {
 	lastAutomaticAt: string | null;
 	lastManualAt: string | null;
 	generations: number;
 	retention: number;
+	manualRetention: number;
+	root: string;
+	manual: BackupEntry[];
 }
 
 export interface BackupCreated {
 	directory: string;
 	createdAt: string;
 	files: string[];
+	entry: BackupEntry;
+}
+
+export interface BackupRestoreResult {
+	restored: BackupEntry;
+	safety: BackupEntry;
 }
 
 export interface HubLoadError {
@@ -191,4 +211,8 @@ export interface HubStorage {
 	): Promise<void>;
 	backupNow(): Promise<BackupCreated>;
 	backupInfo(): Promise<BackupInfo>;
+	/** Lê um ponto manual e devolve um bundle importável. */
+	loadBackupBundle(id: string): Promise<ExportBundle>;
+	/** Restaura hub/estado/cache de um ponto, criando antes um ponto de segurança. */
+	restoreBackup(id: string): Promise<BackupRestoreResult>;
 }

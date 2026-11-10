@@ -61,13 +61,18 @@
 - `importBundle` aceita `settingsPolicy`; o padrão do merge agora é **manter** as settings atuais.
 - Import roda sob os locks de hub/estado, lê e valida tudo antes de gravar e faz rollback do hub se a gravação do estado falhar.
 
-### DATA-09 — Rotação de backups e “Backup agora”
+### DATA-09 — Rotação de backups e pontos de restauração
 
 - Cada gravação mantém `.bak` + `.bak.1` … `.bak.6` (7 gerações); a mais antiga é sobrescrita, nunca a mais nova.
 - `load*FromBackup` tenta as gerações em ordem até achar uma válida.
-- `POST /api/backup` cria `data/backups/manual-<timestamp>/` com `hub.json`, `estado.json`, `feed-cache.json` e **todas** as gerações `.bak` disponíveis, sob lock.
-- `GET /api/backup` informa idade do backup automático, último manual, gerações e retenção.
-- Gerenciar mostra “Último backup automático: há X” e o botão **Backup agora**.
+- **Pontos de restauração** (`manual-*`):
+  - `POST /api/backup` cria `data/backups/manual-<timestamp>/` com `hub.json`, `estado.json`, `feed-cache.json` e todas as gerações `.bak`, sob lock;
+  - `GET /api/backup` lista os pontos com data, **caminho absoluto**, arquivos e tamanho;
+  - `POST /api/backup/restore` valida o ponto, cria um **ponto de segurança** do estado atual e restaura hub/estado/cache;
+  - `GET /api/backup/download/[id]` baixa o ponto como JSON importável.
+- Mantém os **10 pontos manuais mais recentes**; os mais antigos são removidos ao criar um novo.
+- Gerenciar → “Pontos de restauração”: criar, copiar caminho, baixar, restaurar (com confirmação e reload).
+- `GET /api/backup` também informa idade do backup automático e gerações.
 
 ### DATA-10 — Fallback na interface
 
@@ -76,13 +81,14 @@
 
 ## Verificação
 
-- `npm test`: **272/272** em 33 arquivos.
+- `npm test`: **283/283** em 34 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
 - Servidor real:
   - 10 leituras concorrentes preservadas (e desfeitas depois);
-  - backup manual criado e detectado;
+  - ponto criado, listado com caminho absoluto, restaurado com ponto de segurança e baixado como JSON importável;
+  - restauração rejeitou `../hub.json` com 400;
   - preview do próprio export sem mudanças e sem conflito de settings;
   - fonte temporária criada e removida com cache consistente;
   - 3 gerações de backup após as escritas;

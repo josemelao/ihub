@@ -4,6 +4,7 @@ import {
 	readFile,
 	readdir,
 	rename,
+	rm,
 	stat,
 	unlink,
 	writeFile
@@ -13,7 +14,9 @@ import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_STATE } from '../defaults';
 import { HubValidationError, parseFeedCache, parseHub, parseHubState } from '../schema';
 import type {
 	BackupCreated,
+	BackupEntry,
 	BackupInfo,
+	BackupRestoreResult,
 	ExportBundle,
 	FeedCache,
 	HubData,
@@ -27,6 +30,7 @@ import { createLockRegistry } from './mutex';
 
 const fileLocks = createLockRegistry();
 const BACKUP_GENERATIONS = 7;
+const MANUAL_BACKUP_RETENTION = 10;
 
 const nodeFileDeps: AtomicFileDeps = {
 	writeFile: (path, data) => writeFile(path, data, 'utf-8'),
@@ -397,10 +401,116 @@ export class JsonFileStorage implements HubStorage {
 		});
 	}
 
+	private backupsRoot(): string {
+		return resolve(this.dataDir, 'backups');
+	}
+
+	private async readJsonAt(fullPath: string, label: string): Promise<unknown> {
+		let raw: string;
+		try {
+			raw = await readFile(fullPath, 'utf-8');
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+				throw new HubValidationError(
+					[{ path: [], message: `Arquivo não encontrado: ${fullPath}` }],
+					label
+				);
+			}
+			throw error;
+		}
+
+		try {
+			return JSON.parse(raw);
+		} catch (error) {
+			throw new HubValidationError(
+				[
+					{
+						path: [],
+						message: `JSON inválido em ${fullPath}: ${(error as Error).message}`
+					}
+				],
+				label
+			);
+		}
+	}
+
+	private async listManualBackups(): Promise<BackupEntry[]> {
+		const root = this.backupsRoot();
+		let entries;
+		try {
+			entries = await readdir(root, { withFileTypes: true });
+		} catch {
+			return [];
+		}
+
+		const result: BackupEntry[] = [];
+		for (const entry of entries) {
+			if (!entry.isDirectory() || !isSafeBackupId(entry.name)) continue;
+
+			const path = join(root, entry.name);
+			try {
+				const dirStat = await stat(path);
+				const names = await readdir(path);
+				let sizeBytes = 0;
+				for (const name of names) {
+					try {
+						sizeBytes += (await stat(join(path, name))).size;
+					} catch {
+						// arquivo removido no meio da leitura
+					}
+				}
+
+				result.push({
+					id: entry.name,
+					createdAt: dirStat.mtime.toISOString(),
+					path,
+					files: names.length,
+					sizeBytes,
+					hasHub: names.includes('hub.json'),
+					hasState: names.includes('estado.json'),
+					hasCache: names.includes('feed-cache.json')
+				});
+			} catch {
+				// pasta inacessível: ignora
+			}
+		}
+
+		return result.sort(
+			(a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id)
+		);
+	}
+
+	private async requireManualBackup(id: string): Promise<BackupEntry> {
+		if (!isSafeBackupId(id)) {
+			throw new HubValidationError(
+				[{ path: ['id'], message: 'Ponto de restauração inválido.' }],
+				'backup'
+			);
+		}
+
+		const entries = await this.listManualBackups();
+		const found = entries.find((entry) => entry.id === id);
+		if (!found) {
+			throw new HubValidationError(
+				[{ path: ['id'], message: 'Ponto de restauração não encontrado.' }],
+				'backup'
+			);
+		}
+		return found;
+	}
+
+	private async pruneManualBackups(): Promise<void> {
+		const entries = await this.listManualBackups();
+		for (const entry of entries.slice(MANUAL_BACKUP_RETENTION)) {
+			await rm(entry.path, { recursive: true, force: true }).catch(() => undefined);
+		}
+	}
+
 	async backupNow(): Promise<BackupCreated> {
 		const createdAt = new Date();
 		const stamp = createdAt.toISOString().replace(/[:.]/g, '-');
-		const directory = join(this.dataDir, 'backups', `manual-${stamp}`);
+		const id = `manual-${stamp}`;
+		const directory = resolve(this.dataDir, 'backups', id);
 
 		return fileLocks.withLocks(
 			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
@@ -435,7 +545,20 @@ export class JsonFileStorage implements HubStorage {
 					'utf-8'
 				);
 
-				return { directory, createdAt: createdAt.toISOString(), files };
+				const entry = (await this.listManualBackups()).find((candidate) => candidate.id === id) ?? {
+					id,
+					createdAt: createdAt.toISOString(),
+					path: directory,
+					files: files.length,
+					sizeBytes: 0,
+					hasHub: files.includes('hub.json'),
+					hasState: files.includes('estado.json'),
+					hasCache: files.includes('feed-cache.json')
+				};
+
+				await this.pruneManualBackups();
+
+				return { directory, createdAt: createdAt.toISOString(), files, entry };
 			}
 		);
 	}
@@ -448,21 +571,7 @@ export class JsonFileStorage implements HubStorage {
 			lastAutomaticAt = null;
 		}
 
-		let lastManualAt: string | null = null;
-		try {
-			const backupsDir = join(this.dataDir, 'backups');
-			const entries = await readdir(backupsDir, { withFileTypes: true });
-			const manual = entries
-				.filter((entry) => entry.isDirectory() && entry.name.startsWith('manual-'))
-				.map((entry) => entry.name)
-				.sort();
-			const newest = manual.at(-1);
-			if (newest) {
-				lastManualAt = (await stat(join(backupsDir, newest))).mtime.toISOString();
-			}
-		} catch {
-			lastManualAt = null;
-		}
+		const manual = await this.listManualBackups();
 
 		let generations = 0;
 		for (let index = 0; index < BACKUP_GENERATIONS; index += 1) {
@@ -477,11 +586,61 @@ export class JsonFileStorage implements HubStorage {
 
 		return {
 			lastAutomaticAt,
-			lastManualAt,
+			lastManualAt: manual[0]?.createdAt ?? null,
 			generations,
-			retention: BACKUP_GENERATIONS
+			retention: BACKUP_GENERATIONS,
+			manualRetention: MANUAL_BACKUP_RETENTION,
+			root: this.backupsRoot(),
+			manual
 		};
 	}
+
+	async loadBackupBundle(id: string): Promise<ExportBundle> {
+		const entry = await this.requireManualBackup(id);
+		const hub = parseHub(await this.readJsonAt(join(entry.path, 'hub.json'), 'backup'));
+		if (!entry.hasState) return { hub };
+
+		const state = parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'));
+		return { hub, state };
+	}
+
+	async restoreBackup(id: string): Promise<BackupRestoreResult> {
+		const entry = await this.requireManualBackup(id);
+		const hub = parseHub(await this.readJsonAt(join(entry.path, 'hub.json'), 'backup'));
+		const state = entry.hasState
+			? parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'))
+			: null;
+
+		let cache: FeedCache | null = null;
+		if (entry.hasCache) {
+			try {
+				cache = parseFeedCache(
+					await this.readJsonAt(join(entry.path, 'feed-cache.json'), 'backup')
+				);
+			} catch (error) {
+				if (!(error instanceof HubValidationError)) throw error;
+				// cache é descartável: restaura hub/estado mesmo se ele estiver inválido
+			}
+		}
+
+		// Antes de sobrescrever, guarda o estado atual para permitir desfazer.
+		const safety = await this.backupNow();
+
+		await fileLocks.withLocks(
+			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
+			async () => {
+				await this.persistHub(hub);
+				if (state) await this.persistState(state);
+				if (cache) await this.persistFeedCache(cache);
+			}
+		);
+
+		return { restored: entry, safety: safety.entry };
+	}
+}
+
+export function isSafeBackupId(value: string): boolean {
+	return /^manual-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z$/.test(value);
 }
 
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
