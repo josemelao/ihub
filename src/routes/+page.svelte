@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { sortFeedSourcesForDisplay } from '#lib/feed/order';
 	import { onMount } from 'svelte';
-	import { readLocal, writeLocal } from '#lib/browser-storage';
+	import { QUICK_NOTE_ID, quickNoteOf } from '#lib/notes';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import HomeDashboard from '#lib/components/HomeDashboard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
@@ -26,13 +26,33 @@
 	const savedRecent = $derived(buildSavedView(hub, data.feed, data.state).slice(0, 3));
 
 	let note = $state('');
+	let noteStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
+	let noteTimer: ReturnType<typeof setTimeout> | undefined;
 
 	onMount(() => {
-		note = readLocal('meu-hub:nota') ?? '';
+		note = quickNoteOf(data.notes)?.text ?? '';
 	});
 
-	function saveNote() {
-		writeLocal('meu-hub:nota', note);
+	function onNoteInput(): void {
+		noteStatus = 'saving';
+		clearTimeout(noteTimer);
+		noteTimer = setTimeout(() => void persistNote(), 500);
+	}
+
+	async function persistNote(): Promise<void> {
+		const text = note.trim();
+		try {
+			const response = await fetch('/api/notes', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify(
+					text ? { action: 'save', text } : { action: 'delete', id: QUICK_NOTE_ID }
+				)
+			});
+			noteStatus = response.ok ? 'saved' : 'error';
+		} catch {
+			noteStatus = 'error';
+		}
 	}
 
 	function unreadFor(sourceId: string): number {
@@ -139,8 +159,16 @@
 				rows="4"
 				placeholder="Anote algo e siga o dia..."
 				bind:value={note}
-				oninput={saveNote}></textarea>
-			<span class="muted small">Salva neste navegador.</span>
+				oninput={onNoteInput}></textarea>
+			<span class="muted small">
+				{noteStatus === 'saving'
+					? 'Salvando...'
+					: noteStatus === 'saved'
+						? 'Salvo no hub (data/notes.json).'
+						: noteStatus === 'error'
+							? 'Falha ao salvar a nota.'
+							: 'Salva no hub, entra no export.'}
+			</span>
 		</section>
 	</aside>
 </div>

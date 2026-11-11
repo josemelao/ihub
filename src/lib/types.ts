@@ -46,6 +46,19 @@ export interface AppItem extends ItemBase {
 
 export type HubItem = LinkItem | AppItem;
 
+export interface HubNote {
+	id: string;
+	text: string;
+	createdAt: string;
+	updatedAt: string;
+	pinned?: boolean;
+}
+
+export interface NotesData {
+	version: number;
+	notes: HubNote[];
+}
+
 export interface FeedSource {
 	id: string;
 	type: FeedSourceType;
@@ -130,6 +143,7 @@ export interface FeedCache {
 export interface ExportBundle {
 	hub: HubData;
 	state?: HubState;
+	notes?: NotesData;
 }
 
 export interface ImportOptions {
@@ -215,6 +229,9 @@ export interface HubStorage {
 	loadFeedCache(): Promise<FeedCache>;
 	loadFeedCacheFromBackup(): Promise<FeedCache | null>;
 	updateFeedCache(fn: (cache: FeedCache) => FeedCache | Promise<FeedCache>): Promise<FeedCache>;
+	loadNotes(): Promise<NotesData>;
+	updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData>;
+	saveNotes(data: NotesData): Promise<void>;
 	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */
 	updateHubAndCache(
 		hubFn: (hub: HubData) => HubData | Promise<HubData>,

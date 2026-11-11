@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { withSourceOrders } from './feed/order';
 import { withNormalizedTags } from './tags';
-import type { FeedCache, HubData, HubState, ValidationIssue } from './types';
+import type { FeedCache, HubData, HubState, NotesData, ValidationIssue } from './types';
 
 export class HubValidationError extends Error {
 	readonly issues: ValidationIssue[];
@@ -314,6 +314,31 @@ export function parseHubState(input: unknown): HubState {
 		throw new HubValidationError(issuesFrom(result.error), 'estado.json');
 	}
 	return result.data as HubState;
+}
+
+const noteSchema = z.object({
+	id: z.string().min(1),
+	text: z.string().min(1).max(4000),
+	createdAt: z.string().default(''),
+	updatedAt: z.string().default(''),
+	pinned: z.boolean().optional()
+});
+
+export const notesSchema = z
+	.object({
+		version: z.number().int().positive().default(1),
+		notes: z.array(noteSchema).default([])
+	})
+	.superRefine((data, ctx) => {
+		checkDuplicateIds(ctx, data.notes, 'notes');
+	});
+
+export function parseNotes(input: unknown): NotesData {
+	const result = notesSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'notes.json');
+	}
+	return result.data as NotesData;
 }
 
 export function parseFeedCache(input: unknown): FeedCache {

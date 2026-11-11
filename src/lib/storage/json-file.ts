@@ -11,10 +11,10 @@ import {
 } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_STATE } from '../defaults';
+import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_NOTES, EMPTY_STATE } from '../defaults';
 import { migrateHub } from '../migrations/hub';
-import { migrateFeedCache, migrateState } from '../migrations/state';
-import { HubValidationError, parseFeedCache, parseHub, parseHubState } from '../schema';
+import { migrateFeedCache, migrateNotes, migrateState } from '../migrations/state';
+import { HubValidationError, parseFeedCache, parseHub, parseHubState, parseNotes } from '../schema';
 import { recoverHubState } from '../state-recovery';
 import type {
 	BackupCreated,
@@ -28,6 +28,7 @@ import type {
 	HubState,
 	HubStorage,
 	ImportOptions,
+	NotesData,
 	StateLoadResult
 } from '../types';
 import { writeFileAtomically, type AtomicFileDeps } from './atomic';
@@ -363,8 +364,45 @@ export class JsonFileStorage implements HubStorage {
 		await this.persistFeedCache(cache);
 	}
 
+	private persistNotes(data: NotesData): Promise<void> {
+		return this.writeJsonAtomic('notes.json', parseNotes(data), (value) => {
+			try {
+				parseNotes(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+	}
+
+	async loadNotes(): Promise<NotesData> {
+		try {
+			const raw = await this.readJson('notes.json');
+			return parseNotes(migrateNotes(raw).data);
+		} catch (error) {
+			if (isMissingFile(error)) return structuredClone(EMPTY_NOTES);
+			throw error;
+		}
+	}
+
+	async updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData> {
+		return fileLocks.withLock(this.lockKey('notes.json'), async () => {
+			const next = parseNotes(await fn(await this.loadNotes()));
+			await this.persistNotes(next);
+			return next;
+		});
+	}
+
+	async saveNotes(data: NotesData): Promise<void> {
+		await this.persistNotes(data);
+	}
+
 	async exportBundle(): Promise<ExportBundle> {
-		return { hub: await this.loadHub(), state: await this.loadState() };
+		return {
+			hub: await this.loadHub(),
+			state: await this.loadState(),
+			notes: await this.loadNotes()
+		};
 	}
 
 	async importBundle(
@@ -374,6 +412,7 @@ export class JsonFileStorage implements HubStorage {
 	): Promise<void> {
 		const incoming = parseHub(bundle.hub);
 		const incomingState = bundle.state ? parseHubState(bundle.state) : null;
+		const incomingNotes = bundle.notes ? parseNotes(bundle.notes) : null;
 
 		await fileLocks.withLocks([this.lockKey('hub.json'), this.lockKey('estado.json')], async () => {
 			// Lê e valida tudo antes de gravar: estado inválido não pode deixar
@@ -405,6 +444,14 @@ export class JsonFileStorage implements HubStorage {
 				if (incomingState) {
 					try {
 						await this.persistState(incomingState);
+					} catch (error) {
+						if (previousHub) await this.persistHub(previousHub).catch(() => undefined);
+						throw error;
+					}
+				}
+				if (incomingNotes) {
+					try {
+						await this.persistNotes(incomingNotes);
 					} catch (error) {
 						if (previousHub) await this.persistHub(previousHub).catch(() => undefined);
 						throw error;
@@ -449,6 +496,19 @@ export class JsonFileStorage implements HubStorage {
 					await this.persistHub(previousHub).catch(() => undefined);
 					throw error;
 				}
+			}
+
+			if (incomingNotes) {
+				const currentNotes = await this.loadNotes();
+				const merged = new Map(currentNotes.notes.map((note) => [note.id, note]));
+				for (const note of incomingNotes.notes) merged.set(note.id, note);
+				await this.persistNotes({
+					version: incomingNotes.version,
+					notes: [...merged.values()]
+				}).catch(async (error) => {
+					await this.persistHub(previousHub!).catch(() => undefined);
+					throw error;
+				});
 			}
 		});
 	}

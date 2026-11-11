@@ -1,4 +1,4 @@
-import { EMPTY_FEED_CACHE, EMPTY_STATE } from '#lib/defaults';
+import { EMPTY_FEED_CACHE, EMPTY_NOTES, EMPTY_STATE } from '#lib/defaults';
 import { pruneOrphanFeedCache } from '#lib/feed/cache';
 import { startScheduler } from '#lib/feed/scheduler';
 import { backfillSavedSnapshots } from '#lib/feed/view';
@@ -39,7 +39,7 @@ export const load: LayoutServerLoad = async () => {
 	const storage = getStorage();
 	startScheduler();
 
-	const [hubResult, stateResult, cacheResult] = await Promise.all([
+	const [hubResult, stateResult, cacheResult, notesResult] = await Promise.all([
 		storage.loadHubWithFallback(),
 		loadWithBackup(
 			() => storage.loadStateWithRecovery(),
@@ -53,6 +53,11 @@ export const load: LayoutServerLoad = async () => {
 			() => storage.loadFeedCache(),
 			() => storage.loadFeedCacheFromBackup(),
 			() => structuredClone(EMPTY_FEED_CACHE)
+		),
+		loadWithBackup(
+			() => storage.loadNotes(),
+			async () => null,
+			() => structuredClone(EMPTY_NOTES)
 		)
 	]);
 
@@ -83,6 +88,8 @@ export const load: LayoutServerLoad = async () => {
 		stateError: stateResult.error,
 		stateRecovery: stateResult.value.recovery,
 		cacheError: cacheResult.error,
+		notes: notesResult.value,
+		notesError: notesResult.error,
 		state,
 		feed
 	};
