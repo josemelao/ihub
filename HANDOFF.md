@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 303 testes
+npm test        # 313 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **303/303 testes, 35 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **313/313 testes, 36 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -389,3 +389,18 @@ Detalhes em [`docs/triage.md`](docs/triage.md).
 - No servidor real: cache de 26 → 16 posts e contador da sidebar de 11 → 1, coerente com o feed.
 - “Marcar antigos” validado com um post real de 21/10: cálculo → marcar → desfazer → estado restaurado.
 - `npm run verify` verde com **303/303 testes**.
+
+## 18. Fase 2 — seleção em massa e teclado
+
+Executada em 10/11/2026 sobre `v0.12.1`.
+
+- **ORG-01**: modo de seleção com checkbox por card, shift+clique para intervalo, barra com lido/não lido, salvar/remover, selecionar todos os filtrados e limpar.
+- Backend `/api/state` ganhou `save-many` (snapshots validados em conjunto) e `unsave-many`.
+- **ORG-09**: `j`/`k` navegam, `m` lê, `s` salva, `o`/`Enter` abrem, `?` mostra ajuda e `Esc` sai da seleção.
+- Card focado ganha outline e scroll; atalhos ignorados em campos de texto, modais e palette.
+- Novo `ShortcutHelp.svelte` com a lista de teclas.
+- Teste real via Edge/CDP: 10 checkboxes, clique + shift = 3 selecionados, barra completa, ajuda abria, `j` focava card e “Limpar” zerava.
+- API em lote: `save-many` + `unsave-many` restauraram a contagem de salvos.
+- `npm run verify` verde com **313/313 testes**.
+
+Detalhes em [`docs/bulk.md`](docs/bulk.md).

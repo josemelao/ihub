@@ -77,6 +77,8 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - **+ Salvar filtro** captura a busca atual num formulário em linha com **Nome, Incluir, Excluir, Modo, Categoria, Fonte e "Somente não lidos"**. Os filtros podem ser editados/removidos em Gerenciar → Regras.
 - **Marcar antigos** permite marcar como lido o que está na visão atual com mais de 1, 3 ou 7 dias, com desfazer por 30 segundos.
 - O contador de não lidos da sidebar usa a mesma visão do feed (ignora fontes removidas/desligadas); cache de fonte removida é limpo ao carregar.
+- **Selecionar** entra no modo de seleção com checkbox por card, shift+clique para intervalo e barra de ações em lote (lido/não lido, salvar/remover, selecionar todos).
+- Atalhos no feed: `j`/`k` navegam, `m` marca lido, `s` salva, `o`/`Enter` abrem, `?` mostra a ajuda e `Esc` sai da seleção.
 - A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Favoritos mesmo se a fonte for removida ou o cache expirar.
 - **Vídeos do YouTube**: a thumbnail mostra um botão **▶**; o clique abre um player em modal com `youtube-nocookie` e autoplay, sem alterar o layout do Bento. O modal fecha por Esc, botão fechar ou clique fora e tem o atalho **Abrir no YouTube**.
@@ -175,7 +177,7 @@ npm run lint    # Prettier + ESLint
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md), [`docs/triage.md`](docs/triage.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md), [`docs/triage.md`](docs/triage.md), [`docs/bulk.md`](docs/bulk.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
 
 ## Mockups
 

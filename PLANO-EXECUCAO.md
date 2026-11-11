@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados e bloco de triagem (ORG-07/08/10/13) executados  
+> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados e blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13) executados  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 

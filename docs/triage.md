@@ -77,6 +77,6 @@
 
 ## Fora deste bloco
 
-- Marcação em massa por seleção manual (ORG-01) e drag & drop (ORG-02).
-- Importação de bookmarks/OPML (ORG-04), quick add/bookmarklet (ORG-05) e tags como filtro (ORG-03).
+- Marcação em massa por seleção manual (ORG-01) e teclado (ORG-09) foram executados no bloco seguinte (`v0.13.0`, `docs/bulk.md`).
+- Drag & drop (ORG-02), importação de bookmarks/OPML (ORG-04), quick add/bookmarklet (ORG-05) e tags como filtro (ORG-03).
 - DATA-03 (progresso de refresh por fonte) e DATA-07 (migrações).

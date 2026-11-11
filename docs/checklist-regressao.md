@@ -26,6 +26,11 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] Sidebar mostra não lidos por categoria; chips de categoria/fonte mostram contagem.
 - [x] Chips de fonte alternam o feed e respeitam a categoria selecionada.
 - [x] “Marcar antigos” (1/3/7 dias) age sobre a visão atual, confirma e permite desfazer.
+- [x] “Selecionar” mostra checkboxes; shift+clique seleciona intervalo; barra de ações aparece.
+- [x] Lote marca lido/não lido, salva/remove dos salvos e atualiza contadores.
+- [x] “Selecionar todos os filtrados” e “Limpar” funcionam; filtros limpam a seleção.
+- [x] Atalhos `j/k/m/s/o/?/Esc` funcionam e são ignorados ao digitar ou com modal aberto.
+- [x] Ajuda de atalhos abre com `?` e fecha com Esc/Fechar.
 - [x] Contador da sidebar bate com os não lidos da visão do feed.
 - [x] Cache de fonte removida é limpo ao carregar o layout.
 - [x] Filtro salvo com categoria/fonte/não lidos persiste e aplica o escopo após reload.

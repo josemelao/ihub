@@ -99,4 +99,80 @@ describe('applyStateAction', () => {
 		if (!result.ok) return;
 		expect(Object.keys(result.state.read)).toEqual(['a']);
 	});
+
+	it('salva vários posts com snapshots em um lote', () => {
+		const result = applyStateAction(
+			empty(),
+			{
+				action: 'save-many',
+				entries: [
+					{ id: 'a', snapshot: snapshot('a') },
+					{ id: 'b', snapshot: snapshot('b') }
+				]
+			},
+			now
+		);
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.state.saved).toEqual(['a', 'b']);
+		expect(result.state.savedItems.a.savedAt).toBe(now);
+		expect(result.state.savedItems.b.item.id).toBe('b');
+	});
+
+	it('aborta o lote inteiro quando um snapshot é inválido', () => {
+		const unsafe = snapshot('b');
+		unsafe.item.url = 'javascript:alert(1)';
+
+		const result = applyStateAction(
+			empty(),
+			{
+				action: 'save-many',
+				entries: [
+					{ id: 'a', snapshot: snapshot('a') },
+					{ id: 'b', snapshot: unsafe }
+				]
+			},
+			now
+		);
+
+		expect(result).toEqual({
+			ok: false,
+			error: 'Snapshot inválido: item, URL ou thumbnail não são seguros.'
+		});
+	});
+
+	it('remove vários posts dos salvos em um lote', () => {
+		let state = empty();
+		const saved = applyStateAction(
+			state,
+			{
+				action: 'save-many',
+				entries: [
+					{ id: 'a', snapshot: snapshot('a') },
+					{ id: 'b', snapshot: snapshot('b') }
+				]
+			},
+			now
+		);
+		if (saved.ok) state = saved.state;
+
+		const result = applyStateAction(state, { action: 'unsave-many', ids: ['a', 'b'] }, now);
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.state.saved).toEqual([]);
+		expect(result.state.savedItems).toEqual({});
+	});
+
+	it('rejeita lotes vazios ou sem lista', () => {
+		expect(applyStateAction(empty(), { action: 'save-many', entries: [] }, now)).toEqual({
+			ok: false,
+			error: 'Envie pelo menos um item.'
+		});
+		expect(applyStateAction(empty(), { action: 'unsave-many' }, now)).toEqual({
+			ok: false,
+			error: 'Envie a lista de ids.'
+		});
+	});
 });

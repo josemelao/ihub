@@ -1,13 +1,27 @@
 import { toSafeHttpUrl } from './net/url';
 import type { HubState, SavedItemSnapshot } from './types';
 
-export type StateAction = 'read' | 'unread' | 'save' | 'unsave' | 'mark-all-read' | 'mark-unread';
+export type StateAction =
+	| 'read'
+	| 'unread'
+	| 'save'
+	| 'unsave'
+	| 'mark-all-read'
+	| 'mark-unread'
+	| 'save-many'
+	| 'unsave-many';
+
+export interface BulkSaveEntry {
+	id: string;
+	snapshot?: SavedItemSnapshot;
+}
 
 export interface StatePayload {
 	action?: StateAction;
 	id?: string;
 	ids?: string[];
 	snapshot?: SavedItemSnapshot;
+	entries?: BulkSaveEntry[];
 }
 
 export type StateActionResult = { ok: true; state: HubState } | { ok: false; error: string };
@@ -86,6 +100,46 @@ export function applyStateAction(
 			if (!Array.isArray(payload.ids)) return invalid('Envie a lista de ids.');
 			for (const id of payload.ids) {
 				if (typeof id === 'string') delete next.read[id];
+			}
+			break;
+
+		case 'save-many': {
+			if (!Array.isArray(payload.entries) || payload.entries.length === 0) {
+				return invalid('Envie pelo menos um item.');
+			}
+
+			const prepared: { id: string; snapshot?: SavedItemSnapshot }[] = [];
+			for (const entry of payload.entries) {
+				if (!entry || typeof entry.id !== 'string' || !entry.id) {
+					return invalid('Item do lote inválido.');
+				}
+
+				if (entry.snapshot) {
+					const snapshot = safeSnapshot(entry.snapshot, entry.id);
+					if (!snapshot) {
+						return invalid('Snapshot inválido: item, URL ou thumbnail não são seguros.');
+					}
+					prepared.push({ id: entry.id, snapshot });
+				} else {
+					prepared.push({ id: entry.id });
+				}
+			}
+
+			next.saved = [...new Set([...next.saved, ...prepared.map((entry) => entry.id)])];
+			for (const entry of prepared) {
+				if (entry.snapshot) {
+					next.savedItems[entry.id] = { ...entry.snapshot, savedAt: now };
+				}
+			}
+			break;
+		}
+
+		case 'unsave-many':
+			if (!Array.isArray(payload.ids)) return invalid('Envie a lista de ids.');
+			for (const id of payload.ids) {
+				if (typeof id !== 'string') continue;
+				next.saved = next.saved.filter((savedId) => savedId !== id);
+				delete next.savedItems[id];
 			}
 			break;
 

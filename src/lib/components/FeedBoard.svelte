@@ -6,6 +6,7 @@
 	import { fade } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
 	import { matchesFilter } from '#lib/feed/filter';
+	import { selectAll, updateSelection } from '#lib/feed/selection';
 	import { countUnread, cutoffDaysAgo, idsOlderThan, resolveScope } from '#lib/feed/triage';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import { snapshotFromEntry } from '#lib/feed/view';
@@ -14,6 +15,7 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
+	import ShortcutHelp from './ShortcutHelp.svelte';
 
 	type FeedView = 'bento' | 'compact' | 'completo';
 
@@ -94,8 +96,15 @@
 	let filterUnreadOnly = $state(false);
 	let filterError = $state('');
 	let filterBusy = $state(false);
+	let selectionMode = $state(false);
+	let selectedIds = $state<string[]>([]);
+	let selectionAnchor = $state<string | null>(null);
+	let bulkBusy = $state(false);
+	let shortcutsOpen = $state(false);
+	let keyboardId = $state<string | null>(null);
 
 	onMount(() => {
+		window.addEventListener('keydown', handleShortcut);
 		const saved = localStorage.getItem('meu-hub:feed-view');
 		if (saved === 'bento' || saved === 'compact' || saved === 'completo') {
 			view = saved;
@@ -129,6 +138,7 @@
 		}, 400);
 
 		return () => {
+			window.removeEventListener('keydown', handleShortcut);
 			clearTimeout(timer);
 			clearTimeout(viewTimer);
 			clearTimeout(undoTimer);
@@ -194,6 +204,9 @@
 					entries.find((entry) => entry.source.id === scope.sourceId)?.source ??
 					null)
 	);
+	const selectedSet = $derived(new Set(selectedIds));
+	const selectedEntries = $derived(entries.filter((entry) => selectedSet.has(entry.item.id)));
+	const filteredIds = $derived(filtered.map((entry) => entry.item.id));
 	const savedTerms = $derived(savedQuery.trim().split(/\s+/).filter(Boolean));
 	const savedFiltered = $derived(
 		[...entries]
@@ -260,6 +273,230 @@
 
 	function resetLimit(): void {
 		limit = 10;
+		if (selectedIds.length > 0) {
+			selectedIds = [];
+			selectionAnchor = null;
+		}
+	}
+
+	function enterSelection(): void {
+		selectionMode = true;
+		selectedIds = [];
+		selectionAnchor = null;
+	}
+
+	function exitSelection(): void {
+		selectionMode = false;
+		selectedIds = [];
+		selectionAnchor = null;
+	}
+
+	function toggleSelect(entry: FeedViewItem, event: MouseEvent): void {
+		const result = updateSelection(selectedIds, entry.item.id, {
+			visibleIds: filteredIds,
+			anchor: selectionAnchor,
+			mode: event.shiftKey ? 'range' : 'toggle'
+		});
+		selectedIds = result.selected;
+		selectionAnchor = result.anchor;
+		keyboardId = entry.item.id;
+	}
+
+	function selectAllFiltered(): void {
+		selectedIds = selectAll(filteredIds);
+		selectionAnchor = null;
+	}
+
+	function clearSelection(): void {
+		selectedIds = [];
+		selectionAnchor = null;
+	}
+
+	async function bulkMarkRead(unread: boolean): Promise<void> {
+		if (selectedIds.length === 0 || bulkBusy) return;
+		bulkBusy = true;
+		const ids = [...selectedIds];
+
+		try {
+			const ok = await sendState({
+				action: unread ? 'mark-unread' : 'mark-all-read',
+				ids
+			});
+			if (!ok) {
+				showToast('Não foi possível atualizar os posts.', 'error', 5000);
+				return;
+			}
+
+			if (!unread) {
+				const batch = saveUndoBatch(ids);
+				undoIds = batch.ids;
+				showToast(
+					`${ids.length} ${ids.length === 1 ? 'post marcado' : 'posts marcados'} como lidos.`,
+					'undo',
+					0
+				);
+				scheduleUndoExpiry(batch.expiresAt);
+			} else {
+				showToast(
+					`${ids.length} ${ids.length === 1 ? 'post marcado' : 'posts marcados'} como não lidos.`,
+					'success',
+					4000
+				);
+			}
+
+			exitSelection();
+			await invalidateAll();
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
+	async function bulkSave(): Promise<void> {
+		if (selectedIds.length === 0 || bulkBusy) return;
+		const targets = selectedEntries.filter((entry) => !entry.saved);
+		if (targets.length === 0) {
+			showToast('Os posts selecionados já estão salvos.', 'success', 3500);
+			return;
+		}
+
+		bulkBusy = true;
+		try {
+			const ok = await sendState({
+				action: 'save-many',
+				entries: targets.map((entry) => ({
+					id: entry.item.id,
+					snapshot: snapshotFromEntry(entry)
+				}))
+			});
+			if (!ok) {
+				showToast('Não foi possível salvar os posts.', 'error', 5000);
+				return;
+			}
+
+			showToast(
+				`${targets.length} ${targets.length === 1 ? 'post salvo' : 'posts salvos'}.`,
+				'success',
+				4000
+			);
+			exitSelection();
+			await invalidateAll();
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
+	async function bulkUnsave(): Promise<void> {
+		if (selectedIds.length === 0 || bulkBusy) return;
+		const targets = selectedEntries.filter((entry) => entry.saved);
+		if (targets.length === 0) {
+			showToast('Nenhum dos selecionados está salvo.', 'success', 3500);
+			return;
+		}
+
+		bulkBusy = true;
+		try {
+			const ok = await sendState({
+				action: 'unsave-many',
+				ids: targets.map((entry) => entry.item.id)
+			});
+			if (!ok) {
+				showToast('Não foi possível remover os posts dos salvos.', 'error', 5000);
+				return;
+			}
+
+			showToast(
+				`${targets.length} ${targets.length === 1 ? 'post removido' : 'posts removidos'} dos salvos.`,
+				'success',
+				4000
+			);
+			exitSelection();
+			await invalidateAll();
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
+	function isTypingTarget(target: EventTarget | null): boolean {
+		const element = target as HTMLElement | null;
+		if (!element) return false;
+		const tag = element.tagName;
+		if (tag === 'INPUT') {
+			const type = (element as HTMLInputElement).type;
+			return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(type);
+		}
+		return tag === 'TEXTAREA' || tag === 'SELECT' || element.isContentEditable;
+	}
+
+	function focusedEntry(): FeedViewItem | null {
+		return visible.find((entry) => entry.item.id === keyboardId) ?? null;
+	}
+
+	function moveKeyboard(delta: number): void {
+		if (visible.length === 0) return;
+		const current = keyboardId ? visible.findIndex((entry) => entry.item.id === keyboardId) : -1;
+		const next =
+			current < 0
+				? delta > 0
+					? 0
+					: visible.length - 1
+				: Math.min(visible.length - 1, Math.max(0, current + delta));
+		const entry = visible[next];
+		keyboardId = entry.item.id;
+		const element = document.getElementById(`feed-card-${entry.item.id}`);
+		element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+		element?.focus({ preventScroll: true });
+	}
+
+	function handleShortcut(event: KeyboardEvent): void {
+		if (event.defaultPrevented) return;
+		if (event.ctrlKey || event.metaKey || event.altKey) return;
+		if (isTypingTarget(event.target)) return;
+		if (document.querySelector('[role="dialog"], dialog[open]')) return;
+
+		if (event.key === '?') {
+			event.preventDefault();
+			shortcutsOpen = true;
+			return;
+		}
+
+		if (event.key === 'Escape') {
+			if (selectionMode) {
+				event.preventDefault();
+				exitSelection();
+			} else {
+				keyboardId = null;
+			}
+			return;
+		}
+
+		if (event.key === 'j') {
+			event.preventDefault();
+			moveKeyboard(1);
+			return;
+		}
+
+		if (event.key === 'k') {
+			event.preventDefault();
+			moveKeyboard(-1);
+			return;
+		}
+
+		const entry = focusedEntry();
+		if (!entry) return;
+
+		if (event.key === 'm') {
+			event.preventDefault();
+			toggleRead(entry);
+		} else if (event.key === 's') {
+			event.preventDefault();
+			toggleSave(entry);
+		} else if (event.key === 'o' || event.key === 'Enter') {
+			if (event.key === 'Enter' && (event.target as HTMLElement | null)?.closest('button, a')) {
+				return;
+			}
+			event.preventDefault();
+			window.open(entry.item.url, '_blank', 'noopener,noreferrer');
+		}
 	}
 
 	function selectFilter(id: string): void {
@@ -568,6 +805,9 @@
 				<button class="chip link" type="button" onclick={requestMarkAllRead}>
 					Marcar tudo como lido
 				</button>
+				{#if !selectionMode}
+					<button class="chip link" type="button" onclick={enterSelection}>Selecionar</button>
+				{/if}
 				{#if undoIds.length > 0}
 					<button class="chip" type="button" onclick={undoMarkAllRead} disabled={undoBusy}>
 						{undoBusy ? 'Desfazendo...' : 'Desfazer'}
@@ -579,6 +819,63 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if selectionMode}
+		<div class="bulk-bar" role="region" aria-label="Ações em massa">
+			<strong aria-live="polite">
+				{selectedIds.length}
+				{selectedIds.length === 1 ? 'selecionado' : 'selecionados'}
+			</strong>
+			<div class="chips">
+				<button
+					class="chip"
+					type="button"
+					onclick={() => bulkMarkRead(false)}
+					disabled={selectedIds.length === 0 || bulkBusy}
+				>
+					Marcar lido
+				</button>
+				<button
+					class="chip"
+					type="button"
+					onclick={() => bulkMarkRead(true)}
+					disabled={selectedIds.length === 0 || bulkBusy}
+				>
+					Marcar não lido
+				</button>
+				<button
+					class="chip"
+					type="button"
+					onclick={bulkSave}
+					disabled={selectedIds.length === 0 || bulkBusy}
+				>
+					Salvar
+				</button>
+				<button
+					class="chip"
+					type="button"
+					onclick={bulkUnsave}
+					disabled={selectedIds.length === 0 || bulkBusy}
+				>
+					Remover dos salvos
+				</button>
+				<button class="chip" type="button" onclick={selectAllFiltered} disabled={bulkBusy}>
+					Selecionar todos os {filtered.length}
+				</button>
+				<button
+					class="chip"
+					type="button"
+					onclick={clearSelection}
+					disabled={selectedIds.length === 0 || bulkBusy}
+				>
+					Limpar
+				</button>
+				<button class="chip link" type="button" onclick={exitSelection} disabled={bulkBusy}>
+					Sair da seleção
+				</button>
+			</div>
+		</div>
+	{/if}
 
 	{#if refreshMessage}
 		<div class:alert={refreshFailed} class:notice={!refreshFailed} role="status">
@@ -890,10 +1187,27 @@
 			{#each visible as entry (entry.item.id)}
 				<div
 					class="feed-slot"
+					class:selected={selectedSet.has(entry.item.id)}
+					class:keyboard-focused={keyboardId === entry.item.id}
+					id={`feed-card-${entry.item.id}`}
+					tabindex="-1"
 					in:fade={{ duration: fadeDuration }}
 					out:fade={{ duration: fadeDuration }}
 					animate:flip={{ duration: motionDuration }}
 				>
+					{#if selectionMode}
+						<label class="select-box" title="Selecionar post">
+							<input
+								type="checkbox"
+								checked={selectedSet.has(entry.item.id)}
+								onclick={(event) => {
+									event.preventDefault();
+									toggleSelect(entry, event);
+								}}
+								aria-label={`Selecionar ${entry.item.title}`}
+							/>
+						</label>
+					{/if}
 					<FeedCard
 						{entry}
 						terms={saved ? savedTerms : terms}
@@ -959,4 +1273,8 @@
 			</button>
 		{/if}
 	</div>
+{/if}
+
+{#if shortcutsOpen}
+	<ShortcutHelp onclose={() => (shortcutsOpen = false)} />
 {/if}
