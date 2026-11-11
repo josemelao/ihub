@@ -349,47 +349,78 @@ export function addSources(hub: HubData, inputs: SourceInput[]): HubData {
 	return { ...hub, feedSources: [...hub.feedSources, ...added] };
 }
 
+/**
+ * Ajusta o escopo dos filtros salvos quando uma fonte muda de categoria:
+ * filtros que fixam categoria+fonte passam a apontar para a categoria nova,
+ * filtros que só fixam a fonte continuam sem categoria e os demais não mudam.
+ */
+function syncFilterScopeForSource(
+	filters: SavedFilter[],
+	sourceId: string,
+	categoryId: string
+): SavedFilter[] {
+	return filters.map((filter) =>
+		filter.sourceId === sourceId && filter.categoryId ? { ...filter, categoryId } : filter
+	);
+}
+
 export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubData {
+	let movedToCategory: string | null = null;
+
+	const feedSources = hub.feedSources.map((source) => {
+		if (source.id !== id) return source;
+
+		const categoryId = patch.categoryId ?? source.categoryId;
+		const categoryChanged = categoryId !== source.categoryId;
+		if (categoryChanged) movedToCategory = categoryId;
+
+		const next: FeedSource = {
+			...source,
+			type: patch.type ?? source.type,
+			name: patch.name ?? source.name,
+			target: patch.target ?? source.target,
+			categoryId,
+			order: categoryChanged ? nextSourceOrder(hub, categoryId) : source.order,
+			intervalMinutes: patch.intervalMinutes ?? source.intervalMinutes,
+			enabled: patch.enabled ?? source.enabled,
+			include: patch.include ?? source.include,
+			exclude: patch.exclude ?? source.exclude,
+			matchMode: patch.matchMode ?? source.matchMode
+		};
+
+		if (patch.groupId === null) {
+			delete next.groupId;
+		} else if (patch.groupId !== undefined) {
+			next.groupId = patch.groupId;
+		}
+
+		// Grupo de outra categoria deixaria o hub inconsistente na validação.
+		if (next.groupId) {
+			const group = hub.groups.find((entry) => entry.id === next.groupId);
+			if (group && group.categoryId !== categoryId) delete next.groupId;
+		}
+
+		if (patch.maxItems === null) {
+			delete next.maxItems;
+		} else if (patch.maxItems !== undefined) {
+			next.maxItems = patch.maxItems;
+		}
+
+		if (patch.locale === null) {
+			delete next.locale;
+		} else if (patch.locale !== undefined) {
+			next.locale = patch.locale;
+		}
+
+		return next;
+	});
+
 	return {
 		...hub,
-		feedSources: hub.feedSources.map((source) => {
-			if (source.id !== id) return source;
-
-			const categoryId = patch.categoryId ?? source.categoryId;
-			const next: FeedSource = {
-				...source,
-				type: patch.type ?? source.type,
-				name: patch.name ?? source.name,
-				target: patch.target ?? source.target,
-				categoryId,
-				order: categoryId !== source.categoryId ? nextSourceOrder(hub, categoryId) : source.order,
-				intervalMinutes: patch.intervalMinutes ?? source.intervalMinutes,
-				enabled: patch.enabled ?? source.enabled,
-				include: patch.include ?? source.include,
-				exclude: patch.exclude ?? source.exclude,
-				matchMode: patch.matchMode ?? source.matchMode
-			};
-
-			if (patch.groupId === null) {
-				delete next.groupId;
-			} else if (patch.groupId !== undefined) {
-				next.groupId = patch.groupId;
-			}
-
-			if (patch.maxItems === null) {
-				delete next.maxItems;
-			} else if (patch.maxItems !== undefined) {
-				next.maxItems = patch.maxItems;
-			}
-
-			if (patch.locale === null) {
-				delete next.locale;
-			} else if (patch.locale !== undefined) {
-				next.locale = patch.locale;
-			}
-
-			return next;
-		})
+		feedSources,
+		savedFilters: movedToCategory
+			? syncFilterScopeForSource(hub.savedFilters, id, movedToCategory)
+			: hub.savedFilters
 	};
 }
 
@@ -487,6 +518,19 @@ export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>
 		? nextSourceOrder(hub, categoryId, (source) => source.groupId === id)
 		: 0;
 
+	const movedSourceIds = new Set(
+		categoryChanged
+			? hub.feedSources.filter((source) => source.groupId === id).map((source) => source.id)
+			: []
+	);
+	const savedFilters = categoryChanged
+		? hub.savedFilters.map((filter) =>
+				filter.sourceId && movedSourceIds.has(filter.sourceId) && filter.categoryId
+					? { ...filter, categoryId }
+					: filter
+			)
+		: hub.savedFilters;
+
 	return {
 		...hub,
 		groups: hub.groups.map((group) =>
@@ -499,7 +543,8 @@ export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>
 			? hub.feedSources.map((source) =>
 					source.groupId === id ? { ...source, categoryId, order: nextGroupSourceOrder++ } : source
 				)
-			: hub.feedSources
+			: hub.feedSources,
+		savedFilters
 	};
 }
 
