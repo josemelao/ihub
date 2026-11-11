@@ -6,39 +6,118 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **M0 (projeto)**, **M1 (dados e layout)**, **M2 (busca Ctrl K, exportar/importar)**, **M3 (feed)**, **M4 (painel de edição)** e **M5 (acabamento)**: concluídos.
-- Os dados iniciais vêm dos mockups de referência (categorias, grupos, atalhos fixados, fontes e filtros salvos).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo) e seleção em massa com atalhos.
+- **Versão atual:** `v0.13.2` · **317 testes** em 36 arquivos.
+- **Próximos blocos planejados:** captura rápida (bookmarks/OPML, quick add), organização manual (drag & drop, ordem de fontes), PWA/autostart e leitura (reader/highlights).
+- O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
 
 SvelteKit 3 + Svelte 5 (runes) + TypeScript, `@sveltejs/adapter-node`, Vitest, Zod, Fuse.js, `fast-xml-parser` e adapter-node. Tema escuro único, responsivo.
 
-## Como rodar
+## Instalar em outra máquina (Windows)
 
-Requisitos: Node.js 24+ e npm.
+### 1. Pré-requisitos
+
+- Windows 10/11.
+- **Node.js 24 ou superior** (<https://nodejs.org>).
+- Git (<https://git-scm.com>).
+
+Confira no PowerShell:
 
 ```powershell
-npm install
-Copy-Item data\hub.example.json data\hub.json   # só na primeira vez
-npm run dev
+node -v
+npm -v
+git --version
 ```
 
-Abre em <http://127.0.0.1:5757>.
-
-Para uso diário (build de produção):
+### 2. Baixar o projeto
 
 ```powershell
+git clone https://github.com/josemelao/ihub.git
+cd ihub
+npm ci
+```
+
+`npm ci` instala exatamente as versões do `package-lock.json`. Use `npm install` apenas se estiver alterando dependências.
+
+### 3. Primeira execução sem dados antigos
+
+```powershell
+Copy-Item data\hub.example.json data\hub.json
 npm run build
 npm start
 ```
 
-`npm start` força `HOST=127.0.0.1` e `PORT=5757` por padrão. Variáveis aceitas (veja `.env.example`):
+Abra <http://127.0.0.1:5757>.
 
-| Variável       | Padrão      | Função                                                    |
-| -------------- | ----------- | --------------------------------------------------------- |
-| `HOST`         | `127.0.0.1` | interface de rede (não exponha na rede)                   |
-| `PORT`         | `5757`      | porta                                                     |
-| `HUB_DATA_DIR` | `data`      | pasta dos arquivos JSON (pode ser uma pasta sincronizada) |
+O `npm start` fica preso ao terminal (é o servidor). Para parar, use `Ctrl+C`.
+
+### 4. Migrar os dados do PC antigo
+
+Com o app **fechado nos dois PCs**:
+
+1. No PC antigo, copie a pasta `data` inteira.
+2. No PC novo, substitua a pasta `data` do projeto pela copiada.
+3. Se quiser manter os pontos de restauração, copie também `data\backups`.
+4. Inicie o app e confira os dados.
+
+Alternativa sem copiar arquivos: no PC antigo use **Gerenciar → Exportar**, leve o JSON e use **Gerenciar → Importar** no PC novo.
+
+> Não copie `node_modules`, `.svelte-kit` ou `build` entre máquinas. Não rode dois servidores apontando para a mesma pasta ao mesmo tempo.
+
+### 5. Configuração opcional
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Variáveis aceitas:
+
+| Variável       | Padrão      | Função                                                             |
+| -------------- | ----------- | ------------------------------------------------------------------ |
+| `HOST`         | `127.0.0.1` | interface de rede (**não exponha na rede**)                        |
+| `PORT`         | `5757`      | porta                                                              |
+| `HUB_DATA_DIR` | `data`      | pasta dos JSON (pode ser uma pasta sincronizada do Drive/OneDrive) |
+
+Sem `.env`, os padrões acima já funcionam.
+
+### 6. Rodar em desenvolvimento
+
+```powershell
+npm run dev
+```
+
+Abre em <http://127.0.0.1:5757> com recarregamento automático.
+
+### 7. Atualizar o app
+
+Com o servidor parado (`Ctrl+C`):
+
+```powershell
+# opcional: crie um ponto de restauração em Gerenciar → Backups antes
+git pull
+npm ci
+npm run verify
+npm run build
+npm start
+```
+
+### 8. Problemas comuns
+
+- **Porta ocupada (`EADDRINUSE`):** feche o processo na porta 5757 ou defina `PORT` no `.env`.
+- **“Host não permitido”:** acesse por `http://127.0.0.1:5757` ou `http://localhost:5757`; o servidor não aceita outros hosts.
+- **JSON inválido:** o app mostra o problema e tenta o backup `.bak`; restaure um ponto em **Gerenciar → Backups** se necessário.
+- **Node antigo:** `node -v` precisa ser 24+.
+- **Feed não atualiza:** confira o status em **Gerenciar → Fontes**; erros de rede/rate limit aparecem por fonte.
+- **Backup/restauração:** os pontos manuais ficam em `data\backups\manual-*` e podem ser baixados pela aba **Backups**.
+
+### 9. Iniciar com o Windows
+
+Ainda **não há autostart automático** (PLAT-02 pendente). Por enquanto:
+
+- deixe o `npm start` em uma janela do PowerShell; ou
+- crie uma tarefa no **Agendador de Tarefas** com gatilho “Ao fazer logon”, ação iniciando `npm` com argumento `start` e “Iniciar em” apontando para a pasta do projeto.
 
 ## Dados
 
@@ -109,7 +188,8 @@ Em **Gerenciar**, as abas são funcionais:
 - **Itens**: links e apps juntos, com subchips **Todos / Links / Apps**, busca local e agrupamento por **categoria → grupo** (inclui “Sem grupo”). Adicionar link e adicionar app ficam no cabeçalho.
 - **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens ou fontes).
 - **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso). Mostra itens, grupos e fontes.
-- **Filtros salvos**: adicionar/editar/remover filtros de busca, com Incluir, Excluir e Modo.
+- **Filtros salvos**: adicionar/editar/remover filtros de busca, com Incluir, Excluir, Modo, Categoria, Fonte e “Somente não lidos”.
+- **Backups**: criar, listar, baixar, restaurar e excluir pontos de restauração; mostra a idade do último backup automático.
 - **Aparência**: escolher a cor de destaque do tema (predefinidas ou cor personalizada).
 
 O editor lateral é compacto, dividido em seções (**Fonte/Organização/Atualização/Filtros**, **Identificação/Organização/Aparência/Extras**), com cabeçalho e rodapé fixos — os botões **Cancelar/Salvar** ficam sempre visíveis. A remoção usa um diálogo próprio, no tema escuro, em vez do `confirm()` do navegador.
