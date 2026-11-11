@@ -1,6 +1,6 @@
 import { fetchPublicText } from '../net/safe-fetch';
 import type { FeedCache, FeedItem, FeedSourceStatus, HubData } from '../types';
-import { parseFeed } from './parse';
+import { feedFormatOf, FeedFormatError, parseFeed } from './parse';
 import { resolveFeedUrl } from './sources';
 
 export type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
@@ -96,6 +96,7 @@ export async function refreshFeed(
 				timeoutMs,
 				maxBytes: MAX_RESPONSE_BYTES
 			});
+			if (feedFormatOf(text) === 'invalid') throw new FeedFormatError();
 			const parsed = parseFeed(text, source.id);
 			const previous = itemsBySource.get(source.id) ?? [];
 			const chosen = parsed.length > 0 ? parsed : previous;

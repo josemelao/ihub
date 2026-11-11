@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { XMLParser } from 'fast-xml-parser';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { toSafeHttpUrl } from '../net/url';
 import type { FeedItem } from '../types';
 
@@ -125,6 +125,36 @@ function makeId(sourceId: string, guid: string, url: string, title: string): str
 		.update(`${sourceId}\u0000${guid || url || title}`)
 		.digest('hex')
 		.slice(0, 16);
+}
+
+/** Formato reconhecido no documento; `invalid` cobre HTML, XML quebrado e texto solto. */
+export type FeedFormat = 'rss' | 'atom' | 'rdf' | 'invalid';
+
+/** Erro de formato: o conteúdo veio de uma URL que não serve um feed. */
+export class FeedFormatError extends Error {
+	constructor() {
+		super('O conteúdo recebido não é um feed (HTML ou XML inválido).');
+		this.name = 'FeedFormatError';
+	}
+}
+
+export function feedFormatOf(xml: string): FeedFormat {
+	if (!xml || !xml.trim()) return 'invalid';
+	if (XMLValidator.validate(xml) !== true) return 'invalid';
+
+	let document: unknown;
+	try {
+		document = parser.parse(xml);
+	} catch {
+		return 'invalid';
+	}
+	if (!document || typeof document !== 'object') return 'invalid';
+
+	const root = document as Record<string, unknown>;
+	if (root.rss !== undefined && root.rss !== null) return 'rss';
+	if (root.feed !== undefined && root.feed !== null) return 'atom';
+	if (root['rdf:RDF'] !== undefined || root.RDF !== undefined) return 'rdf';
+	return 'invalid';
 }
 
 export function parseFeed(xml: string, sourceId: string): FeedItem[] {
