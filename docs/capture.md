@@ -16,8 +16,9 @@ Em **Gerenciar → Importar favoritos/OPML**, selecione o `bookmarks.html` expor
 - Escolhendo uma categoria no seletor **Organizar**, tudo vai para ela e as pastas viram grupos.
 - Categorias e grupos existentes são reutilizados por nome (sem diferenciar maiúsculas/acentos).
 - Links importados recebem a tag `importado`.
-- URL repetida (já no hub ou no mesmo arquivo) é ignorada e contada como duplicata.
-- `javascript:`, `place:`, `file:` e URLs vazias são descartadas.
+- URL repetida (já no hub ou no mesmo arquivo) é ignorada; o preview mostra duplicados e itens inválidos com o motivo.
+- `javascript:`, `place:`, `file:` e URLs vazias são descartadas e aparecem na lista de inválidos.
+- Arquivos truncados ou com tags sem fechamento são recuperados; o trecho problemático é contado em “ignorados”.
 
 ### Importar OPML
 
@@ -33,6 +34,10 @@ O mesmo diálogo aceita `.opml`/`.xml`.
 ### Exportar OPML
 
 **Gerenciar → Exportar OPML** baixa `ihub-feeds.opml` com as fontes agrupadas por categoria/grupo. O arquivo reimporta sem perda de nome, URL ou pastas. Fontes cujo feed não pode ser resolvido (ex.: `@handle` do YouTube) são omitidas.
+
+### Exportar favoritos
+
+**Gerenciar → Exportar favoritos** baixa `ihub-bookmarks.html` no formato Netscape, com categorias/grupos e apenas os links (apps ficam de fora). O arquivo reimporta no próprio hub ou em qualquer navegador.
 
 ### Adicionar rápido
 
@@ -57,6 +62,7 @@ Em **Gerenciar → Itens**, arraste **Salvar no Hub** para a barra de favoritos.
 | `POST /api/import/file/preview` | Valida e resume bookmarks/OPML           |
 | `POST /api/import/file/apply`   | Aplica a importação (somente merge)      |
 | `GET /api/export/opml`          | Baixa as fontes em OPML                  |
+| `GET /api/export/bookmarks`     | Baixa os links em bookmarks HTML         |
 | `POST /api/link-metadata`       | Extrai título/descrição/ícone de uma URL |
 
 Limite dos arquivos: **10 MB**. A importação nunca apaga nem sobrescreve dados existentes.
@@ -64,6 +70,7 @@ Limite dos arquivos: **10 MB**. A importação nunca apaga nem sobrescreve dados
 ## Estrutura
 
 - `src/lib/import/bookmarks.ts` — parser do HTML Netscape.
+- `src/lib/import/bookmarks-export.ts` — exportador do HTML Netscape.
 - `src/lib/import/opml.ts` — parser e exportador OPML.
 - `src/lib/import/apply.ts` — merge puro no hub.
 - `src/lib/import/file-import.ts` — dispatch e preview.
@@ -78,15 +85,16 @@ Limite dos arquivos: **10 MB**. A importação nunca apaga nem sobrescreve dados
 ## Verificação
 
 - `npm run verify`: check, lint, testes e build verdes.
-- **369 testes** em 46 arquivos.
-- Casos cobertos: HTML aninhado, entidades, URLs perigosas, duplicatas, OPML aninhado/único, round-trip OPML, merge sem duplicar, metadados, fallback e bookmarklet.
+- **380 testes** em 49 arquivos.
+- Casos cobertos: HTML aninhado, entidades, URLs perigosas, duplicatas, arquivos truncados, profundidade máxima, OPML aninhado/único, round-trip OPML e bookmarks, merge sem duplicar, metadados, fallback e bookmarklet.
 
 ### Checklist manual
 
 1. Exportar favoritos do Chrome e importar; conferir categorias/grupos.
 2. Reimportar o mesmo arquivo; conferir “duplicados”.
 3. Importar um OPML e exportar de volta; reimportar sem duplicar.
-4. Selecionar uma categoria fixa no diálogo; conferir que as pastas viraram grupos.
-5. Adicionar rápido com um site online; conferir título/descrição.
-6. Adicionar rápido com a rede desligada; conferir que o editor abre só com a URL.
-7. Arrastar o bookmarklet em Chrome, Edge e Firefox e salvar uma página.
+4. Exportar favoritos e reimportar no mesmo hub; conferir links e pastas.
+5. Selecionar uma categoria fixa no diálogo; conferir que as pastas viraram grupos.
+6. Adicionar rápido com um site online; conferir título/descrição.
+7. Adicionar rápido com a rede desligada; conferir que o editor abre só com a URL.
+8. Arrastar o bookmarklet em Chrome, Edge e Firefox e salvar uma página.

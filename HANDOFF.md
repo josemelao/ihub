@@ -423,15 +423,17 @@ Detalhes em [`docs/bulk.md`](docs/bulk.md).
 
 Executada em 11/11/2026 sobre `v0.13.2`.
 
-- **ORG-04**: **Importar favoritos/OPML** em Gerenciar, com detecção de formato, preview, merge sem duplicatas e **Exportar OPML**.
+- **ORG-04**: **Importar favoritos/OPML** em Gerenciar, com detecção de formato, preview, merge sem duplicatas e **Exportar OPML/favoritos**.
   - Pasta de 1º nível → categoria; subpastas → grupo (`A / B`); raiz → `Importados` / `Feeds importados`.
   - Categoria fixa opcional no diálogo; nomes existentes são reutilizados sem diferenciar caixa/acentos.
   - Bookmark importado recebe `tags: ['importado']`; feeds entram com 30 min e habilitados.
-  - Arquivos limitados a 10 MB; URLs só `http(s)`.
+  - Arquivos limitados a 10 MB; URLs só `http(s)`; parser linear com limite de profundidade e itens inválidos listados no preview.
+  - Exportar favoritos gera `ihub-bookmarks.html` (Netscape) e reimporta sem perda de nomes/pastas.
 - **ORG-05**: **Adicionar rápido** na sidebar (URL + metadados) e **bookmarklet** “Salvar no Hub” na aba Itens.
   - `/api/link-metadata` extrai título, descrição e ícone via `fetchPublicText` (SSRF, timeout 5 s, 1 MB).
   - Falha de metadados não bloqueia: o editor abre só com a URL.
   - Bookmarklet abre `/gerenciar?tab=itens&add=link&url=...&name=...`.
-- APIs novas: `POST /api/import/file/preview`, `POST /api/import/file/apply`, `GET /api/export/opml`, `POST /api/link-metadata`.
-- `npm run verify` verde com **369 testes** em 46 arquivos.
+  - Os parâmetros do deep link são aplicados por efeito reativo, então funcionam mesmo quando o Gerenciar já está aberto.
+- APIs novas: `POST /api/import/file/preview`, `POST /api/import/file/apply`, `GET /api/export/opml`, `GET /api/export/bookmarks`, `POST /api/link-metadata`.
+- `npm run verify` verde com **380 testes** em 49 arquivos.
 - Detalhes em [`docs/capture.md`](docs/capture.md).
