@@ -5,6 +5,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
+	import { readLocal, writeLocal } from '#lib/browser-storage';
 	import { matchesFilter } from '#lib/feed/filter';
 	import { selectAll, updateSelection } from '#lib/feed/selection';
 	import { countUnread, cutoffDaysAgo, idsOlderThan, resolveScope } from '#lib/feed/triage';
@@ -105,12 +106,12 @@
 
 	onMount(() => {
 		window.addEventListener('keydown', handleShortcut);
-		const saved = localStorage.getItem('meu-hub:feed-view');
+		const saved = readLocal('meu-hub:feed-view');
 		if (saved === 'bento' || saved === 'compact' || saved === 'completo') {
 			view = saved;
 		} else if (saved === 'grid') {
 			view = 'completo';
-			localStorage.setItem('meu-hub:feed-view', 'completo');
+			writeLocal('meu-hub:feed-view', 'completo');
 		}
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -150,7 +151,7 @@
 	const fadeDuration = $derived(reduceMotion || !animationsEnabled || !viewMotionReady ? 0 : 160);
 
 	function setView(next: FeedView): void {
-		localStorage.setItem('meu-hub:feed-view', next);
+		writeLocal('meu-hub:feed-view', next);
 		if (next === view) return;
 
 		viewMotionReady = false;

@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { sortFeedSources } from '#lib/feed/order';
 	import { onMount } from 'svelte';
+	import { readLocal, writeLocal } from '#lib/browser-storage';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import HomeDashboard from '#lib/components/HomeDashboard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
@@ -22,11 +23,11 @@
 	let note = $state('');
 
 	onMount(() => {
-		note = localStorage.getItem('meu-hub:nota') ?? '';
+		note = readLocal('meu-hub:nota') ?? '';
 	});
 
 	function saveNote() {
-		localStorage.setItem('meu-hub:nota', note);
+		writeLocal('meu-hub:nota', note);
 	}
 
 	function unreadFor(sourceId: string): number {
