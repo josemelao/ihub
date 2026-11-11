@@ -9,3 +9,7 @@ bun.lockb
 /static/
 /mockups/
 PLANEJAMENTO-hub.md
+
+# Windows autostart scripts
+/scripts/*.ps1
+/scripts/*.vbs
