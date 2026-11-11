@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida (v0.14.0)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -418,3 +418,20 @@ Detalhes em [`docs/bulk.md`](docs/bulk.md).
 - Shift no meio de uma seleção maior desmarca o que ficou fora.
 - Testes: `[0]` → shift 4 → `[0..4]` → shift 2 → `[0,1,2]` → shift 4 → `[0..4]`; clique normal alterna só o item.
 - Funciona no sentido inverso e com âncora ausente (fallback toggle).
+
+## 19. Fase 2 — captura rápida (v0.14.0)
+
+Executada em 11/11/2026 sobre `v0.13.2`.
+
+- **ORG-04**: **Importar favoritos/OPML** em Gerenciar, com detecção de formato, preview, merge sem duplicatas e **Exportar OPML**.
+  - Pasta de 1º nível → categoria; subpastas → grupo (`A / B`); raiz → `Importados` / `Feeds importados`.
+  - Categoria fixa opcional no diálogo; nomes existentes são reutilizados sem diferenciar caixa/acentos.
+  - Bookmark importado recebe `tags: ['importado']`; feeds entram com 30 min e habilitados.
+  - Arquivos limitados a 10 MB; URLs só `http(s)`.
+- **ORG-05**: **Adicionar rápido** na sidebar (URL + metadados) e **bookmarklet** “Salvar no Hub” na aba Itens.
+  - `/api/link-metadata` extrai título, descrição e ícone via `fetchPublicText` (SSRF, timeout 5 s, 1 MB).
+  - Falha de metadados não bloqueia: o editor abre só com a URL.
+  - Bookmarklet abre `/gerenciar?tab=itens&add=link&url=...&name=...`.
+- APIs novas: `POST /api/import/file/preview`, `POST /api/import/file/apply`, `GET /api/export/opml`, `POST /api/link-metadata`.
+- `npm run verify` verde com **369 testes** em 46 arquivos.
+- Detalhes em [`docs/capture.md`](docs/capture.md).

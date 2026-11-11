@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo) e seleção em massa com atalhos.
-- **Versão atual:** `v0.13.2` · **317 testes** em 36 arquivos.
-- **Próximos blocos planejados:** captura rápida (bookmarks/OPML, quick add), organização manual (drag & drop, ordem de fontes), PWA/autostart e leitura (reader/highlights).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos e captura rápida (bookmarks/OPML, quick add e bookmarklet).
+- **Versão atual:** `v0.14.0` · **369 testes** em 46 arquivos.
+- **Próximos blocos planejados:** organização manual (drag & drop, ordem de fontes), PWA/autostart e leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -179,6 +179,14 @@ Na tela **Gerenciar**:
 
 - **Exportar dados** baixa um `hub-export-AAAA-MM-DD.json` com o hub e o estado.
 - **Importar dados** lê o arquivo, valida e mostra um resumo antes de confirmar. Escolha **substituir tudo** ou **mesclar por id**. Um backup do `hub.json` atual é criado automaticamente.
+
+### Captura rápida
+
+- **Importar favoritos/OPML**: aceita o `bookmarks.html` do Chrome/Edge/Firefox e arquivos `.opml`/`.xml`. Pastas viram categorias/grupos (ou grupos dentro de uma categoria escolhida), URLs repetidas são ignoradas e links entram com a tag `importado`. A importação só adiciona; nunca apaga.
+- **Exportar OPML**: baixa `ihub-feeds.opml` com as fontes agrupadas por categoria/grupo; reimportar mantém nome, URL e pastas.
+- **Adicionar rápido** (sidebar): cole uma URL e o app busca título, descrição e ícone antes de abrir o editor. Se a página não puder ser lida, o editor abre só com a URL.
+- **Bookmarklet** em Gerenciar → Itens: arraste **Salvar no Hub** para a barra de favoritos e clique em qualquer site para abrir o editor já preenchido. Sites com CSP rígida podem bloquear bookmarklets; nesse caso use **Adicionar rápido**.
+- Detalhes, limites e checklist: [docs/capture.md](docs/capture.md).
 
 ### Editar pela interface (M4)
 
