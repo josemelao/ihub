@@ -108,6 +108,20 @@ describe('service worker', () => {
 		expect(sw).toContain('trimCache');
 	});
 
+	it('sempre responde com uma página offline quando o cache falha', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain('offlineResponse');
+		expect(sw).toContain('new Response(OFFLINE_HTML');
+	});
+
+	it('limita a espera do servidor na navegação', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain('AbortSignal.timeout(NAVIGATION_TIMEOUT_MS)');
+		expect(sw).toContain('NAVIGATION_TIMEOUT_MS = 8000');
+	});
+
 	it('never caches API or non-GET requests', () => {
 		const sw = readWorker();
 
