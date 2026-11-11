@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import Icon from '#lib/components/Icon.svelte';
 	import LibraryCard from '#lib/components/LibraryCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { collectTags, itemHasTag, tagKey } from '#lib/tags';
 	import type { Category, HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
 
@@ -15,6 +18,9 @@
 	type Tab = 'todos' | 'app' | 'link';
 	let tab = $state<Tab>('todos');
 	let query = $state('');
+	let activeTagKey = $state(tagKey(page.url.searchParams.get('tag') ?? ''));
+
+	const tags = $derived(collectTags(hub));
 
 	const STORAGE_KEY = 'meu-hub:library-collapsed';
 
@@ -59,6 +65,7 @@
 	);
 
 	function matches(item: HubItem, category: Category, groupName: string): boolean {
+		if (activeTagKey && !itemHasTag(item, activeTagKey)) return false;
 		if (tab === 'app' && item.type !== 'app') return false;
 		if (tab === 'link' && item.type !== 'link') return false;
 		if (terms.length === 0) return true;
@@ -68,6 +75,23 @@
 		);
 		return terms.every((term) => haystack.includes(term));
 	}
+
+	async function selectTag(tag: string): Promise<void> {
+		activeTagKey = tag ? tagKey(tag) : '';
+		const url = new URL(page.url.href);
+		if (tag) url.searchParams.set('tag', tag);
+		else url.searchParams.delete('tag');
+		await goto(`${url.pathname}${url.search}`, { replaceState: true });
+	}
+
+	let lastTagParam: string | null = null;
+
+	$effect(() => {
+		const param = page.url.searchParams.get('tag') ?? '';
+		if (param === lastTagParam) return;
+		lastTagParam = param;
+		activeTagKey = param ? tagKey(param) : '';
+	});
 
 	const sections = $derived.by(() => {
 		return sortedCategories
@@ -206,6 +230,31 @@
 	</button>
 </div>
 
+{#if tags.length > 0 || activeTagKey}
+	<div class="chips" role="group" aria-label="Filtrar por tag">
+		<button
+			class="chip"
+			class:active={!activeTagKey}
+			type="button"
+			aria-pressed={!activeTagKey}
+			onclick={() => selectTag('')}
+		>
+			Todas
+		</button>
+		{#each tags as tag (tag.key)}
+			<button
+				class="chip"
+				class:active={activeTagKey === tag.key}
+				type="button"
+				aria-pressed={activeTagKey === tag.key}
+				onclick={() => selectTag(tag.tag)}
+			>
+				{tag.tag} · {tag.count}
+			</button>
+		{/each}
+	</div>
+{/if}
+
 <div class="filter-panel">
 	<div class="filter-row">
 		<div class="filter-input">
@@ -228,6 +277,9 @@
 		{/if}
 		{#if query}
 			<button class="chip" type="button" onclick={() => (query = '')}>Limpar busca</button>
+		{/if}
+		{#if activeTagKey}
+			<button class="chip" type="button" onclick={() => selectTag('')}>Limpar tag</button>
 		{/if}
 	</div>
 </div>
@@ -287,15 +339,24 @@
 	<div class="placeholder-panel">
 		<span class="placeholder-title">Nenhum item encontrado</span>
 		<span class="muted">
-			{#if query}
-				Ajuste a busca ou limpe o filtro para ver todos os itens.
+			{#if query || activeTagKey}
+				Ajuste a busca, a tag ou limpe os filtros para ver todos os itens.
 			{:else}
 				Cadastre links e apps em Gerenciar → Links / Apps do PC.
 			{/if}
 		</span>
 		<div class="chips">
-			{#if query}
-				<button class="chip" type="button" onclick={() => (query = '')}>Limpar busca</button>
+			{#if query || activeTagKey}
+				<button
+					class="chip"
+					type="button"
+					onclick={() => {
+						query = '';
+						void selectTag('');
+					}}
+				>
+					Limpar filtros
+				</button>
 			{:else}
 				<a class="chip link" href={resolve('/gerenciar')}>Ir para Gerenciar</a>
 			{/if}
