@@ -7,8 +7,9 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import LibraryCard from '#lib/components/LibraryCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
-	import { collectTags, itemHasTag, tagKey } from '#lib/tags';
-	import type { Category, HubItem } from '#lib/types';
+	import { matchesLibraryItem, searchTerms } from '#lib/library-filter';
+	import { collectTags, tagKey } from '#lib/tags';
+	import type { HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -44,36 +45,29 @@
 		return () => clearTimeout(timer);
 	});
 
+	onMount(() => {
+		const syncFromUrl = (): void => {
+			const param = new URL(window.location.href).searchParams.get('tag') ?? '';
+			activeTagKey = param ? tagKey(param) : '';
+		};
+		window.addEventListener('popstate', syncFromUrl);
+		return () => window.removeEventListener('popstate', syncFromUrl);
+	});
+
 	const motionDuration = $derived(reduceMotion || !motionEnabled ? 0 : 220);
 
 	const appCount = $derived(hub.items.filter((item) => item.type === 'app').length);
 	const linkCount = $derived(hub.items.filter((item) => item.type === 'link').length);
 	const sortedCategories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
 
-	function normalize(value: string): string {
-		return value
-			.normalize('NFD')
-			.replace(/[\u0300-\u036f]/g, '')
-			.toLowerCase();
-	}
+	const terms = $derived(searchTerms(query));
 
-	const terms = $derived(
-		normalize(query)
-			.trim()
-			.split(/\s+/)
-			.filter((term) => term.length > 0)
-	);
-
-	function matches(item: HubItem, category: Category, groupName: string): boolean {
-		if (activeTagKey && !itemHasTag(item, activeTagKey)) return false;
-		if (tab === 'app' && item.type !== 'app') return false;
-		if (tab === 'link' && item.type !== 'link') return false;
-		if (terms.length === 0) return true;
-
-		const haystack = normalize(
-			[item.name, category.name, groupName, item.tags.join(' '), item.description ?? ''].join('\n')
-		);
-		return terms.every((term) => haystack.includes(term));
+	function matches(item: HubItem, categoryName: string, groupName: string): boolean {
+		return matchesLibraryItem(item, categoryName, groupName, {
+			tab,
+			query,
+			tagKey: activeTagKey
+		});
 	}
 
 	async function selectTag(tag: string): Promise<void> {
@@ -81,7 +75,7 @@
 		const url = new URL(page.url.href);
 		if (tag) url.searchParams.set('tag', tag);
 		else url.searchParams.delete('tag');
-		await goto(`${url.pathname}${url.search}`, { replaceState: true });
+		await goto(`${url.pathname}${url.search}`, { shallow: true });
 	}
 
 	let lastTagParam: string | null = null;
@@ -107,7 +101,7 @@
 								(item) =>
 									item.categoryId === category.id &&
 									item.groupId === group.id &&
-									matches(item, category, group.name)
+									matches(item, category.name, group.name)
 							)
 							.sort((a, b) => a.order - b.order)
 					}))
@@ -118,7 +112,7 @@
 						(item) =>
 							item.categoryId === category.id &&
 							!item.groupId &&
-							matches(item, category, 'Sem grupo')
+							matches(item, category.name, 'Sem grupo')
 					)
 					.sort((a, b) => a.order - b.order);
 
