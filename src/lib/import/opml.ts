@@ -185,11 +185,13 @@ function sourceOutline(source: FeedSource): string | null {
 	try {
 		feedUrl = feedUrlFor(source);
 	} catch {
-		feedUrl = source.type === 'rss' ? toSafeHttpUrl(source.target) : null;
+		feedUrl = source.type === 'rss' ? source.target : null;
 	}
-	if (!feedUrl) return null;
+	// Só http(s) pode sair no XML exportado.
+	const safeFeedUrl = feedUrl ? toSafeHttpUrl(feedUrl) : null;
+	if (!safeFeedUrl) return null;
 
-	return `        <outline type="rss" text="${escapeXml(source.name)}" xmlUrl="${escapeXml(feedUrl)}"/>`;
+	return `        <outline type="rss" text="${escapeXml(source.name)}" xmlUrl="${escapeXml(safeFeedUrl)}"/>`;
 }
 
 /**
