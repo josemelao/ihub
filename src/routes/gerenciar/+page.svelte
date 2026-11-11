@@ -211,6 +211,7 @@
 		id: string;
 		label: string;
 	} | null>(null);
+	let confirmingTag = $state<string | null>(null);
 	let editor = $state<{
 		kind: EditorKind;
 		initial: HubItem | FeedSource | Category | Group | SavedFilter | null;
@@ -379,6 +380,13 @@
 		draggingItemId = null;
 		if (!id) return;
 		void mutate({ action: 'move-item-to', id, categoryId, groupId });
+	}
+
+	function confirmRemoveTag(): void {
+		if (!confirmingTag) return;
+		const tag = confirmingTag;
+		confirmingTag = null;
+		void mutate({ action: 'remove-tag', tag });
 	}
 
 	function renameTagFromForm(event: SubmitEvent, from: string): void {
@@ -1335,16 +1343,25 @@
 								{tag.count === 1 ? 'item' : 'itens'}
 							</span>
 						</span>
-						<form class="manage-actions" onsubmit={(event) => renameTagFromForm(event, tag.tag)}>
-							<input
-								class="tag-rename-input"
-								name="name"
-								value={tag.tag}
-								aria-label={`Novo nome para a tag ${tag.tag}`}
-								maxlength="40"
-							/>
-							<button class="mini-btn" type="submit">Renomear</button>
-						</form>
+						<div class="manage-actions">
+							<form class="manage-actions" onsubmit={(event) => renameTagFromForm(event, tag.tag)}>
+								<input
+									class="tag-rename-input"
+									name="name"
+									value={tag.tag}
+									aria-label={`Novo nome para a tag ${tag.tag}`}
+									maxlength="40"
+								/>
+								<button class="mini-btn" type="submit">Renomear</button>
+							</form>
+							<button
+								class="mini-btn danger"
+								type="button"
+								onclick={() => (confirmingTag = tag.tag)}
+							>
+								Remover
+							</button>
+						</div>
 					</div>
 				{/each}
 			</div>
@@ -1640,6 +1657,16 @@
 			onclose={() => (editor = null)}
 		/>
 	{/key}
+{/if}
+
+{#if confirmingTag}
+	<ConfirmDialog
+		title={`Remover a tag "${confirmingTag}"?`}
+		message="A tag será removida de todos os itens. Os itens não serão apagados."
+		confirmLabel="Remover"
+		onconfirm={confirmRemoveTag}
+		oncancel={() => (confirmingTag = null)}
+	/>
 {/if}
 
 {#if confirming}

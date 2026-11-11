@@ -3,7 +3,7 @@ import { EMPTY_HUB } from './defaults';
 import { addLink, updateItem } from './hub-edit';
 import { parseHub } from './schema';
 import type { HubData } from './types';
-import { collectTags, itemHasTag, normalizeTags, renameTag, tagKey } from './tags';
+import { collectTags, itemHasTag, normalizeTags, removeTag, renameTag, tagKey } from './tags';
 
 function base(): HubData {
 	const hub = structuredClone(EMPTY_HUB);
@@ -100,6 +100,20 @@ describe('renameTag', () => {
 
 	it('rejects an empty destination', () => {
 		expect(() => renameTag(base(), 'build', '   ')).toThrow(/nome/i);
+	});
+});
+
+describe('removeTag', () => {
+	it('removes the tag from every item without deleting the items', () => {
+		const removed = removeTag(base(), 'BUILD');
+		expect(removed.items).toHaveLength(3);
+		expect(removed.items[0].tags).toEqual(['Pré venda']);
+		expect(removed.items[1].tags).toEqual(['Trabalho']);
+	});
+
+	it('is a no-op for an unknown or empty tag', () => {
+		expect(removeTag(base(), 'inexistente').items).toEqual(base().items);
+		expect(removeTag(base(), '  ').items).toEqual(base().items);
 	});
 });
 

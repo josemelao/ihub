@@ -17,6 +17,7 @@
 		type BackdropPointerState
 	} from '#lib/dialog-backdrop';
 	import { sortFeedSources } from '#lib/feed/order';
+	import { collectTags } from '#lib/tags';
 	import Icon from './Icon.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import ItemIcon from './ItemIcon.svelte';
@@ -220,6 +221,7 @@
 	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
 
 	const groups = $derived(hub.groups.filter((group) => group.categoryId === categoryId));
+	const availableTags = $derived(collectTags(hub).map((tag) => tag.tag));
 	const currentColor = $derived(
 		hub.categories.find((category) => category.id === categoryId)?.color ?? '#8AA4FF'
 	);
@@ -574,7 +576,12 @@
 					<span class="editor-section-label">Extras</span>
 					<div class="field">
 						<label for="e-tags">Tags (separadas por vírgula)</label>
-						<input id="e-tags" bind:value={tags} placeholder="build, wiki" />
+						<input id="e-tags" bind:value={tags} placeholder="build, wiki" list="e-tags-options" />
+						<datalist id="e-tags-options">
+							{#each availableTags as tag (tag)}
+								<option value={tag}></option>
+							{/each}
+						</datalist>
 					</div>
 
 					<label class="check">

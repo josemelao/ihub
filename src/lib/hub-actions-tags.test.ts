@@ -48,3 +48,14 @@ describe('rename-tag action', () => {
 		).toThrow(/nome/i);
 	});
 });
+
+describe('remove-tag action', () => {
+	it('removes the tag from every item', () => {
+		const removed = applyHubAction(base(), { action: 'remove-tag', tag: 'BUILD' });
+		expect(removed.items[0].tags).toEqual(['Trabalho']);
+	});
+
+	it('rejects a missing tag', () => {
+		expect(() => applyHubAction(base(), { action: 'remove-tag' })).toThrow(/tag/i);
+	});
+});

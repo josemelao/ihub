@@ -59,6 +59,21 @@ export function itemHasTag(item: HubItem, tag: string): boolean {
 	return normalizeTags(item.tags).some((candidate) => tagKey(candidate) === key);
 }
 
+/** Remove a tag de todos os itens, sem apagar os itens. */
+export function removeTag(hub: HubData, tag: string): HubData {
+	const key = tagKey(tag);
+	if (!key) return hub;
+
+	return {
+		...hub,
+		items: hub.items.map((item) => {
+			const filtered = item.tags.filter((candidate) => tagKey(candidate) !== key);
+			if (filtered.length === item.tags.length) return item;
+			return { ...item, tags: normalizeTags(filtered) };
+		})
+	};
+}
+
 export function renameTag(hub: HubData, from: string, to: string): HubData {
 	const fromKey = tagKey(from);
 	const nextTag = cleanTag(to);
