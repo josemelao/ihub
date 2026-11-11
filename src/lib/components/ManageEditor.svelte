@@ -217,6 +217,9 @@
 	let issues = $state<ValidationIssue[]>([]);
 	let notice = $state('');
 	let detecting = $state(false);
+	let testing = $state(false);
+	let testResult = $state('');
+	let testFailed = $state(false);
 	let dialogEl = $state<HTMLDialogElement | null>(null);
 	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
 
@@ -358,6 +361,54 @@
 			error = 'Falha de rede ao detectar o feed.';
 		} finally {
 			detecting = false;
+		}
+	}
+
+	function splitTerms(value: string): string[] {
+		return value
+			.split(',')
+			.map((term) => term.trim())
+			.filter(Boolean);
+	}
+
+	async function testSource(): Promise<void> {
+		testing = true;
+		testResult = '';
+		testFailed = false;
+
+		try {
+			const response = await fetch('/api/test-source', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					type: sourceType,
+					target,
+					include: splitTerms(include),
+					exclude: splitTerms(exclude),
+					matchMode
+				})
+			});
+			const result = (await response.json()) as {
+				ok?: boolean;
+				total?: number;
+				filtered?: number;
+				titles?: string[];
+				error?: string;
+			};
+
+			if (!response.ok || !result.ok) {
+				testFailed = true;
+				testResult = result.error ?? 'Falha ao testar a fonte.';
+				return;
+			}
+
+			const titles = (result.titles ?? []).join(' · ');
+			testResult = `${result.total} posts encontrados; ${result.filtered} passam nas regras.${titles ? ` Primeiros: ${titles}` : ''}`;
+		} catch {
+			testFailed = true;
+			testResult = 'Falha de rede ao testar a fonte.';
+		} finally {
+			testing = false;
 		}
 	}
 
@@ -640,7 +691,15 @@
 									{detecting ? 'Detectando...' : 'Detectar'}
 								</button>
 							{/if}
+							<button type="button" class="btn" onclick={testSource} disabled={testing || !target}>
+								{testing ? 'Testando...' : 'Testar'}
+							</button>
 						</div>
+						{#if testResult}
+							<span class="muted small" class:error-text={testFailed} role="status">
+								{testResult}
+							</span>
+						{/if}
 						{#if sourceType === 'youtube'}
 							<span class="muted small">
 								Ex.: @MisterEtide, https://youtube.com/@canal ou UCy7DyzEEC9h81lmwg6H5rlw
