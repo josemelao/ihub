@@ -474,3 +474,4 @@ Executada em 11/11/2026 sobre `v0.14.0`.
 - `npm run verify` verde com **399 testes** em 52 arquivos.
 - Edge/CDP: item movido de Darktide para Risk of Rain Returns e fonte r/Darktide ↔ Steam News; ambos persistidos no `hub.json`.
 - Detalhes em [`docs/organization.md`](docs/organization.md).
+- **Validação manual do dono (11/11/2026): aprovada** — DnD entre grupos/“Sem grupo” e reordenação de fontes conferidos com o servidor em `127.0.0.1:5757`.
