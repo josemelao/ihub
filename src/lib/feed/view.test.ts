@@ -105,8 +105,10 @@ describe('buildSavedView', () => {
 		expect(view[0].category?.color).toBe('#123456');
 	});
 
-	it('ignora id salvo sem cache e sem snapshot', () => {
-		expect(buildSavedView(hub, cache, state(['fantasma']))).toHaveLength(0);
+	it('mostra id salvo sem cache e sem snapshot como indisponível', () => {
+		const view = buildSavedView(hub, cache, state(['fantasma']));
+		expect(view).toHaveLength(1);
+		expect(view[0].missing).toBe(true);
 	});
 
 	it('mantém salvo mesmo com a fonte desligada', () => {

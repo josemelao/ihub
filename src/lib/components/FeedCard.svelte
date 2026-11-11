@@ -118,7 +118,13 @@
 	}
 </script>
 
-{#if variant === 'compact'}
+{#if entry.missing}
+	<article class="feed-card missing-card">
+		<h3>Conteúdo indisponível</h3>
+		<p class="missing-hint">Este post salvo perdeu os dados e não pode ser aberto.</p>
+		<button class="missing-remove" type="button" onclick={onsave}>Remover dos salvos</button>
+	</article>
+{:else if variant === 'compact'}
 	<article class="feed-card variant-compact" class:read={entry.read}>
 		{#if videoId}
 			<button

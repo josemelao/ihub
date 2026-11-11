@@ -17,6 +17,8 @@ export interface FeedViewItem {
 	read: boolean;
 	saved: boolean;
 	savedAt?: string;
+	/** Salvo sem cache nem snapshot utilizável: só dá para remover, não abrir. */
+	missing?: boolean;
 }
 
 export function buildFeedView(
@@ -94,10 +96,45 @@ export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState):
 		}
 
 		const snapshot = state.savedItems?.[id];
-		if (!snapshot) continue;
+		const snapshotUrl = snapshot ? toSafeHttpUrl(snapshot.item.url) : null;
 
-		const snapshotUrl = toSafeHttpUrl(snapshot.item.url);
-		if (!snapshotUrl) continue;
+		if (!snapshot || !snapshotUrl) {
+			// Legado salvo antes de existir snapshot, ou snapshot com URL insegura:
+			// aparece na lista para o usuário poder remover, sem link falso.
+			result.push({
+				item: {
+					id,
+					sourceId: 'desconhecida',
+					title: 'Conteúdo indisponível',
+					summary: 'Este post salvo perdeu os dados e não pode ser aberto.',
+					url: '',
+					publishedAt: '',
+					thumbnail: null
+				},
+				source: {
+					id: 'desconhecida',
+					type: 'rss',
+					name: 'Sem fonte',
+					target: '',
+					categoryId: 'salvos-sem-dados',
+					intervalMinutes: 0,
+					enabled: true,
+					include: [],
+					exclude: [],
+					matchMode: 'any'
+				},
+				category: {
+					id: 'salvos-sem-dados',
+					name: 'Salvos sem dados',
+					color: '#8AA4FF',
+					order: 9999
+				},
+				read: Boolean(state.read[id]),
+				saved: true,
+				missing: true
+			});
+			continue;
+		}
 		const snapshotItem = {
 			...snapshot.item,
 			url: snapshotUrl,
