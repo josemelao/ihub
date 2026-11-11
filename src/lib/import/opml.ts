@@ -164,7 +164,7 @@ function escapeXml(value: string): string {
 }
 
 function sourceOutline(source: FeedSource): string | null {
-	let feedUrl: string | null = null;
+	let feedUrl: string | null;
 	try {
 		feedUrl = feedUrlFor(source);
 	} catch {
@@ -207,7 +207,7 @@ export function buildOpml(hub: HubData): string {
 				if (outlines.length === 0) return null;
 				return [
 					`      <outline text="${escapeXml(group.name)}">`,
-					...outlines.map((line) => line.replace(/^        /, '        ')),
+					...outlines,
 					'      </outline>'
 				].join('\n');
 			})
