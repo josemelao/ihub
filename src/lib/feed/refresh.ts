@@ -39,7 +39,7 @@ export async function refreshFeed(
 	cache: FeedCache,
 	options: RefreshOptions = {}
 ): Promise<RefreshOutcome> {
-	const fetcher = options.fetcher ?? (fetch as Fetcher);
+	const fetcher = options.fetcher;
 	const now = options.now?.() ?? new Date();
 	const nowIso = now.toISOString();
 	const defaultMaxPerSource = options.maxPerSource ?? DEFAULT_MAX_PER_SOURCE;
