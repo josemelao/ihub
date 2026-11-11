@@ -709,6 +709,26 @@ button {
 	border-left: 2px solid var(--line);
 }
 
+.manage-subgroup.drop-target {
+	border-left-color: var(--accent);
+	background: color-mix(in srgb, var(--accent) 8%, transparent);
+	border-radius: 10px;
+}
+
+.drag-handle {
+	cursor: grab;
+	color: var(--mut);
+	font-size: 14px;
+	line-height: 1;
+	letter-spacing: -1px;
+	user-select: none;
+	padding: 2px;
+}
+
+.drag-handle:active {
+	cursor: grabbing;
+}
+
 .manage-subgroup-head {
 	display: flex;
 	align-items: baseline;

@@ -88,6 +88,7 @@
 					.sort((a, b) => a.order - b.order)
 					.map((group) => ({
 						id: group.id,
+						key: `${category.id}:${group.id}`,
 						name: group.name,
 						items: hub.items
 							.filter(
@@ -128,7 +129,12 @@
 					.sort((a, b) => a.order - b.order);
 
 				if (ungrouped.length > 0) {
-					groups.push({ id: '__sem-grupo', name: 'Sem grupo', items: ungrouped });
+					groups.push({
+						id: '__sem-grupo',
+						key: `${category.id}:__sem-grupo`,
+						name: 'Sem grupo',
+						items: ungrouped
+					});
 				}
 
 				return {
@@ -191,6 +197,8 @@
 	let filterQuery = $state('');
 	let sourceStatusFilter = $state<'all' | 'erro'>('all');
 	let focusedGroupId = $state<string | null>(null);
+	let draggingItemId = $state<string | null>(null);
+	let dropTargetKey = $state<string | null>(null);
 	let accent = $state(untrack(() => data.hub.settings.accent));
 	let confirming = $state<{
 		kind: 'item' | 'source' | 'category' | 'group' | 'filter';
@@ -328,6 +336,42 @@
 		handledSearch = search;
 		applyUrlParams();
 	});
+
+	function startItemDrag(event: DragEvent, id: string): void {
+		draggingItemId = id;
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', id);
+		}
+	}
+
+	function endItemDrag(): void {
+		draggingItemId = null;
+		dropTargetKey = null;
+	}
+
+	function overGroup(event: DragEvent, key: string): void {
+		if (!draggingItemId) return;
+		event.preventDefault();
+		if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+		dropTargetKey = key;
+	}
+
+	function leaveGroup(event: DragEvent, key: string): void {
+		const current = event.currentTarget as HTMLElement;
+		const related = event.relatedTarget as Node | null;
+		if (related && current.contains(related)) return;
+		if (dropTargetKey === key) dropTargetKey = null;
+	}
+
+	function dropOnGroup(event: DragEvent, categoryId: string, groupId: string | null): void {
+		event.preventDefault();
+		const id = event.dataTransfer?.getData('text/plain') || draggingItemId;
+		dropTargetKey = null;
+		draggingItemId = null;
+		if (!id) return;
+		void mutate({ action: 'move-item-to', id, categoryId, groupId });
+	}
 
 	async function mutate(payload: Record<string, unknown>): Promise<void> {
 		actionError = '';
@@ -1163,13 +1207,32 @@
 					<span class="muted small">{section.total} itens</span>
 				</div>
 				{#each section.groups as group (group.id)}
-					<div class="manage-subgroup">
+					<div
+						class="manage-subgroup"
+						class:drop-target={dropTargetKey === group.key}
+						role="group"
+						aria-label={group.name}
+						ondragover={(event) => overGroup(event, group.key)}
+						ondragleave={(event) => leaveGroup(event, group.key)}
+						ondrop={(event) =>
+							dropOnGroup(event, section.category.id, group.id === '__sem-grupo' ? null : group.id)}
+					>
 						<div class="manage-subgroup-head">
 							<span>{group.name}</span>
 							<span class="muted small">{group.items.length}</span>
 						</div>
 						{#each group.items as item (item.id)}
 							<div class="manage-row">
+								<span
+									class="drag-handle"
+									draggable="true"
+									title="Arraste para outro grupo"
+									aria-hidden="true"
+									ondragstart={(event) => startItemDrag(event, item.id)}
+									ondragend={endItemDrag}
+								>
+									⋮⋮
+								</span>
 								<ItemIcon {item} color={colors[item.categoryId] ?? '#8AA4FF'} size={34} />
 								<span class="manage-main">
 									<span class="manage-name">{item.name}</span>
