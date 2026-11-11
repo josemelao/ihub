@@ -86,36 +86,72 @@ function linkOf(value: unknown): string {
 	return '';
 }
 
-function thumbnailOf(item: Record<string, unknown>, link: string): string | null {
-	function mediaUrl(value: unknown): string | null {
-		for (const entry of asArray(value)) {
-			if (!entry || typeof entry !== 'object') continue;
-			const object = entry as Record<string, unknown>;
-			const url = object['@_url'];
-			if (typeof url === 'string' && url) return url;
-			for (const nested of Object.values(object)) {
-				const found = mediaUrl(nested);
-				if (found) return found;
-			}
-		}
-		return null;
-	}
+const IMAGE_EXTENSION = /\.(?:jpe?g|png|gif|webp|avif|svg|bmp)$/i;
 
-	const media = mediaUrl([
-		item.enclosure,
-		item['media:content'],
-		item['media:thumbnail'],
-		item['media:group']
-	]);
-	if (media) {
-		const youtubeMedia = /youtube\.com\/(?:v|vi)\/([\w-]{11})/i.exec(media);
+function isImageType(type: unknown): boolean {
+	return typeof type === 'string' && /^image\//i.test(type.split(';')[0].trim());
+}
+
+function isImageUrl(url: string): boolean {
+	try {
+		return IMAGE_EXTENSION.test(new URL(url).pathname);
+	} catch {
+		return false;
+	}
+}
+
+function firstMediaUrl(value: unknown): string | null {
+	for (const entry of asArray(value)) {
+		if (!entry || typeof entry !== 'object') continue;
+		const object = entry as Record<string, unknown>;
+		const url = object['@_url'];
+		if (typeof url === 'string' && url) return url;
+		for (const nested of Object.values(object)) {
+			const found = firstMediaUrl(nested);
+			if (found) return found;
+		}
+	}
+	return null;
+}
+
+/** Só aceita mídia de imagem: áudio/vídeo nunca viram capa. */
+function imageMediaUrl(value: unknown): string | null {
+	for (const entry of asArray(value)) {
+		if (!entry || typeof entry !== 'object') continue;
+		const object = entry as Record<string, unknown>;
+		const url = object['@_url'];
+		const type = object['@_type'];
+
+		if (typeof url === 'string' && url) {
+			if (isImageType(type)) return url;
+			if (type === undefined && isImageUrl(url)) return url;
+		}
+
+		for (const nested of Object.values(object)) {
+			const found = imageMediaUrl(nested);
+			if (found) return found;
+		}
+	}
+	return null;
+}
+
+function thumbnailOf(item: Record<string, unknown>, link: string): string | null {
+	const thumbnail = firstMediaUrl(item['media:thumbnail']);
+	const media =
+		thumbnail ?? imageMediaUrl([item.enclosure, item['media:content'], item['media:group']]);
+	const safeMedia = media ? toSafeHttpUrl(media) : null;
+	if (safeMedia) {
+		const youtubeMedia = /youtube\.com\/(?:v|vi)\/([\w-]{11})/i.exec(safeMedia);
 		if (youtubeMedia) return `https://i.ytimg.com/vi/${youtubeMedia[1]}/hqdefault.jpg`;
-		return toSafeHttpUrl(media);
+		return safeMedia;
 	}
 
 	const html = textOf(item['content:encoded'] ?? item.description ?? item.content ?? item.summary);
 	const image = /<img\b[^>]*\bsrc\s*=\s*["']([^"']+)["']/i.exec(html);
-	if (image) return toSafeHttpUrl(image[1]);
+	if (image) {
+		const safeImage = toSafeHttpUrl(image[1]);
+		if (safeImage) return safeImage;
+	}
 
 	const youtube = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/i.exec(
 		link
