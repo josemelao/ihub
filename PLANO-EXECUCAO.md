@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
+> **Status:** Fase 1 concluída em `v0.19.0` (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -707,11 +707,11 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Todas as páginas carregam com CSP enforced sem erro no console.
-- [ ] Imagens externas necessárias continuam funcionando.
-- [ ] `frame-ancestors` impede iframe.
-- [ ] Headers presentes em HTML, API e assets.
-- [ ] Documentado no README como ajustar a CSP.
+- [x] Todas as páginas carregam com CSP enforced sem erro no console.
+- [x] Imagens externas necessárias continuam funcionando.
+- [x] `frame-ancestors` impede iframe.
+- [x] Headers presentes em HTML, API e assets.
+- [x] Documentado no README como ajustar a CSP.
 
 ---
 
@@ -860,10 +860,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] 10 fontes com 100 ms cada terminam em < 2 s.
-- [ ] A UI mostra progresso e não trava.
-- [ ] Uma fonte lenta não bloqueia as demais.
-- [ ] Erros continuam isolados por fonte.
+- [x] 10 fontes com 100 ms cada terminam em < 2 s.
+- [x] A UI mostra progresso e não trava.
+- [x] Uma fonte lenta não bloqueia as demais.
+- [x] Erros continuam isolados por fonte.
 
 ---
 
@@ -951,10 +951,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Abrir um hub v1 migra para v2 sem perder dados.
-- [ ] Migração é idempotente.
-- [ ] Falha de migração não altera o arquivo original.
-- [ ] Existe teste de rollback (restaurar backup).
+- [x] Abrir um hub v1 migra para v2 sem perder dados.
+- [x] Migração é idempotente.
+- [x] Falha de migração não altera o arquivo original.
+- [x] Existe teste de rollback (restaurar backup).
 
 ---
 

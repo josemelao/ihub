@@ -12,11 +12,26 @@ export const CONTENT_SECURITY_POLICY = [
 	"frame-ancestors 'none'",
 	"form-action 'self'",
 	"script-src 'self' 'unsafe-inline'",
-	"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-	"font-src 'self' https://fonts.gstatic.com data:",
+	"style-src 'self' 'unsafe-inline'",
+	"font-src 'self' data:",
 	"img-src 'self' https: data:",
 	"connect-src 'self'",
 	"worker-src 'self'",
 	"frame-src 'self' https://www.youtube-nocookie.com https://www.redditmedia.com",
 	"media-src 'self' https:"
 ].join('; ');
+
+/** Aplica todos os headers de segurança (CSP em modo enforce) numa resposta. */
+export function withSecurityHeaders(response: Response): Response {
+	const headers = new Headers(response.headers);
+	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+		headers.set(name, value);
+	}
+	headers.set('content-security-policy', CONTENT_SECURITY_POLICY);
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers
+	});
+}

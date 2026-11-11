@@ -1,5 +1,5 @@
 import type { Handle } from '@sveltejs/kit/hooks';
-import { CONTENT_SECURITY_POLICY, SECURITY_HEADERS } from '#lib/security/headers';
+import { withSecurityHeaders } from '#lib/security/headers';
 
 const ALLOWED_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', '::1']);
 
@@ -29,15 +29,5 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const response = await resolve(event);
-	const headers = new Headers(response.headers);
-	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
-		headers.set(name, value);
-	}
-	headers.set('content-security-policy-report-only', CONTENT_SECURITY_POLICY);
-
-	return new Response(response.body, {
-		status: response.status,
-		statusText: response.statusText,
-		headers
-	});
+	return withSecurityHeaders(response);
 };

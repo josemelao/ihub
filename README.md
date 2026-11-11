@@ -271,6 +271,16 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 | `/api/state`         | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                          |
 | `/api/discover-feed` | Descobre o feed RSS/Atom de uma página (POST)                                           |
 
+## Segurança e privacidade
+
+- Todo tráfego é local (`127.0.0.1`); `Host`/`Origin` de outros domínios são bloqueados com 403.
+- `Content-Security-Policy` roda em **enforce** (não Report-Only): `default-src 'self'`, scripts e estilos próprios, `object-src 'none'`, `frame-ancestors 'none'`. Players liberados apenas para `youtube-nocookie.com` e `redditmedia.com`.
+- Fontes (Inter/Space Grotesk) são servidas de `static/fonts`; não há requisição a Google Fonts.
+- Toda imagem externa usa `referrerpolicy="no-referrer"`.
+- URLs de feed/imagem só são aceitas em `http(s)`; o fetch valida o IP resolvido e bloqueia rede interna (SSRF).
+- Para ajustar a CSP (ex.: nova origem de iframe), edite `src/lib/security/headers.ts` e rode `npm run verify`; o teste `headers.test.ts` cobre as diretivas.
+- Arquivos em `data/*.json` e `.env` ficam fora do Git. O service worker nunca cacheia `/api/` nem `data/`.
+
 ## Estrutura
 
 ```

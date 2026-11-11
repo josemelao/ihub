@@ -545,3 +545,13 @@ Executada em 11/11/2026 sobre `v0.17.0` (`PLANO-CORRECOES.md`, 19 FIXes).
   - FIX-19: payloads de `/api/hub`, `/api/state` e `/api/backup/restore` validados; erros internos não vazam mensagem.
 - `npm run verify` verde com **553 testes** em 76 arquivos.
 - Observação: `package.json` continua em `0.0.1`; a versão do produto é a tag (`v0.18.0`).
+
+## 24. Fase 1 — fechamento (v0.19.0)
+
+Executada em 11/11/2026 sobre `v0.18.0`, fechando os itens pendentes da Fase 1 do `PLANO-EXECUCAO.md`.
+
+- **DATA-07 — migrações versionadas**: `src/lib/migrations/` com cadeia pura (`migrateHub` v1→v2). O v2 normaliza `order` das fontes por categoria. No load, o `JsonFileStorage` migra, valida, guarda `hub.json.pre-vN.bak` e grava o resultado; carregar arquivo já migrado não escreve. Versão futura é recusada com mensagem clara e sem tocar no arquivo. `estado.json`/`feed-cache.json` passam pelo mesmo framework (passthrough + guarda de versão).
+- **DATA-03 — refresh concorrente com progresso**: `mapWithConcurrency` (limite 4, ordem preservada) e `durationMs` por fonte. `POST /api/refresh` com `async: true` devolve `202 { jobId, total }`; `GET /api/refresh/status?id=` devolve o progresso; home, feed e Gerenciar mostram “Atualizando 3/10...”. O caminho síncrono continua igual para fonte única.
+- **PLAT-03a — fontes locais**: Inter e Space Grotesk variáveis em `static/fonts` (`@font-face` em `app.css`), sem `fonts.googleapis.com`/`gstatic.com`; imagens externas com `referrerpolicy="no-referrer"`.
+- **SEC-02 — CSP enforced**: `withSecurityHeaders` aplica `Content-Security-Policy` (não Report-Only) em HTML, API e assets; política sem origens do Google, com `frame-ancestors 'none'` e players permitidos. README ganhou a seção “Segurança e privacidade”.
+- `npm run verify` verde com **600 testes** em 85 arquivos.
