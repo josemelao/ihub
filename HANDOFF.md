@@ -212,14 +212,14 @@ data/
 
 ```powershell
 npm run verify  # check + lint + testes + build
-npm test        # 313 testes
+npm test        # 317 testes
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
 npm run build
 npm audit --omit=dev
 ```
 
-Estado no handoff: **313/313 testes, 36 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
+Estado no handoff: **317/317 testes, 36 arquivos de teste, 0 erros/avisos no check, lint limpo, build ok, 0 vulnerabilidades de produção**.
 O `npm audit` completo ainda mostra avisos de dependências de desenvolvimento (ESLint); não afetam o runtime.
 
 ## 9. Commits (histórico)
@@ -401,7 +401,7 @@ Executada em 10/11/2026 sobre `v0.12.1`.
 - Novo `ShortcutHelp.svelte` com a lista de teclas.
 - Teste real via Edge/CDP: 10 checkboxes, clique + shift = 3 selecionados, barra completa, ajuda abria, `j` focava card e “Limpar” zerava.
 - API em lote: `save-many` + `unsave-many` restauraram a contagem de salvos.
-- `npm run verify` verde com **313/313 testes**.
+- `npm run verify` verde com **317/317 testes**.
 
 Detalhes em [`docs/bulk.md`](docs/bulk.md).
 
@@ -411,3 +411,10 @@ Detalhes em [`docs/bulk.md`](docs/bulk.md).
 - Superfície clicável cobre o card em modo de seleção: qualquer clique seleciona, com shift para intervalo.
 - `keyboardId` só é definido por `j`/`k`; qualquer `pointerdown` limpa, eliminando a borda azul presa.
 - Validado via Edge/CDP: 1 → 3 (shift) → 2 selecionados, checkboxes sincronizados e outline removido após mouse.
+
+### Correção v0.13.2 — shift redefine o intervalo
+
+- `updateSelection` agora **substitui** a seleção pelo intervalo âncora→clique, em vez de somar.
+- Shift no meio de uma seleção maior desmarca o que ficou fora.
+- Testes: `[0]` → shift 4 → `[0..4]` → shift 2 → `[0,1,2]` → shift 4 → `[0..4]`; clique normal alterna só o item.
+- Funciona no sentido inverso e com âncora ausente (fallback toggle).

@@ -32,14 +32,55 @@ describe('updateSelection', () => {
 		expect(result.anchor).toBe('b');
 	});
 
-	it('mantém itens fora do intervalo ao estender', () => {
+	it('mantém itens dentro do intervalo ao estender', () => {
 		const result = updateSelection(['a', 'c'], 'e', {
 			visibleIds,
 			anchor: 'c',
 			mode: 'range'
 		});
 
-		expect(result.selected).toEqual(['a', 'c', 'd', 'e']);
+		expect(result.selected).toEqual(['c', 'd', 'e']);
+	});
+
+	it('encolhe o intervalo e desmarca quem ficou fora', () => {
+		const result = updateSelection(['a', 'b', 'c', 'd', 'e'], 'c', {
+			visibleIds,
+			anchor: 'a',
+			mode: 'range'
+		});
+
+		expect(result.selected).toEqual(['a', 'b', 'c']);
+	});
+
+	it('funciona no sentido inverso', () => {
+		const result = updateSelection([], 'c', {
+			visibleIds,
+			anchor: 'e',
+			mode: 'range'
+		});
+
+		expect(result.selected).toEqual(['c', 'd', 'e']);
+	});
+
+	it('shift na própria âncora mantém só a âncora', () => {
+		const result = updateSelection(['a', 'b', 'c'], 'b', {
+			visibleIds,
+			anchor: 'b',
+			mode: 'range'
+		});
+
+		expect(result.selected).toEqual(['b']);
+	});
+
+	it('shift sem âncora visível vira toggle', () => {
+		const result = updateSelection([], 'c', {
+			visibleIds,
+			anchor: 'x',
+			mode: 'range'
+		});
+
+		expect(result.selected).toEqual(['c']);
+		expect(result.anchor).toBe('c');
 	});
 
 	it('shift sem âncora vira toggle', () => {

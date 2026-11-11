@@ -26,7 +26,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] Sidebar mostra não lidos por categoria; chips de categoria/fonte mostram contagem.
 - [x] Chips de fonte alternam o feed e respeitam a categoria selecionada.
 - [x] “Marcar antigos” (1/3/7 dias) age sobre a visão atual, confirma e permite desfazer.
-- [x] “Selecionar” mostra checkboxes; shift+clique seleciona intervalo; barra de ações aparece.
+- [x] “Selecionar” mostra checkboxes; shift+clique redefine o intervalo e desmarca quem ficou fora; barra de ações aparece.
 - [x] Clicar em qualquer lugar do card seleciona; checkbox visual acompanha o estado.
 - [x] Borda de teclado só aparece com `j/k` e some ao clicar com o mouse.
 - [x] Lote marca lido/não lido, salva/remove dos salvos e atualiza contadores.

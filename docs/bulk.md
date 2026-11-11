@@ -10,7 +10,8 @@
 
 - Botão **Selecionar** no cabeçalho do feed.
 - Checkbox sobreposto em cada card, sem alterar os três layouts do FeedCard.
-- **Shift+clique** seleciona o intervalo; clique normal alterna; a seleção usa a ordem da lista filtrada.
+- **Shift+clique** redefine a seleção para o intervalo entre a âncora e o item clicado; itens fora do intervalo são desmarcados.
+- Clicar no checkbox ou em qualquer lugar do card alterna o item; a âncora é o último clique normal.
 - Barra fixa com:
   - contagem de selecionados;
   - **Marcar lido**, **Marcar não lido**, **Salvar**, **Remover dos salvos**;
@@ -54,7 +55,7 @@ Quando o foco não está em campo de texto e não há diálogo/palette aberto:
 
 ## Verificação
 
-- `npm test`: **313/313** em 36 arquivos.
+- `npm test`: **317/317** em 36 arquivos.
 - `npm run check`: 0 erros/avisos.
 - `npm run lint`: limpo.
 - `npm run build`: ok.
@@ -97,4 +98,29 @@ Validação via Edge/CDP:
 - nenhum outline após interação com mouse;
 - `j` → outline sólido; clique → outline removido.
 - Screenshot conferido com checkboxes marcados e sem borda presa.
-- `npm test`: **313/313**.
+- `npm test`: **317/317**.
+
+## Correção v0.13.2 — shift redefine o intervalo
+
+Antes, shift+clique **somava** o intervalo à seleção. Agora ele **substitui** a seleção pelo intervalo entre a âncora e o item clicado, como no Explorer:
+
+- A selecionado, shift em E → A–E;
+- shift em C → A–C, desmarcando D e E;
+- shift em E de novo → A–E;
+- clique normal em D → só D alterna;
+- shift na própria âncora → mantém só a âncora;
+- âncora fora da lista visível → cai no toggle normal.
+
+Validação via Edge/CDP:
+
+```
+clique 0:        [0]
+shift 4:         [0,1,2,3,4]
+shift 2 (meio):  [0,1,2]
+shift 4:         [0,1,2,3,4]
+clique normal 2: [0,1,3,4]
+```
+
+Screenshot conferido: cards 0,1,3,4 marcados, card 2 desmarcado e sem outline indevido.
+
+Testes de `selection.ts` atualizados para substituição, encolhimento, sentido inverso e âncora ausente. `npm test`: **317/317**.

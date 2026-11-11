@@ -12,17 +12,17 @@ export function updateSelection(
 ): SelectionUpdate {
 	const next = new Set(selected);
 
-	if (options.mode === 'range' && options.anchor && options.anchor !== id) {
+	if (options.mode === 'range' && options.anchor) {
 		const anchorIndex = options.visibleIds.indexOf(options.anchor);
 		const targetIndex = options.visibleIds.indexOf(id);
 
 		if (anchorIndex >= 0 && targetIndex >= 0) {
 			const start = Math.min(anchorIndex, targetIndex);
 			const end = Math.max(anchorIndex, targetIndex);
-			for (let index = start; index <= end; index += 1) {
-				next.add(options.visibleIds[index]);
-			}
-			return { selected: [...next], anchor: options.anchor };
+			return {
+				selected: options.visibleIds.slice(start, end + 1),
+				anchor: options.anchor
+			};
 		}
 	}
 
