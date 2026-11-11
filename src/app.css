@@ -1383,24 +1383,38 @@ h3 {
 	flex: 1;
 }
 
+.select-surface {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+}
+
 .select-box {
 	position: absolute;
 	top: 8px;
 	left: 8px;
 	z-index: 4;
 	display: flex;
-	padding: 4px;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	padding: 0;
 	border-radius: 8px;
-	background: color-mix(in srgb, var(--panel) 82%, transparent);
 	border: 1px solid var(--line);
+	background: color-mix(in srgb, var(--panel) 82%, transparent);
+	color: var(--on-accent);
 	cursor: pointer;
 }
 
-.select-box input {
-	width: 18px;
-	height: 18px;
-	accent-color: var(--accent);
-	cursor: pointer;
+.select-box.active {
+	border-color: var(--accent);
+	background: var(--accent);
+	color: var(--on-accent);
 }
 
 .feed-slot.selected > .feed-card {

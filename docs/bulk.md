@@ -74,3 +74,27 @@ Quando o foco não está em campo de texto e não há diálogo/palette aberto:
 - “Selecionar todos” usa a lista filtrada completa, não só os 10 visíveis.
 - Desfazer cobre leitura; salvar/remover em lote não têm undo nesta versão.
 - `Enter` respeita botões/links focados para não sequestrar a ativação nativa.
+
+## Correção v0.13.1 — checkbox e foco
+
+Diagnóstico no navegador:
+
+- a seleção mudava (barra 4 → 3 → 2 → 1), mas todos os `input.checked` ficavam `false`;
+- o outline azul de teclado ficava preso no último card clicado porque `toggleSelect` definia `keyboardId` e nada limpava.
+
+Correções:
+
+- O checkbox nativo virou um `<button role="checkbox" aria-checked>` com ícone de check; o visual agora segue 100% o estado.
+- Em modo de seleção, uma **superfície cobre o card inteiro**: clicar em qualquer lugar seleciona/desseleciona; shift+clique continua o intervalo.
+- `keyboardId` só é definido por `j`/`k` e é limpo em qualquer `pointerdown`.
+- O outline de teclado usa `.feed-slot.keyboard-focused`; o de seleção continua separado.
+
+Validação via Edge/CDP:
+
+- clique no corpo do card → 1 selecionado, `aria-checked=true`;
+- shift+clique no terceiro → 3 selecionados;
+- clique no primeiro de novo → 2 selecionados;
+- nenhum outline após interação com mouse;
+- `j` → outline sólido; clique → outline removido.
+- Screenshot conferido com checkboxes marcados e sem borda presa.
+- `npm test`: **313/313**.

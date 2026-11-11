@@ -27,6 +27,8 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] Chips de fonte alternam o feed e respeitam a categoria selecionada.
 - [x] “Marcar antigos” (1/3/7 dias) age sobre a visão atual, confirma e permite desfazer.
 - [x] “Selecionar” mostra checkboxes; shift+clique seleciona intervalo; barra de ações aparece.
+- [x] Clicar em qualquer lugar do card seleciona; checkbox visual acompanha o estado.
+- [x] Borda de teclado só aparece com `j/k` e some ao clicar com o mouse.
 - [x] Lote marca lido/não lido, salva/remove dos salvos e atualiza contadores.
 - [x] “Selecionar todos os filtrados” e “Limpar” funcionam; filtros limpam a seleção.
 - [x] Atalhos `j/k/m/s/o/?/Esc` funcionam e são ignorados ao digitar ou com modal aberto.

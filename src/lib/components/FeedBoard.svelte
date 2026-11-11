@@ -283,12 +283,14 @@
 		selectionMode = true;
 		selectedIds = [];
 		selectionAnchor = null;
+		keyboardId = null;
 	}
 
 	function exitSelection(): void {
 		selectionMode = false;
 		selectedIds = [];
 		selectionAnchor = null;
+		keyboardId = null;
 	}
 
 	function toggleSelect(entry: FeedViewItem, event: MouseEvent): void {
@@ -299,7 +301,6 @@
 		});
 		selectedIds = result.selected;
 		selectionAnchor = result.anchor;
-		keyboardId = entry.item.id;
 	}
 
 	function selectAllFiltered(): void {
@@ -777,7 +778,7 @@
 	}
 </script>
 
-<section class="section" aria-labelledby="t-feed">
+<section class="section" aria-labelledby="t-feed" onpointerdown={() => (keyboardId = null)}>
 	<div class="section-head">
 		<div>
 			<h2 id="t-feed">{title}</h2>
@@ -1196,17 +1197,27 @@
 					animate:flip={{ duration: motionDuration }}
 				>
 					{#if selectionMode}
-						<label class="select-box" title="Selecionar post">
-							<input
-								type="checkbox"
-								checked={selectedSet.has(entry.item.id)}
-								onclick={(event) => {
-									event.preventDefault();
-									toggleSelect(entry, event);
-								}}
-								aria-label={`Selecionar ${entry.item.title}`}
-							/>
-						</label>
+						<button
+							type="button"
+							class="select-surface"
+							tabindex="-1"
+							aria-label={`Selecionar ${entry.item.title}`}
+							onclick={(event) => toggleSelect(entry, event)}
+						></button>
+						<button
+							type="button"
+							class="select-box"
+							class:active={selectedSet.has(entry.item.id)}
+							role="checkbox"
+							aria-checked={selectedSet.has(entry.item.id)}
+							title="Selecionar post"
+							aria-label={`Selecionar ${entry.item.title}`}
+							onclick={(event) => toggleSelect(entry, event)}
+						>
+							{#if selectedSet.has(entry.item.id)}
+								<Icon name="check" size={14} />
+							{/if}
+						</button>
 					{/if}
 					<FeedCard
 						{entry}

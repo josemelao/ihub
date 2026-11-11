@@ -404,3 +404,10 @@ Executada em 10/11/2026 sobre `v0.12.1`.
 - `npm run verify` verde com **313/313 testes**.
 
 Detalhes em [`docs/bulk.md`](docs/bulk.md).
+
+### Correção v0.13.1 — checkbox e foco
+
+- Checkbox nativo trocado por `<button role="checkbox" aria-checked>` com ícone; o visual agora acompanha o estado.
+- Superfície clicável cobre o card em modo de seleção: qualquer clique seleciona, com shift para intervalo.
+- `keyboardId` só é definido por `j`/`k`; qualquer `pointerdown` limpa, eliminando a borda azul presa.
+- Validado via Edge/CDP: 1 → 3 (shift) → 2 selecionados, checkboxes sincronizados e outline removido após mouse.
