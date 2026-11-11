@@ -137,6 +137,7 @@
 			>
 				{#if hasImage}
 					<img
+						referrerpolicy="no-referrer"
 						src={entry.item.thumbnail ?? ''}
 						alt=""
 						loading="lazy"
@@ -160,6 +161,7 @@
 				disabled={redditLoading}
 			>
 				<img
+					referrerpolicy="no-referrer"
 					src={entry.item.thumbnail ?? ''}
 					alt=""
 					loading="lazy"
@@ -187,6 +189,7 @@
 				onclick={() => (imageOpen = true)}
 			>
 				<img
+					referrerpolicy="no-referrer"
 					src={entry.item.thumbnail ?? ''}
 					alt=""
 					loading="lazy"
@@ -280,6 +283,7 @@
 			>
 				{#if hasImage}
 					<img
+						referrerpolicy="no-referrer"
 						src={entry.item.thumbnail ?? ''}
 						alt=""
 						loading="lazy"
@@ -303,6 +307,7 @@
 				disabled={redditLoading}
 			>
 				<img
+					referrerpolicy="no-referrer"
 					src={entry.item.thumbnail ?? ''}
 					alt=""
 					loading="lazy"
@@ -330,6 +335,7 @@
 				onclick={() => (imageOpen = true)}
 			>
 				<img
+					referrerpolicy="no-referrer"
 					src={entry.item.thumbnail ?? ''}
 					alt=""
 					loading="lazy"

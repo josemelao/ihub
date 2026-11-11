@@ -63,7 +63,7 @@
 		</div>
 
 		<div class="image-frame">
-			<img {src} alt={title} decoding="async" />
+			<img referrerpolicy="no-referrer" {src} alt={title} decoding="async" />
 		</div>
 
 		<div class="image-actions">
