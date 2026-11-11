@@ -4,6 +4,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+	import BookmarkletCard from '#lib/components/BookmarkletCard.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import ImportFavoritesDialog from '#lib/components/ImportFavoritesDialog.svelte';
 	import ItemIcon from '#lib/components/ItemIcon.svelte';
@@ -1082,6 +1083,7 @@
 		{/if}
 	</div>
 {:else if tab === 'itens'}
+	<BookmarkletCard />
 	<div class="chips" role="group" aria-label="Filtrar itens por tipo">
 		<button
 			class="chip"
