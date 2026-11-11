@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
-Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0)**. Projeto local, funcional e com testes verdes.
+Data: 2026-11-11
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -515,3 +515,33 @@ Executada em 11/11/2026 sobre `v0.16.0`.
   - navegação por tag usava `replaceState` e quebrava Voltar/Avançar → agora usa navegação shallow + sincronização no `popstate`;
   - filtro combinado vivia só no componente → extraído para `src/lib/library-filter.ts` com testes de tag × tipo × busca.
 - Detalhes em [`docs/tags.md`](docs/tags.md).
+
+## 23. Fase 3 — correções da revisão de código (v0.18.0)
+
+Executada em 11/11/2026 sobre `v0.17.0` (`PLANO-CORRECOES.md`, 19 FIXes).
+
+- **Integridade e ordem**
+  - FIX-01: `updateSource`/`updateGroup` sincronizam `savedFilters` (categoria+fonte) e descartam `groupId` de outra categoria; mover fonte com filtro salvo não retorna mais 400.
+  - FIX-02: `updateItem` recalcula `order` ao mudar categoria/grupo (mesmo resultado do drag & drop).
+  - FIX-10: `recoverHubState` mantém entradas válidas de `estado.json`, descarta só o inválido e o layout mostra o que foi recuperado.
+  - FIX-03: `restoreBackup` cria o ponto de segurança dentro do lock e faz rollback de hub/estado/cache se uma gravação falhar.
+- **Feed**
+  - FIX-04: HTML/XML inválido é erro (`FeedFormatError`), mantém posts antigos e não limpa o erro da fonte.
+  - FIX-05: refresh forçado é enfileirado em vez de reaproveitar a execução em andamento.
+  - FIX-06: Atom prefere `rel="alternate"` e lê `dc:date`.
+  - FIX-07: thumbnail só aceita mídia de imagem.
+  - FIX-08: `redditPostInfo` protege `decodeURIComponent` (400, não 500).
+- **Resiliência e segurança**
+  - FIX-09: `browser-storage` protege `localStorage` na home e no feed.
+  - FIX-13: salvos sem snapshot aparecem como “Conteúdo indisponível” com botão de remover.
+  - FIX-11: DNS resolvido uma vez e IP fixado na conexão (`node:http/https`), IPv6 mapeado/NAT64/6to4 cobertos.
+  - FIX-17: service worker migrado para `src/service-worker.ts` com `version` do build, poda de caches antigos e limite de 120 entradas.
+  - FIX-12: fallback offline sempre responde (HTML embutido) e navegação tem timeout de 8 s.
+- **Menores**
+  - FIX-14: índice da busca memoizado por identidade de hub/feed.
+  - FIX-15: OPML só exporta URLs http(s).
+  - FIX-16: ordem das fontes normalizada por categoria e listas planas agrupadas por categoria.
+  - FIX-18: `.env` inválido gera log; VBS procura Node em Program Files (x86)/LocalAppData/PATH; instalador valida Node 24+.
+  - FIX-19: payloads de `/api/hub`, `/api/state` e `/api/backup/restore` validados; erros internos não vazam mensagem.
+- `npm run verify` verde com **544 testes** em 76 arquivos.
+- Observação: `package.json` continua em `0.0.1`; a versão do produto é a tag (`v0.18.0`).

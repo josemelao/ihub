@@ -1,7 +1,7 @@
 # Plano de correções — revisão de código (pós v0.17.0)
 
-> **Status:** planejado, não iniciado.
-> **Base:** `master` em `5dd5ffa` (`v0.17.0`), 440 testes em 58 arquivos.
+> **Status:** executado em 11/11/2026 (todos os 19 FIXes, um commit por item).
+> **Base:** `master` em `5dd5ffa` (`v0.17.0`), 440 testes em 58 arquivos; ao fim, 544 testes em 76 arquivos.
 > **Origem:** revisão de código feita em 11/11/2026.
 > **Regra:** este documento é só o plano. Cada tarefa só começa quando o dono autorizar.
 
