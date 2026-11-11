@@ -226,6 +226,46 @@ export function updateItem(hub: HubData, id: string, patch: ItemPatch): HubData 
 	};
 }
 
+/** Move o item para o fim da categoria/grupo destino (groupId nulo remove o grupo). */
+export function moveItemTo(
+	hub: HubData,
+	id: string,
+	categoryId: string,
+	groupId?: string | null
+): HubData {
+	const item = hub.items.find((entry) => entry.id === id);
+	if (!item) return hub;
+	if (!hub.categories.some((category) => category.id === categoryId)) {
+		throw new Error('Categoria não encontrada.');
+	}
+
+	const nextGroupId = groupId ?? undefined;
+	if (nextGroupId) {
+		const group = hub.groups.find((entry) => entry.id === nextGroupId);
+		if (!group) throw new Error('Grupo não encontrado.');
+		if (group.categoryId !== categoryId) {
+			throw new Error('O grupo não pertence à categoria informada.');
+		}
+	}
+
+	if (item.categoryId === categoryId && (item.groupId ?? undefined) === nextGroupId) return hub;
+
+	const order = nextItemOrder(hub, categoryId, nextGroupId);
+	return {
+		...hub,
+		items: hub.items.map((entry) => {
+			if (entry.id !== id) return entry;
+			const { groupId: _currentGroup, ...rest } = entry;
+			return {
+				...rest,
+				categoryId,
+				...(nextGroupId ? { groupId: nextGroupId } : {}),
+				order
+			};
+		})
+	};
+}
+
 export function removeItem(hub: HubData, id: string): HubData {
 	return { ...hub, items: hub.items.filter((item) => item.id !== id) };
 }

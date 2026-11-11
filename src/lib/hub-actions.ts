@@ -8,6 +8,8 @@ import {
 	moveCategory,
 	moveGroup,
 	moveItem,
+	moveItemTo,
+	moveSource,
 	removeCategory,
 	removeGroup,
 	removeItem,
@@ -36,6 +38,8 @@ export interface HubPayload {
 	action?: string;
 	id?: string;
 	direction?: 'up' | 'down';
+	categoryId?: string;
+	groupId?: string | null;
 	item?: (LinkInput | AppInput) & { type?: 'link' | 'app' };
 	patch?: ItemPatch;
 	source?: SourceInput;
@@ -76,6 +80,14 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 
 		case 'move-item':
 			return moveItem(hub, requireId(payload), requireDirection(payload));
+
+		case 'move-item-to': {
+			if (!payload.categoryId) throw new Error('Informe a categoria.');
+			return moveItemTo(hub, requireId(payload), payload.categoryId, payload.groupId ?? null);
+		}
+
+		case 'move-source':
+			return moveSource(hub, requireId(payload), requireDirection(payload));
 
 		case 'add-source':
 			if (!payload.source) throw new Error('Informe a fonte.');
