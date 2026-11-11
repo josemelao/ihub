@@ -1,5 +1,5 @@
 import { getStorage } from '../storage';
-import { refreshFeed, type RefreshOutcome } from './refresh';
+import { refreshFeed, type RefreshOutcome, type RefreshResult } from './refresh';
 import { createRefreshRunner, type RefreshRequest } from './refresh-runner';
 
 const SCHEDULER_KEY = Symbol.for('meu-hub.feed-scheduler');
@@ -24,8 +24,12 @@ export function runRefresh(request: RefreshRequest = {}): Promise<RefreshOutcome
 	return runner.run(request);
 }
 
-export function refreshAndSave(force = false, sourceId?: string): Promise<RefreshOutcome> {
-	return runRefresh({ force, sourceId });
+export function refreshAndSave(
+	force = false,
+	sourceId?: string,
+	onSourceDone?: (result: RefreshResult, done: number, total: number) => void
+): Promise<RefreshOutcome> {
+	return runRefresh({ force, sourceId, onSourceDone });
 }
 
 async function scheduledRun(): Promise<void> {

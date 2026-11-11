@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { relativeTime } from '#lib/display';
+	import { refreshWithProgress } from '#lib/refresh-client';
 	import type { FeedCache, HubData, HubState } from '#lib/types';
 	import Icon from './Icon.svelte';
 	import QuickAccess from './QuickAccess.svelte';
@@ -26,35 +27,27 @@
 
 	let busy = $state(false);
 	let message = $state('');
+	let progress = $state<{ done: number; total: number } | null>(null);
 
 	async function refreshNow(): Promise<void> {
 		busy = true;
 		message = '';
+		progress = null;
 		try {
-			const response = await fetch('/api/refresh', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: '{}'
+			const job = await refreshWithProgress((value) => {
+				progress = value;
 			});
-			const result = (await response.json()) as {
-				ok?: boolean;
-				error?: string;
-				results?: { ok: boolean; name: string }[];
-			};
-			if (!result.ok) {
-				message = result.error ?? 'Falha ao atualizar o feed.';
-			} else {
-				const failed = (result.results ?? []).filter((entry) => !entry.ok);
-				message =
-					failed.length > 0
-						? `Falha em: ${failed.map((entry) => entry.name).join(', ')}`
-						: 'Feed atualizado.';
-			}
+			const failed = job.results.filter((entry) => !entry.ok);
+			message =
+				failed.length > 0
+					? `Falha em: ${failed.map((entry) => entry.name).join(', ')}`
+					: 'Feed atualizado.';
 			await invalidateAll();
-		} catch {
-			message = 'Falha de rede ao atualizar.';
+		} catch (error) {
+			message = error instanceof Error ? error.message : 'Falha de rede ao atualizar.';
 		} finally {
 			busy = false;
+			progress = null;
 		}
 	}
 </script>
@@ -97,7 +90,11 @@
 		<div class="action-list">
 			<button class="action-row" type="button" onclick={refreshNow} disabled={busy}>
 				<Icon name="rss" size={16} />
-				{busy ? 'Atualizando...' : 'Atualizar agora'}
+				{busy
+					? progress && progress.total > 0
+						? `Atualizando ${progress.done}/${progress.total}...`
+						: 'Atualizando...'
+					: 'Atualizar agora'}
 			</button>
 			<a class="action-row" href={resolve('/feed')}>
 				<Icon name="rss" size={16} />

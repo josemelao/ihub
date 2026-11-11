@@ -12,6 +12,7 @@
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
 	import { sortFeedSources } from '#lib/feed/order';
+	import { refreshWithProgress } from '#lib/refresh-client';
 	import { collectTags, tagKey } from '#lib/tags';
 	import type { ImportPreview } from '#lib/import-preview';
 	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
@@ -488,6 +489,7 @@
 	let refreshing = $state(false);
 	let refreshingSourceId = $state<string | null>(null);
 	let refreshMessage = $state('');
+	let refreshProgress = $state<{ done: number; total: number } | null>(null);
 	let refreshFailed = $state(false);
 
 	let backupBusy = $state(false);
@@ -781,36 +783,26 @@
 		refreshing = true;
 		refreshMessage = '';
 		refreshFailed = false;
+		refreshProgress = null;
 
 		try {
-			const response = await fetch('/api/refresh', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: '{}'
+			const job = await refreshWithProgress((progress) => {
+				refreshProgress = progress;
 			});
-			const result = (await response.json()) as {
-				ok?: boolean;
-				error?: string;
-				results?: { ok: boolean; name: string }[];
-			};
-
-			if (!result.ok) {
-				refreshMessage = result.error ?? 'Falha ao atualizar o feed.';
-				refreshFailed = true;
-			} else {
-				const failed = (result.results ?? []).filter((entry) => !entry.ok);
-				refreshFailed = failed.length > 0;
-				refreshMessage =
-					failed.length > 0
-						? `Atualizado com falha em: ${failed.map((entry) => entry.name).join(', ')}`
-						: 'Feed atualizado.';
-			}
+			const failed = job.results.filter((entry) => !entry.ok);
+			refreshFailed = failed.length > 0;
+			refreshMessage =
+				failed.length > 0
+					? `Atualizado com falha em: ${failed.map((entry) => entry.name).join(', ')}`
+					: 'Feed atualizado.';
 			await invalidateAll();
-		} catch {
-			refreshMessage = 'Falha de rede ao atualizar o feed.';
+		} catch (error) {
+			refreshMessage =
+				error instanceof Error ? error.message : 'Falha de rede ao atualizar o feed.';
 			refreshFailed = true;
 		} finally {
 			refreshing = false;
+			refreshProgress = null;
 		}
 	}
 
@@ -905,7 +897,11 @@
 	</button>
 	<button class="btn" type="button" onclick={refreshNow} disabled={refreshing}>
 		<Icon name="refresh" size={16} />
-		{refreshing ? 'Atualizando...' : 'Atualizar feed'}
+		{refreshing
+			? refreshProgress && refreshProgress.total > 0
+				? `Atualizando ${refreshProgress.done}/${refreshProgress.total}...`
+				: 'Atualizando...'
+			: 'Atualizar feed'}
 	</button>
 	<input
 		bind:this={fileInput}

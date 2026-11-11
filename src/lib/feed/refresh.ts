@@ -16,6 +16,8 @@ export interface RefreshOptions {
 	sourceId?: string;
 	/** Fontes buscadas em paralelo (padrão 4). */
 	concurrency?: number;
+	/** Chamado a cada fonte concluída, na ordem de conclusão. */
+	onSourceDone?: (result: RefreshResult, done: number, total: number) => void;
 }
 
 export interface RefreshResult {
@@ -63,10 +65,22 @@ export async function refreshFeed(
 		(source) => !options.sourceId || source.id === options.sourceId
 	);
 
-	const results = await mapWithConcurrency(
+	const results: RefreshResult[] = [];
+	let completed = 0;
+
+	await mapWithConcurrency(
 		targets,
 		options.concurrency ?? DEFAULT_CONCURRENCY,
-		async (source): Promise<RefreshResult> => {
+		async (source, index): Promise<void> => {
+			const result = await refreshOne(source);
+			completed += 1;
+			results[index] = result;
+			options.onSourceDone?.(result, completed, targets.length);
+		}
+	);
+
+	async function refreshOne(source: (typeof targets)[number]): Promise<RefreshResult> {
+		{
 			const startedAt = Date.now();
 			const status = sources[source.id];
 			const done = (result: Omit<RefreshResult, 'durationMs'>): RefreshResult => ({
@@ -144,7 +158,7 @@ export async function refreshFeed(
 				});
 			}
 		}
-	);
+	}
 
 	const cutoff = now.getTime() - retentionMs;
 	const seen = new Set<string>();

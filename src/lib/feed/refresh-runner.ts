@@ -1,9 +1,10 @@
 import type { FeedCache, HubData } from '../types';
-import type { RefreshOutcome } from './refresh';
+import type { RefreshOutcome, RefreshResult } from './refresh';
 
 export interface RefreshRequest {
 	force?: boolean;
 	sourceId?: string;
+	onSourceDone?: (result: RefreshResult, done: number, total: number) => void;
 }
 
 export interface RefreshRunnerDeps {
@@ -11,7 +12,11 @@ export interface RefreshRunnerDeps {
 	refresh(
 		hub: HubData,
 		cache: FeedCache,
-		options: { force: boolean; sourceId?: string }
+		options: {
+			force: boolean;
+			sourceId?: string;
+			onSourceDone?: (result: RefreshResult, done: number, total: number) => void;
+		}
 	): Promise<RefreshOutcome>;
 	updateFeedCache(fn: (cache: FeedCache) => Promise<FeedCache>): Promise<FeedCache>;
 }
@@ -28,7 +33,11 @@ export interface RefreshRunner {
 export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 	const inFlight = new Map<string, { promise: Promise<RefreshOutcome>; force: boolean }>();
 
-	async function execute(request: { force: boolean; sourceId?: string }): Promise<RefreshOutcome> {
+	async function execute(request: {
+		force: boolean;
+		sourceId?: string;
+		onSourceDone?: (result: RefreshResult, done: number, total: number) => void;
+	}): Promise<RefreshOutcome> {
 		let outcome: RefreshOutcome | null = null;
 
 		await deps.updateFeedCache(async (cache) => {
@@ -37,7 +46,8 @@ export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 			const hub = await deps.loadHub();
 			outcome = await deps.refresh(hub, cache, {
 				force: request.force,
-				sourceId: request.sourceId
+				sourceId: request.sourceId,
+				onSourceDone: request.onSourceDone
 			});
 			return outcome.cache;
 		});
@@ -48,7 +58,11 @@ export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 
 	function start(
 		key: string,
-		request: { force: boolean; sourceId?: string }
+		request: {
+			force: boolean;
+			sourceId?: string;
+			onSourceDone?: (result: RefreshResult, done: number, total: number) => void;
+		}
 	): Promise<RefreshOutcome> {
 		const entry = {
 			force: request.force
@@ -67,7 +81,8 @@ export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 			const force = request.force ?? false;
 			const existing = inFlight.get(key);
 
-			if (!existing) return start(key, { force, sourceId });
+			const onSourceDone = request.onSourceDone;
+			if (!existing) return start(key, { force, sourceId, onSourceDone });
 			// Pedido comum espera o que já está rodando; forçado só é engolido
 			// quando a execução em andamento também é forçada.
 			if (!force || existing.force) return existing.promise;
@@ -79,7 +94,7 @@ export function createRefreshRunner(deps: RefreshRunnerDeps): RefreshRunner {
 						() => undefined,
 						() => undefined
 					)
-					.then(() => start(key, { force: true, sourceId }))
+					.then(() => start(key, { force: true, sourceId, onSourceDone }))
 			};
 			inFlight.set(key, queued);
 			return queued.promise;

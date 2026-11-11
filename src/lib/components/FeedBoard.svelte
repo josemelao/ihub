@@ -12,6 +12,7 @@
 	import type { FeedViewItem } from '#lib/feed/view';
 	import { canOpenEntry, snapshotFromEntry } from '#lib/feed/view';
 	import type { Category, FeedSource, SavedFilter } from '#lib/types';
+	import { refreshWithProgress } from '#lib/refresh-client';
 	import { clearUndoBatch, loadUndoBatch, saveUndoBatch } from '#lib/undo';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
@@ -73,6 +74,7 @@
 	let limit = $state(10);
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
+	let refreshProgress = $state<{ done: number; total: number } | null>(null);
 	let refreshFailed = $state(false);
 	let confirmMarkAll = $state(false);
 	let pendingMarkAllIds = $state<string[]>([]);
@@ -746,36 +748,27 @@
 		refreshing = true;
 		refreshMessage = '';
 		refreshFailed = false;
+		refreshProgress = null;
 
 		try {
-			const response = await fetch('/api/refresh', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: '{}'
+			const job = await refreshWithProgress((progress) => {
+				refreshProgress = progress;
 			});
-			const result = (await response.json()) as {
-				ok?: boolean;
-				error?: string;
-				results?: { ok: boolean; name: string }[];
-			};
 
-			if (!result.ok) {
-				refreshMessage = result.error ?? 'Falha ao atualizar o feed.';
-				refreshFailed = true;
-			} else {
-				const failed = (result.results ?? []).filter((entry) => !entry.ok);
-				refreshFailed = failed.length > 0;
-				refreshMessage =
-					failed.length > 0
-						? `Atualizado com falha em: ${failed.map((entry) => entry.name).join(', ')}`
-						: 'Feed atualizado.';
-			}
+			const failed = job.results.filter((entry) => !entry.ok);
+			refreshFailed = failed.length > 0;
+			refreshMessage =
+				failed.length > 0
+					? `Atualizado com falha em: ${failed.map((entry) => entry.name).join(', ')}`
+					: 'Feed atualizado.';
 			await invalidateAll();
-		} catch {
-			refreshMessage = 'Falha de rede ao atualizar o feed.';
+		} catch (error) {
+			refreshMessage =
+				error instanceof Error ? error.message : 'Falha de rede ao atualizar o feed.';
 			refreshFailed = true;
 		} finally {
 			refreshing = false;
+			refreshProgress = null;
 		}
 	}
 </script>
@@ -817,7 +810,11 @@
 					</button>
 				{/if}
 				<button class="chip link" type="button" onclick={refresh} disabled={refreshing}>
-					{refreshing ? 'Atualizando...' : 'Atualizar agora'}
+					{refreshing
+						? refreshProgress && refreshProgress.total > 0
+							? `Atualizando ${refreshProgress.done}/${refreshProgress.total}...`
+							: 'Atualizando...'
+						: 'Atualizar agora'}
 				</button>
 			{/if}
 		</div>
