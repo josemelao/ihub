@@ -249,7 +249,7 @@
 		editor = { kind, initial, preset, key: Date.now() };
 	}
 
-	onMount(() => {
+	function applyUrlParams(): void {
 		const params = page.url.searchParams;
 		const requestedTab = params.get('tab');
 		const validTabs: Tab[] = [
@@ -315,6 +315,15 @@
 			description: params.get('description') ?? undefined,
 			icon: params.get('icon') ?? undefined
 		});
+	}
+
+	let handledSearch: string | null = null;
+
+	$effect(() => {
+		const search = page.url.search;
+		if (search === handledSearch) return;
+		handledSearch = search;
+		applyUrlParams();
 	});
 
 	async function mutate(payload: Record<string, unknown>): Promise<void> {
@@ -801,6 +810,10 @@
 	<a class="btn" href={resolve('/api/export/opml')} download>
 		<Icon name="download" size={16} />
 		Exportar OPML
+	</a>
+	<a class="btn" href={resolve('/api/export/bookmarks')} download>
+		<Icon name="download" size={16} />
+		Exportar favoritos
 	</a>
 	<button class="btn" type="button" onclick={() => fileInput?.click()}>
 		<Icon name="upload" size={16} />
