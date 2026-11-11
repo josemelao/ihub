@@ -2,7 +2,17 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkPort, logStartup } from './start-lib.mjs';
 
-if (existsSync('.env')) process.loadEnvFile('.env');
+if (existsSync('.env')) {
+	try {
+		process.loadEnvFile('.env');
+	} catch (error) {
+		const line = logStartup(
+			`Falha ao carregar .env: ${error instanceof Error ? error.message : String(error)}`
+		);
+		console.error(line.trim());
+		process.exit(1);
+	}
+}
 
 process.env.HOST ??= '127.0.0.1';
 process.env.PORT ??= '5757';

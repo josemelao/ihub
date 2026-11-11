@@ -16,6 +16,13 @@ if (-not $node) {
 	throw 'Node.js não encontrado no PATH. Instale o Node 24+ antes do autostart.'
 }
 
+$nodeVersion = (& $node.Source --version).Trim().TrimStart('v')
+$nodeMajor = 0
+[void][int]::TryParse(($nodeVersion.Split('.')[0]), [ref]$nodeMajor)
+if ($nodeMajor -lt 24) {
+	throw "Node $nodeVersion encontrado; o Meu Hub exige Node 24 ou superior."
+}
+
 $build = Join-Path $root 'build\index.js'
 if (-not (Test-Path $build)) {
 	Write-Warning "Build não encontrado em $build. Rode 'npm run build' antes de usar o autostart."
