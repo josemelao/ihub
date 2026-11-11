@@ -32,6 +32,7 @@ import {
 	type SourceInput,
 	type SourcePatch
 } from './hub-edit';
+import { renameTag } from './tags';
 import type { HubData } from './types';
 
 export interface HubPayload {
@@ -40,6 +41,8 @@ export interface HubPayload {
 	direction?: 'up' | 'down';
 	categoryId?: string;
 	groupId?: string | null;
+	from?: string;
+	to?: string;
 	item?: (LinkInput | AppInput) & { type?: 'link' | 'app' };
 	patch?: ItemPatch;
 	source?: SourceInput;
@@ -88,6 +91,13 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 
 		case 'move-source':
 			return moveSource(hub, requireId(payload), requireDirection(payload));
+
+		case 'rename-tag': {
+			if (!payload.from || !payload.to) {
+				throw new Error('Informe a tag atual e o novo nome.');
+			}
+			return renameTag(hub, payload.from, payload.to);
+		}
 
 		case 'add-source':
 			if (!payload.source) throw new Error('Informe a fonte.');
