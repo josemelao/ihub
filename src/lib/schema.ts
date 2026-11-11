@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { withSourceOrders } from './feed/order';
+import { withNormalizedTags } from './tags';
 import type { FeedCache, HubData, HubState, ValidationIssue } from './types';
 
 export class HubValidationError extends Error {
@@ -304,7 +305,7 @@ export function parseHub(input: unknown): HubData {
 	if (!result.success) {
 		throw new HubValidationError(issuesFrom(result.error));
 	}
-	return withSourceOrders(result.data as HubData);
+	return withNormalizedTags(withSourceOrders(result.data as HubData));
 }
 
 export function parseHubState(input: unknown): HubState {

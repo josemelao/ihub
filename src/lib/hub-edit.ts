@@ -1,4 +1,5 @@
 import { normalizeSourceOrders, sortFeedSources } from './feed/order';
+import { normalizeTags } from './tags';
 import type {
 	AppItem,
 	FeedSource,
@@ -134,7 +135,7 @@ function itemBase(input: {
 		categoryId: input.categoryId,
 		...(input.groupId ? { groupId: input.groupId } : {}),
 		...(input.icon ? { icon: input.icon } : {}),
-		tags: input.tags ?? [],
+		tags: normalizeTags(input.tags ?? []),
 		pinned: input.pinned ?? false,
 		order: 0
 	};
@@ -206,7 +207,7 @@ export function updateItem(hub: HubData, id: string, patch: ItemPatch): HubData 
 			const next = { ...item } as HubItem;
 			if (patch.name !== undefined) next.name = patch.name;
 			if (patch.categoryId !== undefined) next.categoryId = patch.categoryId;
-			if (patch.tags !== undefined) next.tags = patch.tags;
+			if (patch.tags !== undefined) next.tags = normalizeTags(patch.tags);
 			if (patch.pinned !== undefined) next.pinned = patch.pinned;
 
 			if (patch.description === null || patch.description === '') {
