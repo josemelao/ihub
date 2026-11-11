@@ -5,20 +5,21 @@ import { join } from 'node:path';
 import { EMPTY_HUB } from '#lib/defaults';
 import type { FileImportPreview } from '#lib/import/file-import';
 import { JsonFileStorage } from '#lib/storage/json-file';
-import type { RequestHandler } from './$types';
+
+type PostHandler = (event: { request: Request }) => Promise<Response>;
 
 let dir: string;
-let previewPOST: RequestHandler;
-let applyPOST: RequestHandler;
+let previewPOST: PostHandler;
+let applyPOST: PostHandler;
 
-function event(body: unknown): Parameters<RequestHandler>[0] {
+function event(body: unknown): Parameters<PostHandler>[0] {
 	return {
 		request: new Request('http://127.0.0.1/api/import/file', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify(body)
 		})
-	} as Parameters<RequestHandler>[0];
+	};
 }
 
 const BOOKMARKS = `<!DOCTYPE NETSCAPE-Bookmark-file-1>
@@ -39,8 +40,10 @@ beforeAll(async () => {
 	dir = await mkdtemp(join(tmpdir(), 'meu-hub-file-import-'));
 	process.env.HUB_DATA_DIR = dir;
 	await new JsonFileStorage(dir).saveHub(structuredClone(EMPTY_HUB));
-	({ POST: previewPOST } = await import('./preview/+server'));
-	({ POST: applyPOST } = await import('./apply/+server'));
+	({ POST: previewPOST } = (await import('./preview/+server')) as unknown as {
+		POST: PostHandler;
+	});
+	({ POST: applyPOST } = (await import('./apply/+server')) as unknown as { POST: PostHandler });
 });
 
 afterAll(async () => {

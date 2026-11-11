@@ -1,9 +1,6 @@
 import { json } from '@sveltejs/kit';
-import {
-	applyFileImport,
-	fileImportPayloadSchema,
-	type FileImportSummary
-} from '#lib/import/file-import';
+import { applyFileImport, fileImportPayloadSchema } from '#lib/import/file-import';
+import type { FileImportSummary } from '#lib/import/apply';
 import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
