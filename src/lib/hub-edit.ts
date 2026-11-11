@@ -1,3 +1,4 @@
+import { normalizeSourceOrders, sortFeedSources } from './feed/order';
 import type {
 	AppItem,
 	FeedSource,
@@ -264,9 +265,17 @@ export function addSources(hub: HubData, inputs: SourceInput[]): HubData {
 	if (inputs.length === 0) return hub;
 
 	const ids = new Set(hub.feedSources.map((source) => source.id));
+	const nextOrder = new Map<string, number>();
+	for (const [index, source] of hub.feedSources.entries()) {
+		const order = source.order ?? index + 1;
+		nextOrder.set(source.categoryId, Math.max(nextOrder.get(source.categoryId) ?? 0, order));
+	}
+
 	const added: FeedSource[] = inputs.map((input) => {
 		const id = uniqueId(slugify(input.name), ids);
 		ids.add(id);
+		const order = (nextOrder.get(input.categoryId) ?? 0) + 1;
+		nextOrder.set(input.categoryId, order);
 
 		return {
 			id,
@@ -278,6 +287,7 @@ export function addSources(hub: HubData, inputs: SourceInput[]): HubData {
 			intervalMinutes: input.intervalMinutes,
 			...(input.maxItems ? { maxItems: input.maxItems } : {}),
 			...(input.locale ? { locale: input.locale } : {}),
+			order,
 			enabled: input.enabled,
 			include: input.include,
 			exclude: input.exclude,
@@ -327,6 +337,35 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 
 			return next;
 		})
+	};
+}
+
+/** Troca a fonte com a vizinha anterior/próxima dentro da mesma categoria. */
+export function moveSource(hub: HubData, id: string, direction: 'up' | 'down'): HubData {
+	const normalized = normalizeSourceOrders(hub.feedSources);
+	const target = normalized.find((source) => source.id === id);
+	if (!target) return hub;
+
+	const siblings = sortFeedSources(
+		normalized.filter((source) => source.categoryId === target.categoryId)
+	);
+	const index = siblings.findIndex((source) => source.id === id);
+	const swapIndex = direction === 'up' ? index - 1 : index + 1;
+	if (swapIndex < 0 || swapIndex >= siblings.length) {
+		return { ...hub, feedSources: normalized };
+	}
+
+	const other = siblings[swapIndex];
+	const orders = new Map([
+		[target.id, other.order ?? 0],
+		[other.id, target.order ?? 0]
+	]);
+
+	return {
+		...hub,
+		feedSources: normalized.map((source) =>
+			orders.has(source.id) ? { ...source, order: orders.get(source.id)! } : source
+		)
 	};
 }
 
