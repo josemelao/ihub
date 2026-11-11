@@ -181,6 +181,18 @@ export interface HubLoadResult {
 	error: HubLoadError | null;
 }
 
+export interface StateRecoveryInfo {
+	removedSnapshots: number;
+	removedRead: number;
+	removedSaved: number;
+}
+
+export interface StateLoadResult {
+	state: HubState;
+	/** Preenchido quando parte do estado inválido foi descartada na leitura. */
+	recovery: StateRecoveryInfo | null;
+}
+
 export interface ValidationIssue {
 	path: (string | number)[];
 	message: string;
@@ -195,6 +207,7 @@ export interface HubStorage {
 	updateHub(fn: (hub: HubData) => HubData | Promise<HubData>): Promise<HubData>;
 	saveHub(data: HubData): Promise<void>;
 	loadState(): Promise<HubState>;
+	loadStateWithRecovery(): Promise<StateLoadResult>;
 	loadStateFromBackup(): Promise<HubState | null>;
 	updateState(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState>;
 	updateStateWithFallback(fn: (state: HubState) => HubState | Promise<HubState>): Promise<HubState>;

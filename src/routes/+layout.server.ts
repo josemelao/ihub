@@ -42,9 +42,12 @@ export const load: LayoutServerLoad = async () => {
 	const [hubResult, stateResult, cacheResult] = await Promise.all([
 		storage.loadHubWithFallback(),
 		loadWithBackup(
-			() => storage.loadState(),
-			() => storage.loadStateFromBackup(),
-			() => structuredClone(EMPTY_STATE)
+			() => storage.loadStateWithRecovery(),
+			async () => {
+				const backup = await storage.loadStateFromBackup();
+				return backup ? { state: backup, recovery: null } : null;
+			},
+			() => ({ state: structuredClone(EMPTY_STATE), recovery: null })
 		),
 		loadWithBackup(
 			() => storage.loadFeedCache(),
@@ -54,7 +57,7 @@ export const load: LayoutServerLoad = async () => {
 	]);
 
 	const hub: HubData = hubResult.hub;
-	const loadedState: HubState = stateResult.value;
+	const loadedState: HubState = stateResult.value.state;
 	const prunedCache = pruneOrphanFeedCache(hub, cacheResult.value);
 	let feed: FeedCache = prunedCache.cache;
 	if (prunedCache.removed > 0) {
@@ -78,6 +81,7 @@ export const load: LayoutServerLoad = async () => {
 		hub,
 		dataError: hubResult.error,
 		stateError: stateResult.error,
+		stateRecovery: stateResult.value.recovery,
 		cacheError: cacheResult.error,
 		state,
 		feed

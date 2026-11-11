@@ -758,3 +758,54 @@ describe('JsonFileStorage', () => {
 		);
 	});
 });
+
+describe('loadStateWithRecovery', () => {
+	const broken = {
+		version: 1,
+		read: { a: '2026-01-01T00:00:00.000Z', b: 42 },
+		saved: ['a', 7],
+		savedItems: {
+			a: {
+				item: {
+					id: 'a',
+					sourceId: 'fonte',
+					title: 'Post',
+					summary: '',
+					url: 'https://example.com/post',
+					publishedAt: '',
+					thumbnail: null
+				},
+				sourceId: 'fonte',
+				sourceName: 'Fonte',
+				savedAt: ''
+			},
+			b: { sourceId: 'fonte' }
+		}
+	};
+
+	it('mant�m as entradas v�lidas e informa o que foi descartado', async () => {
+		await writeFile(join(dir, 'estado.json'), JSON.stringify(broken), 'utf-8');
+
+		const result = await storage.loadStateWithRecovery();
+
+		expect(result.state.read).toEqual({ a: '2026-01-01T00:00:00.000Z' });
+		expect(result.state.saved).toEqual(['a']);
+		expect(Object.keys(result.state.savedItems)).toEqual(['a']);
+		expect(result.recovery).toEqual({ removedSnapshots: 1, removedRead: 1, removedSaved: 1 });
+		await expect(storage.loadState()).resolves.toMatchObject({ saved: ['a'] });
+	});
+
+	it('n�o reporta recupera��o quando o arquivo est� �ntegro', async () => {
+		await storage.saveState({ version: 1, read: {}, saved: [], savedItems: {} });
+
+		const result = await storage.loadStateWithRecovery();
+
+		expect(result.recovery).toBeNull();
+	});
+
+	it('ainda rejeita um estado estruturalmente inv�lido', async () => {
+		await writeFile(join(dir, 'estado.json'), JSON.stringify({ read: [] }), 'utf-8');
+
+		await expect(storage.loadStateWithRecovery()).rejects.toThrow(HubValidationError);
+	});
+});

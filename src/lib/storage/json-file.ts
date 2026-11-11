@@ -12,6 +12,7 @@ import {
 import { join, resolve } from 'node:path';
 import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_STATE } from '../defaults';
 import { HubValidationError, parseFeedCache, parseHub, parseHubState } from '../schema';
+import { recoverHubState } from '../state-recovery';
 import type {
 	BackupCreated,
 	BackupEntry,
@@ -23,7 +24,8 @@ import type {
 	HubLoadResult,
 	HubState,
 	HubStorage,
-	ImportOptions
+	ImportOptions,
+	StateLoadResult
 } from '../types';
 import { writeFileAtomically, type AtomicFileDeps } from './atomic';
 import { createLockRegistry } from './mutex';
@@ -274,11 +276,22 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async loadState(): Promise<HubState> {
+		return (await this.loadStateWithRecovery()).state;
+	}
+
+	/**
+	 * Como `loadState`, mas descarta apenas as entradas inválidas (snapshot,
+	 * leitura ou id salvo) e informa o que foi recuperado. Erro estrutural
+	 * continua lançando, para o chamador cair no backup/estado vazio.
+	 */
+	async loadStateWithRecovery(): Promise<StateLoadResult> {
 		try {
-			return parseHubState(await this.readJson('estado.json'));
+			const { state, recovery } = recoverHubState(await this.readJson('estado.json'));
+			const touched = recovery.removedSnapshots + recovery.removedRead + recovery.removedSaved;
+			return { state, recovery: touched > 0 ? recovery : null };
 		} catch (error) {
 			if (isMissingFile(error)) {
-				return structuredClone(EMPTY_STATE);
+				return { state: structuredClone(EMPTY_STATE), recovery: null };
 			}
 			throw error;
 		}

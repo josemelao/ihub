@@ -86,6 +86,21 @@
 			</div>
 		{/if}
 
+		{#if data.stateRecovery}
+			<div class="alert" role="status">
+				<strong>estado.json recuperado</strong>
+				<div>
+					{#if data.stateRecovery.removedSnapshots > 0}
+						{data.stateRecovery.removedSnapshots} snapshot(s) inválido(s),{/if}
+					{#if data.stateRecovery.removedRead > 0}
+						{data.stateRecovery.removedRead} leitura(s) inválida(s),{/if}
+					{#if data.stateRecovery.removedSaved > 0}
+						{data.stateRecovery.removedSaved} id(s) salvo(s) inválido(s),{/if}
+					foram descartados; o restante foi mantido.
+				</div>
+			</div>
+		{/if}
+
 		{@render children()}
 	</main>
 </div>
