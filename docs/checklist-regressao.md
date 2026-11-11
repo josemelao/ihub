@@ -104,11 +104,11 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 
 ## Segurança
 
-- [x] CSP não bloqueia Google Fonts, thumbnails, YouTube ou Reddit.
+- [x] CSP não bloqueia thumbnails, YouTube ou Reddit (fontes agora são locais).
 - [x] `frame-src` permite `youtube-nocookie.com` e `redditmedia.com`.
 - [x] `img-src` permite as imagens dos feeds.
 - [x] `Referrer-Policy` não quebra os players.
-- [ ] Trocar Report-Only por enforce após revisar o console.
+- [x] CSP em enforce desde v0.19.0; console conferido nas 6 páginas.
 - [ ] Remover `'unsafe-inline'` de `script-src` com nonce/hash.
 - [ ] Confirmar URL de feed/snapshot só `http(s)`.
 - [ ] Confirmar limite de corpo (413) e SSRF no refresh.

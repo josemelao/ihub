@@ -83,6 +83,15 @@ describe('refresh jobs', () => {
 		expect(view?.error).toMatch(/rede caiu/);
 	});
 
+	it('reaproveita o job em execução em vez de criar outro', async () => {
+		const { jobs } = setup();
+
+		const first = await jobs.start();
+		const second = await jobs.start();
+
+		expect(second.id).toBe(first.id);
+	});
+
 	it('devolve null para job desconhecido', () => {
 		const { jobs } = setup();
 

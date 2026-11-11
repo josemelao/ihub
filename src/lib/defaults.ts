@@ -1,7 +1,9 @@
+import { HUB_SCHEMA_VERSION } from './migrations/hub';
+import { CACHE_SCHEMA_VERSION, STATE_SCHEMA_VERSION } from './migrations/state';
 import type { FeedCache, HubData, HubState } from './types';
 
 export const EMPTY_HUB: HubData = {
-	version: 1,
+	version: HUB_SCHEMA_VERSION,
 	settings: { accent: '#8AA4FF' },
 	categories: [],
 	groups: [],
@@ -11,14 +13,14 @@ export const EMPTY_HUB: HubData = {
 };
 
 export const EMPTY_STATE: HubState = {
-	version: 1,
+	version: STATE_SCHEMA_VERSION,
 	read: {},
 	saved: [],
 	savedItems: {}
 };
 
 export const EMPTY_FEED_CACHE: FeedCache = {
-	version: 1,
+	version: CACHE_SCHEMA_VERSION,
 	updatedAt: new Date(0).toISOString(),
 	items: [],
 	sources: {}

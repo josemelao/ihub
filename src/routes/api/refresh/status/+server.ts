@@ -13,5 +13,5 @@ export const GET: RequestHandler = ({ url }) => {
 		return json({ ok: false, error: 'Job não encontrado.' }, { status: 404 });
 	}
 
-	return json({ ok: true, job });
+	return json({ ok: true, job }, { headers: { 'cache-control': 'no-store' } });
 };

@@ -27,6 +27,7 @@
 				alt=""
 				loading="lazy"
 				decoding="async"
+				referrerpolicy="no-referrer"
 				onerror={(event) => {
 					(event.currentTarget as HTMLImageElement).style.display = 'none';
 				}}

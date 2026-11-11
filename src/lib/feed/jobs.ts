@@ -69,6 +69,13 @@ export function createRefreshJobs(deps: RefreshJobsDeps): RefreshJobs {
 	return {
 		async start() {
 			prune();
+
+			// Já existe refresh global em andamento: devolve o mesmo job para o
+			// progresso não se perder num segundo registro vazio.
+			for (const job of jobs.values()) {
+				if (job.status === 'running') return viewOf(job);
+			}
+
 			const startedMs = now();
 			const total = await deps.count();
 			const job: RefreshJob = {

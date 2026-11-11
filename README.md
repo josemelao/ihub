@@ -254,22 +254,23 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 
 ## Telas
 
-| Rota                 | Tela                                                                                    |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| `/`                  | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito |
-| `/c/[slug]`          | Categoria: grupos, links/apps e feed restrito à categoria                               |
-| `/feed`              | Feed completo com filtros e fontes cadastradas                                          |
-| `/favoritos`         | Posts salvos para depois, com busca e ordenação por salvos/publicados                   |
-| `/biblioteca`        | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps            |
-| `/apps`              | Redireciona para `/biblioteca`                                                          |
-| `/gerenciar`         | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                     |
-| `/api/hub`           | JSON do hub validado (GET) e mutações validadas (POST)                                  |
-| `/api/export`        | Download do bundle (hub + estado)                                                       |
-| `/api/import`        | Importação validada (substituir/mesclar)                                                |
-| `/api/feed`          | Cache do feed com status por fonte                                                      |
-| `/api/refresh`       | Dispara a atualização de todas as fontes                                                |
-| `/api/state`         | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                          |
-| `/api/discover-feed` | Descobre o feed RSS/Atom de uma página (POST)                                           |
+| Rota                  | Tela                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| `/`                   | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito |
+| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                               |
+| `/feed`               | Feed completo com filtros e fontes cadastradas                                          |
+| `/favoritos`          | Posts salvos para depois, com busca e ordenação por salvos/publicados                   |
+| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps            |
+| `/apps`               | Redireciona para `/biblioteca`                                                          |
+| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                     |
+| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                  |
+| `/api/export`         | Download do bundle (hub + estado)                                                       |
+| `/api/import`         | Importação validada (substituir/mesclar)                                                |
+| `/api/feed`           | Cache do feed com status por fonte                                                      |
+| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)   |
+| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                             |
+| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                          |
+| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                           |
 
 ## Segurança e privacidade
 
@@ -341,7 +342,8 @@ Eles não fazem parte do build do app.
 - APIs têm limite de corpo: 2 MB em hub/state, 10 MB em import e 64 KB nas APIs pequenas; excesso retorna 413.
 - O refresh de feeds usa fetch seguro: timeout, 5 MB, bloqueio de loopback/IP privado e validação de redirects.
 - Headers de segurança ativos: `nosniff`, `no-referrer`, `X-Frame-Options: DENY` e `Permissions-Policy`.
-- CSP está em **Report-Only** com allowlist para YouTube, Reddit, Google Fonts e imagens; a troca para enforce fica para depois da revisão do console.
+- CSP em **enforce** (v0.19.0): `default-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'` e players liberados só para YouTube-nocookie/Redditmedia. `script-src` mantém `'unsafe-inline'` porque o SvelteKit injeta o script de hidratação; nonce/hash fica para PLAT-09.
+- Assets estáticos (`/fonts/*`, `/_app/*`) são servidos pelo adapter-node antes do `hooks.server`; os headers de segurança cobrem HTML e APIs (ver `docs/security.md`).
 - Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
 - Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
 - Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão.

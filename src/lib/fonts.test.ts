@@ -29,13 +29,19 @@ describe('fontes locais', () => {
 			expect(readFileSync(path).subarray(0, 4).toString('ascii')).toBe('wOF2');
 		}
 	});
+
+	it('inclui a licença OFL das duas famílias', () => {
+		expect(existsSync(join(root, 'static', 'fonts', 'OFL-Inter.txt'))).toBe(true);
+		expect(existsSync(join(root, 'static', 'fonts', 'OFL-SpaceGrotesk.txt'))).toBe(true);
+	});
 });
 
 describe('imagens externas sem referrer', () => {
-	it('aplica referrerpolicy no card e no lightbox', () => {
+	it('aplica referrerpolicy no card, no lightbox e nos ícones', () => {
 		expect(read('src/lib/components/FeedCard.svelte')).toContain('referrerpolicy="no-referrer"');
 		expect(read('src/lib/components/ImageLightbox.svelte')).toContain(
 			'referrerpolicy="no-referrer"'
 		);
+		expect(read('src/lib/components/ItemIcon.svelte')).toContain('referrerpolicy="no-referrer"');
 	});
 });

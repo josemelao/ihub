@@ -178,7 +178,7 @@ export class JsonFileStorage implements HubStorage {
 
 	async updateHub(fn: (hub: HubData) => HubData | Promise<HubData>): Promise<HubData> {
 		return fileLocks.withLock(this.lockKey('hub.json'), async () => {
-			const next = parseHub(await fn(await this.loadHub()));
+			const next = parseHub(await fn(await this.loadHubLocked()));
 			await this.persistHub(next);
 			return next;
 		});
@@ -228,7 +228,7 @@ export class JsonFileStorage implements HubStorage {
 		return fileLocks.withLocks(
 			[this.lockKey('hub.json'), this.lockKey('feed-cache.json')],
 			async () => {
-				const previousHub = await this.loadHub();
+				const previousHub = await this.loadHubLocked();
 				const hub = parseHub(await hubFn(previousHub));
 
 				// Valida tudo antes de qualquer gravação: cache inválido não pode
@@ -252,18 +252,27 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async loadHub(): Promise<HubData> {
-		return this.migrateAndParseHub(await this.readJson('hub.json'));
+		// A migração grava; por isso a leitura roda sob o lock do hub e relê o
+		// arquivo, em vez de sobrescrever uma edição concorrente com dado velho.
+		return fileLocks.withLock(this.lockKey('hub.json'), () => this.loadHubLocked());
 	}
 
-	/**
-	 * Migra o dado cru até a versão atual e valida. Quando houve migração,
-	 * guarda uma cópia `hub.json.pre-vN.bak` e grava o resultado migrado —
-	 * carregar o arquivo já migrado não escreve nada.
-	 */
-	private async migrateAndParseHub(raw: unknown): Promise<HubData> {
+	/** Use dentro de quem já segura o lock do `hub.json`. */
+	private async loadHubLocked(): Promise<HubData> {
+		const raw = await this.readJson('hub.json');
 		const { data, from, to } = migrateHub(raw);
 		const hub = parseHub(data);
-		if (from > 0 && to > from) await this.persistHubMigration(hub, from);
+
+		if (from !== to) {
+			try {
+				await this.persistHubMigration(hub, from);
+			} catch (error) {
+				// Arquivo intacto: é melhor servir o hub migrado em memória do que
+				// derrubar todas as páginas por causa da cópia/gravação.
+				console.error('[storage] falha ao persistir a migração do hub:', error);
+			}
+		}
+
 		return hub;
 	}
 
@@ -371,7 +380,7 @@ export class JsonFileStorage implements HubStorage {
 			// o hub já importado no disco.
 			let previousHub: HubData | null = null;
 			try {
-				previousHub = await this.loadHub();
+				previousHub = await this.loadHubLocked();
 			} catch (error) {
 				if (!(error instanceof HubValidationError)) throw error;
 				if (mode === 'merge') {
@@ -675,7 +684,7 @@ export class JsonFileStorage implements HubStorage {
 		return fileLocks.withLocks(
 			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
 			async () => {
-				const previousHub = await this.loadHub().catch((error) => {
+				const previousHub = await this.loadHubLocked().catch((error) => {
 					if (error instanceof HubValidationError) return null;
 					throw error;
 				});

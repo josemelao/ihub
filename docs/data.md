@@ -100,8 +100,8 @@
 
 ## Fora desta fase
 
-- **DATA-03** (refresh concorrente com progresso por fonte/SSE): adiado para a fase de UX; o refresh segue síncrono, mas coalescido.
-- **DATA-07** (migrações versionadas): o schema continua em `version: 1`; `lastPrunedAt` é opcional e compatível com arquivos antigos. Migrações entram quando houver mudança quebrante.
+- **DATA-03** (refresh concorrente com progresso por fonte): **concluído em v0.19.0** — concorrência 4, `durationMs` e job assíncrono com polling (`POST /api/refresh` com `async: true`). SSE não foi necessário.
+- **DATA-07** (migrações versionadas): **concluído em v0.19.0** — `hub.json` está em `version: 2` (order normalizada por categoria), com cópia `pre-vN.bak` antes de migrar. `estado.json`/`feed-cache.json` seguem em `version: 1` com framework de migração pronto.
 - Lock entre processos e SQLite continuam em PLAT-04/PLAT-12.
 
 ## Nota sobre CSRF em POSTs

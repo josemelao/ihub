@@ -710,7 +710,7 @@ Diferenciação / depois        → AVALIAR
 - [x] Todas as páginas carregam com CSP enforced sem erro no console.
 - [x] Imagens externas necessárias continuam funcionando.
 - [x] `frame-ancestors` impede iframe.
-- [x] Headers presentes em HTML, API e assets.
+- [ ] Headers presentes em HTML e API (assets estáticos são servidos antes do hook do adapter-node; limitação documentada no README).
 - [x] Documentado no README como ajustar a CSP.
 
 ---

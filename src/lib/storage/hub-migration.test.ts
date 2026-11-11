@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -83,5 +83,30 @@ describe('migração no carregamento do hub', () => {
 		expect(result.error?.usingBackup).toBe(true);
 		expect(result.hub.version).toBe(2);
 		expect(result.hub.feedSources[0].order).toBe(2);
+	});
+
+	it('não perde uma edição feita durante a migração', async () => {
+		const updated = await storage.updateHub((hub) => ({
+			...hub,
+			categories: [...hub.categories, { id: 'novo', name: 'Novo', color: '#fff', order: 3 }]
+		}));
+
+		const saved = JSON.parse(await readFile(join(dir, 'hub.json'), 'utf8'));
+
+		expect(updated.categories.some((category) => category.id === 'novo')).toBe(true);
+		expect(saved.categories.some((category: { id: string }) => category.id === 'novo')).toBe(true);
+		expect(saved.version).toBe(2);
+	});
+
+	it('continua servindo o hub quando a gravação da migração falha', async () => {
+		vi.spyOn(
+			storage as unknown as { persistHub: () => Promise<void> },
+			'persistHub'
+		).mockRejectedValueOnce(new Error('EPERM'));
+
+		const hub = await storage.loadHub();
+
+		expect(hub.version).toBe(2);
+		expect(hub.categories).toHaveLength(2);
 	});
 });

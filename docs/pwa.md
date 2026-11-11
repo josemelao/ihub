@@ -15,7 +15,7 @@
   - nunca intercepta `/api/`, métodos diferentes de GET ou outra origem.
   - **Suba a `VERSION` do cache** sempre que `offline.html`, os ícones ou o manifest mudarem.
 - Registro em `src/routes/+layout.svelte` apenas em produção (`import.meta.env.PROD`).
-- CSP ganhou `worker-src 'self'` (continua Report-Only).
+- CSP ganhou `worker-src 'self'` (Report-Only nesta fase; **enforce desde v0.19.0**).
 
 ### Instalar
 
