@@ -95,15 +95,38 @@ function createFuse(entries: SearchEntry[]): Fuse<SearchEntry> {
 	});
 }
 
-export function searchHub(hub: HubData, query: string, limit = 8, feed?: FeedCache): SearchEntry[] {
+export interface SearchIndex {
+	entries: SearchEntry[];
+	fuse: Fuse<SearchEntry>;
+}
+
+interface IndexCacheEntry {
+	feed?: FeedCache;
+	index: SearchIndex;
+}
+
+const indexCache = new WeakMap<HubData, IndexCacheEntry>();
+
+/** Índice memoizado por identidade de `hub` e `feed` (o app troca objetos, não muta). */
+export function searchIndexFor(hub: HubData, feed?: FeedCache): SearchIndex {
+	const cached = indexCache.get(hub);
+	if (cached && cached.feed === feed) return cached.index;
+
 	const entries = buildSearchEntries(hub, feed);
+	const index: SearchIndex = { entries, fuse: createFuse(entries) };
+	indexCache.set(hub, { feed, index });
+	return index;
+}
+
+export function searchHub(hub: HubData, query: string, limit = 8, feed?: FeedCache): SearchEntry[] {
+	const { entries, fuse } = searchIndexFor(hub, feed);
 	const trimmed = query.trim();
 
 	if (!trimmed) {
 		return entries.slice(0, limit);
 	}
 
-	return createFuse(entries)
+	return fuse
 		.search(trimmed)
 		.slice(0, limit)
 		.map((result) => result.item);
