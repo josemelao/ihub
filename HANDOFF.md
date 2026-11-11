@@ -509,6 +509,9 @@ Executada em 11/11/2026 sobre `v0.16.0`.
   - Gerenciar → Tags: lista com contagem e renomeação por linha; destino existente é mesclado; vazio é rejeitado; remoção em massa com confirmação.
   - Editor de item sugere tags existentes (datalist).
   - Ação `rename-tag` e `remove-tag` no `/api/hub`.
-- `npm run verify` verde com **433 testes** em 57 arquivos.
-- Edge/CDP: `build · 2` filtrou para 2 itens, URL `?tag=build` persistiu no reload; renomear `build` → `Build final` atualizou os 2 itens.
+- `npm run verify` verde com **440 testes** em 58 arquivos.
+- Edge/CDP: `build · 2` filtrou para 2 itens, URL `?tag=build` persistiu no reload e Voltar/Avançar restaurou os filtros; renomear `build` → `Build final` atualizou os 2 itens.
+- Revisão pós-implementação corrigiu:
+  - navegação por tag usava `replaceState` e quebrava Voltar/Avançar → agora usa navegação shallow + sincronização no `popstate`;
+  - filtro combinado vivia só no componente → extraído para `src/lib/library-filter.ts` com testes de tag × tipo × busca.
 - Detalhes em [`docs/tags.md`](docs/tags.md).

@@ -10,7 +10,7 @@
 - Na **Biblioteca**, uma linha de chips mostra as tags com contagem, ordenadas por quantidade e nome.
 - Clicar em `build · 2` mostra só os itens com essa tag; o chip **Todas** limpa o filtro.
 - O filtro combina com busca, abas **Todos / Apps do PC / Navegador** e os acordeões de categoria.
-- A URL reflete a escolha: `/biblioteca?tag=build`. Recarregar ou compartilhar o link mantém o filtro.
+- A URL reflete a escolha: `/biblioteca?tag=build`. Recarregar, compartilhar o link ou usar Voltar/Avançar mantém o filtro coerente.
 
 ## Normalização
 
@@ -49,17 +49,18 @@ Em **Gerenciar → Tags**:
 
 ## Verificação
 
-- `npm run verify` verde; **433 testes** em 57 arquivos.
+- `npm run verify` verde; **440 testes** em 58 arquivos.
 - Edge/CDP:
   - chips exibiram `build · 2`; clique levou a `?tag=build` com “2 itens encontrados”;
   - reload manteve `?tag=build` e o chip ativo;
+  - `build` → `wiki` → Voltar voltou para `?tag=build` com 2 itens; Avançar voltou para `wiki` com 3;
   - renomear `build` → `Build final` atualizou os 2 itens e removeu `build`.
-- Testes cobrem caixa/acento/espaço, contagem, merge no rename, remoção, vazio, parseHub e add/update.
+- Testes cobrem caixa/acento/espaço, contagem, merge no rename, remoção, vazio, parseHub, add/update e o filtro combinado (tag × tipo × busca).
 
 ## Checklist manual
 
 1. Abrir a Biblioteca e clicar em uma tag; conferir a URL e a contagem.
-2. Recarregar e compartilhar o link.
+2. Recarregar, compartilhar o link e usar Voltar/Avançar.
 3. Combinar tag + busca + aba de tipo.
 4. Renomear uma tag no Gerenciar e conferir os itens.
 5. Renomear para o nome de outra tag e conferir a mesclagem.

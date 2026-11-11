@@ -7,7 +7,7 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 ## Status
 
 - **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows e tags como filtro.
-- **Versão atual:** `v0.17.0` · **433 testes** em 57 arquivos.
+- **Versão atual:** `v0.17.0` · **440 testes** em 58 arquivos.
 - **Próximos blocos planejados:** leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
