@@ -121,4 +121,36 @@ describe('fetchPublicText pinando o IP validado', () => {
 
 		await expect(fetchPublicText('https://publico.test/feed')).rejects.toThrow(/interno/i);
 	});
+
+	it('respeita um prazo total mesmo com bytes pingando', async () => {
+		vi.useFakeTimers();
+		try {
+			lookupMock.mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
+
+			httpsMock.mockImplementation(((_options: unknown, callback: never) => {
+				const request = new EventEmitter() as EventEmitter & Record<string, unknown>;
+				request.setTimeout = vi.fn();
+				request.destroy = vi.fn((error: Error) => {
+					request.emit('error', error);
+				});
+				request.end = vi.fn(() => {
+					const response = new EventEmitter() as EventEmitter & Record<string, unknown>;
+					response.statusCode = 200;
+					response.headers = { 'content-type': 'application/xml' };
+					(callback as unknown as (res: unknown) => void)(response);
+					const drip = setInterval(() => response.emit('data', Buffer.from('x')), 100);
+					response.on('close', () => clearInterval(drip));
+				});
+				return request;
+			}) as never);
+
+			const promise = fetchPublicText('https://lento.test/feed', { timeoutMs: 1000 });
+			const assertion = expect(promise).rejects.toThrow(/tempo/i);
+
+			await vi.advanceTimersByTimeAsync(1200);
+			await assertion;
+		} finally {
+			vi.useRealTimers();
+		}
+	});
 });

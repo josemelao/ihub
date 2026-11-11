@@ -101,7 +101,7 @@ describe('service worker', () => {
 		expect(sw).toContain('caches.delete(key)');
 	});
 
-	it('bounds the number of cached entries', () => {
+	it('bounded the number of cached entries', () => {
 		const sw = readWorker();
 
 		expect(sw).toContain('MAX_ENTRIES');
@@ -120,6 +120,13 @@ describe('service worker', () => {
 
 		expect(sw).toContain('AbortSignal.timeout(NAVIGATION_TIMEOUT_MS)');
 		expect(sw).toContain('NAVIGATION_TIMEOUT_MS = 8000');
+	});
+
+	it('tolera um asset ausente no precache', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain('Promise.allSettled');
+		expect(sw).toContain('cache.add(');
 	});
 
 	it('never caches API or non-GET requests', () => {

@@ -68,7 +68,10 @@ sw.addEventListener('install', (event) => {
 	event.waitUntil(
 		caches
 			.open(CACHE)
-			.then((cache) => cache.addAll([...PRECACHE]))
+			.then(async (cache) => {
+				// Um asset ausente não pode abortar o SW inteiro (addAll é tudo-ou-nada).
+				await Promise.allSettled([...PRECACHE].map((path) => cache.add(path)));
+			})
 			.then(() => trimCache(CACHE))
 			.then(() => sw.skipWaiting())
 	);

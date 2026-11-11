@@ -10,7 +10,7 @@
 	import { selectAll, updateSelection } from '#lib/feed/selection';
 	import { countUnread, cutoffDaysAgo, idsOlderThan, resolveScope } from '#lib/feed/triage';
 	import type { FeedViewItem } from '#lib/feed/view';
-	import { snapshotFromEntry } from '#lib/feed/view';
+	import { canOpenEntry, snapshotFromEntry } from '#lib/feed/view';
 	import type { Category, FeedSource, SavedFilter } from '#lib/types';
 	import { clearUndoBatch, loadUndoBatch, saveUndoBatch } from '#lib/undo';
 	import ConfirmDialog from './ConfirmDialog.svelte';
@@ -496,6 +496,7 @@
 			if (event.key === 'Enter' && (event.target as HTMLElement | null)?.closest('button, a')) {
 				return;
 			}
+			if (!canOpenEntry(entry)) return;
 			event.preventDefault();
 			window.open(entry.item.url, '_blank', 'noopener,noreferrer');
 		}

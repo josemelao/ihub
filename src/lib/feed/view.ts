@@ -68,6 +68,11 @@ export function snapshotFromEntry(entry: FeedViewItem): SavedItemSnapshot {
 	};
 }
 
+/** Só faz sentido abrir quem tem URL real (o placeholder de salvo sem dados não tem). */
+export function canOpenEntry(entry: FeedViewItem): boolean {
+	return !entry.missing && Boolean(entry.item.url);
+}
+
 export function buildSavedView(hub: HubData, cache: FeedCache, state: HubState): FeedViewItem[] {
 	const sourceById = new Map(hub.feedSources.map((source) => [source.id, source]));
 	const categoryById = new Map(hub.categories.map((category) => [category.id, category]));

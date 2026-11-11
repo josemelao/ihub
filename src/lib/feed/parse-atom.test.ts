@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseFeed } from './parse';
+import { feedFormatOf, parseFeed } from './parse';
 
 const atom = (links: string, extra = '') => `<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -69,5 +69,38 @@ describe('parseFeed com Atom', () => {
 </channel></rss>`;
 
 		expect(parseFeed(xml, 'fonte')[0]?.publishedAt).toBe('');
+	});
+});
+
+describe('feedFormatOf com conteúdo comum de geradores', () => {
+	it('aceita BOM e linha em branco antes do XML', () => {
+		const xml =
+			'\uFEFF\n<?xml version="1.0"?><rss version="2.0"><channel><title>F</title></channel></rss>';
+
+		expect(feedFormatOf(xml)).toBe('rss');
+	});
+
+	it('aceita espaços antes da declaração XML', () => {
+		const xml = '  \n  <?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"></feed>';
+
+		expect(feedFormatOf(xml)).toBe('atom');
+	});
+
+	it('aceita XML tolerante com & solto quando a raiz é um feed', () => {
+		const xml = '<rss version="2.0"><channel><title>Tom & Jerry</title></channel></rss>';
+
+		expect(feedFormatOf(xml)).toBe('rss');
+	});
+
+	it('continua recusando HTML', () => {
+		expect(feedFormatOf('<html><body>oi</body></html>')).toBe('invalid');
+	});
+});
+
+describe('links Atom perigosos como único link', () => {
+	it('descarta item cujo único link é enclosure', () => {
+		const xml = atom('<link rel="enclosure" href="https://exemplo.test/audio.mp3"/>');
+
+		expect(parseFeed(xml, 'fonte')).toHaveLength(0);
 	});
 });

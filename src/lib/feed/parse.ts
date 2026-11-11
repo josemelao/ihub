@@ -73,6 +73,7 @@ function linkOf(value: unknown): string {
 			const link = linkOf(entry);
 			if (!link) continue;
 			const rel = relOf(entry);
+			if (rel === 'enclosure' || rel === 'edit') continue;
 			if (rel === '' || rel === 'alternate') return link;
 			if (!fallback) fallback = link;
 		}
@@ -80,6 +81,8 @@ function linkOf(value: unknown): string {
 	}
 	if (value && typeof value === 'object') {
 		const object = value as Record<string, unknown>;
+		const rel = relOf(value);
+		if (rel === 'enclosure' || rel === 'edit') return '';
 		if (typeof object['@_href'] === 'string') return object['@_href'].trim();
 		return textOf(object['#text']).trim();
 	}
@@ -196,11 +199,16 @@ export class FeedFormatError extends Error {
 
 export function feedFormatOf(xml: string): FeedFormat {
 	if (!xml || !xml.trim()) return 'invalid';
-	if (XMLValidator.validate(xml) !== true) return 'invalid';
+
+	// Geradores comuns colocam BOM/espaços antes da declaração XML e deixam
+	// `&` solto no texto; ambos são tolerados pelo parser.
+	const probe = xml.replace(/^\uFEFF/, '').trimStart();
+	const tolerant = probe.replace(/&(?![a-zA-Z#][a-zA-Z0-9]*;)/g, '&amp;');
+	if (XMLValidator.validate(tolerant) !== true) return 'invalid';
 
 	let document: unknown;
 	try {
-		document = parser.parse(xml);
+		document = parser.parse(tolerant);
 	} catch {
 		return 'invalid';
 	}

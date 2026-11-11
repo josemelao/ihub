@@ -543,5 +543,5 @@ Executada em 11/11/2026 sobre `v0.17.0` (`PLANO-CORRECOES.md`, 19 FIXes).
   - FIX-16: ordem das fontes normalizada por categoria e listas planas agrupadas por categoria.
   - FIX-18: `.env` inválido gera log; VBS procura Node em Program Files (x86)/LocalAppData/PATH; instalador valida Node 24+.
   - FIX-19: payloads de `/api/hub`, `/api/state` e `/api/backup/restore` validados; erros internos não vazam mensagem.
-- `npm run verify` verde com **544 testes** em 76 arquivos.
+- `npm run verify` verde com **553 testes** em 76 arquivos.
 - Observação: `package.json` continua em `0.0.1`; a versão do produto é a tag (`v0.18.0`).

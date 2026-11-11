@@ -234,10 +234,12 @@ function requestPinned(
 	return new Promise((resolve, reject) => {
 		const send = url.protocol === 'https:' ? httpsRequest : httpRequest;
 		let settled = false;
+		const timers: { deadline?: ReturnType<typeof setTimeout> } = {};
 
 		const finish = (fn: () => void) => {
 			if (settled) return;
 			settled = true;
+			if (timers.deadline) clearTimeout(timers.deadline);
 			fn();
 		};
 
@@ -279,6 +281,12 @@ function requestPinned(
 			}
 		);
 
+		// `setTimeout` do socket só conta inatividade: um host que pinga bytes
+		// devagar nunca dispara. O prazo total garante o fim da espera.
+		timers.deadline = setTimeout(
+			() => request.destroy(new Error('Tempo esgotado ao buscar o conteúdo.')),
+			options.timeoutMs
+		);
 		request.setTimeout(options.timeoutMs, () =>
 			request.destroy(new Error('Tempo esgotado ao buscar o conteúdo.'))
 		);
