@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import ImportFavoritesDialog from '#lib/components/ImportFavoritesDialog.svelte';
 	import ItemIcon from '#lib/components/ItemIcon.svelte';
 	import ManageEditor from '#lib/components/ManageEditor.svelte';
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
@@ -365,6 +366,7 @@
 	let importError = $state('');
 	let importIssues = $state<ValidationIssue[]>([]);
 	let importMessage = $state('');
+	let favoritesImportOpen = $state(false);
 	let busy = $state(false);
 
 	const diffTotals = $derived.by(() => {
@@ -786,6 +788,10 @@
 	<button class="btn" type="button" onclick={() => fileInput?.click()}>
 		<Icon name="upload" size={16} />
 		Importar
+	</button>
+	<button class="btn" type="button" onclick={() => (favoritesImportOpen = true)}>
+		<Icon name="upload" size={16} />
+		Importar favoritos/OPML
 	</button>
 	<button class="btn" type="button" onclick={refreshNow} disabled={refreshing}>
 		<Icon name="refresh" size={16} />
@@ -1430,6 +1436,14 @@
 		</div>
 		<button class="btn btn-primary" type="button" onclick={saveAccent}>Salvar cor</button>
 	</div>
+{/if}
+
+{#if favoritesImportOpen}
+	<ImportFavoritesDialog
+		{hub}
+		onclose={() => (favoritesImportOpen = false)}
+		onimported={(message) => (importMessage = message)}
+	/>
 {/if}
 
 {#if editor}
