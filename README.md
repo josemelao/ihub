@@ -7,7 +7,7 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 ## Status
 
 - **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline e autostart no Windows.
-- **Versão atual:** `v0.16.0` · **408 testes** em 54 arquivos.
+- **Versão atual:** `v0.16.0` · **414 testes** em 55 arquivos.
 - **Próximos blocos planejados:** tags como filtro e leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
@@ -121,6 +121,12 @@ powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1
 ```
 
 O script cria um atalho `Meu Hub.lnk` na pasta **Startup** que roda `scripts/start-hidden.vbs` oculto, iniciando `node scripts/start.mjs`. Requer Node 24+ e `npm run build` já executado.
+
+O `start.mjs` verifica se o build existe e se a porta 5757 já está em uso, gravando o motivo em `data/autostart.log` quando algo falha. Para preparar `.env` e `data/hub.json`:
+
+```powershell
+npm run setup
+```
 
 Para desativar:
 

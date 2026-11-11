@@ -488,6 +488,10 @@ Executada em 11/11/2026 sobre `v0.15.0`.
   - Atalho por usuário na pasta Startup, sem admin, com janela oculta.
   - Instalação/remoção testada em pasta Startup temporária; **não foi instalado no Windows do dono**.
   - Validação real de logon fica pendente (instalar, sair/entrar e abrir `127.0.0.1:5757`).
-- `npm run verify` verde com **408 testes** em 54 arquivos.
+- `npm run verify` verde com **414 testes** em 55 arquivos.
 - Edge/CDP: `Page.getInstallabilityErrors` vazio, SW `activated`/controlando, cache `meu-hub-shell-v1`; com rede e cache HTTP desligados, navegação serviu “Meu Hub está offline”.
+- Revisão pós-implementação corrigiu:
+  - autostart silencioso → `start.mjs` valida build/porta, grava `data/autostart.log` e instala com aviso de porta ocupada;
+  - teste do atalho só verificava existência → agora confere target/arguments/workdir em caminho com espaços;
+  - `npm run setup` adicionado para `.env` e `data/hub.json`.
 - Detalhes em [`docs/pwa.md`](docs/pwa.md).
