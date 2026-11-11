@@ -785,6 +785,10 @@
 		<Icon name="download" size={16} />
 		Exportar
 	</a>
+	<a class="btn" href={resolve('/api/export/opml')} download>
+		<Icon name="download" size={16} />
+		Exportar OPML
+	</a>
 	<button class="btn" type="button" onclick={() => fileInput?.click()}>
 		<Icon name="upload" size={16} />
 		Importar
