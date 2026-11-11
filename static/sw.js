@@ -1,4 +1,5 @@
 const VERSION = 'v1';
+// Suba a VERSION sempre que offline.html, os ícones ou o manifest mudarem.
 const CACHE = `meu-hub-shell-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 const PRECACHE = [OFFLINE_URL, '/manifest.webmanifest', '/favicon.svg'];

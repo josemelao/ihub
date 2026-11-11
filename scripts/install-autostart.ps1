@@ -21,6 +21,19 @@ if (-not (Test-Path $build)) {
 	Write-Warning "Build não encontrado em $build. Rode 'npm run build' antes de usar o autostart."
 }
 
+$busy = $false
+try {
+	$client = New-Object System.Net.Sockets.TcpClient
+	$client.Connect('127.0.0.1', 5757)
+	$busy = $client.Connected
+	$client.Close()
+} catch {
+	$busy = $false
+}
+if ($busy) {
+	Write-Warning 'A porta 5757 já está em uso. O hub pode já estar rodando; o atalho será criado mesmo assim.'
+}
+
 New-Item -ItemType Directory -Force -Path $StartupDir | Out-Null
 
 $wscript = Join-Path $env:WINDIR 'System32\wscript.exe'
