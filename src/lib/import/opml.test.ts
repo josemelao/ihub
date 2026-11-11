@@ -103,6 +103,7 @@ describe('parseOpml', () => {
 		expect(result.sources).toHaveLength(1);
 		expect(result.sources[0].feedUrl).toBe('https://example.com/ok.xml');
 		expect(result.skipped).toBe(3);
+		expect(result.invalid?.every((issue) => issue.reason.includes('URL'))).toBe(true);
 	});
 
 	it('deduplicates repeated feeds', () => {
@@ -116,8 +117,29 @@ describe('parseOpml', () => {
 		expect(result.skipped).toBe(1);
 	});
 
-	it('returns an empty result for invalid XML', () => {
-		expect(parseOpml('isto não é xml')).toEqual({ sources: [], skipped: 0 });
+	it('reports invalid XML instead of silently returning empty', () => {
+		const result = parseOpml('isto não é xml');
+
+		expect(result.sources).toEqual([]);
+		expect(result.skipped).toBe(1);
+		expect(result.invalid?.[0]?.reason).toContain('inválido');
+	});
+
+	it('caps deep nesting and reports it', () => {
+		let xml = '<opml><body>';
+		for (let index = 0; index < 60; index += 1) {
+			xml += `<outline text="N${index}">`;
+		}
+		xml += '<outline text="Feed" xmlUrl="https://example.com/feed.xml"/>';
+		xml += '</outline>'.repeat(60);
+		xml += '</body></opml>';
+
+		const result = parseOpml(xml);
+
+		expect(result.sources).toHaveLength(1);
+		expect(result.sources[0].folderPath.length).toBeLessThanOrEqual(50);
+		expect(result.skipped).toBeGreaterThan(0);
+		expect(result.invalid?.some((issue) => issue.reason.includes('profundidade'))).toBe(true);
 	});
 });
 

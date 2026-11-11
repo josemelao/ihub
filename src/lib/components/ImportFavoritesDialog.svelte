@@ -284,6 +284,19 @@
 					{/each}
 				</ul>
 			{/if}
+
+			{#if preview.invalid.length > 0}
+				<details>
+					<summary class="muted small">
+						{preview.invalid.length} item(ns) inválido(s)
+					</summary>
+					<ul class="muted small">
+						{#each preview.invalid as issue, index (index)}
+							<li><code>{issue.value || '—'}</code>: {issue.reason}</li>
+						{/each}
+					</ul>
+				</details>
+			{/if}
 		{/if}
 
 		<div class="confirm-actions">

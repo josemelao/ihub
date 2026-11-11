@@ -72,6 +72,18 @@ describe('POST /api/import/file/preview', () => {
 		const response = await previewPOST(event({ format: 'bookmarks', content: '   ' }));
 		expect(response.status).toBe(400);
 	});
+
+	it('lists invalid entries with reasons', async () => {
+		const response = await previewPOST(
+			event({
+				format: 'bookmarks',
+				content: '<DL><p><DT><A HREF="javascript:alert(1)">Ruim</A></DL><p>'
+			})
+		);
+		const result = (await response.json()) as { ok: boolean; preview: FileImportPreview };
+
+		expect(result.preview.invalid[0]).toMatchObject({ reason: 'URL não http(s)' });
+	});
 });
 
 describe('POST /api/import/file/apply', () => {

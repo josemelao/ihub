@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { feedUrlFor } from '../feed/sources';
 import { toSafeHttpUrl } from '../net/url';
 import type { FeedSource, FeedSourceType, HubData } from '../types';
+import { addIssue, type ImportIssue } from './issues';
 
 export interface ParsedOpmlSource {
 	name: string;
@@ -12,6 +13,7 @@ export interface ParsedOpmlSource {
 export interface ParsedOpml {
 	sources: ParsedOpmlSource[];
 	skipped: number;
+	invalid?: ImportIssue[];
 }
 
 const MAX_DEPTH = 50;
@@ -64,9 +66,14 @@ function walk(
 	out: ParsedOpmlSource[],
 	seen: Set<string>,
 	counter: { skipped: number },
+	invalid: ImportIssue[],
 	depth: number
 ): void {
-	if (depth > MAX_DEPTH) return;
+	if (depth > MAX_DEPTH * 4) {
+		counter.skipped += 1;
+		addIssue(invalid, '', 'profundidade máxima');
+		return;
+	}
 
 	for (const entry of asArray(node)) {
 		if (!entry || typeof entry !== 'object') continue;
@@ -77,12 +84,14 @@ function walk(
 
 		if ((rawFeedUrl || hasFeedAttribute) && !feedUrl) {
 			counter.skipped += 1;
+			addIssue(invalid, rawFeedUrl, 'URL não http(s)');
 			continue;
 		}
 
 		if (feedUrl) {
 			if (seen.has(feedUrl)) {
 				counter.skipped += 1;
+				addIssue(invalid, feedUrl, 'feed duplicado');
 				continue;
 			}
 			seen.add(feedUrl);
@@ -95,14 +104,16 @@ function walk(
 		}
 
 		const folder = nameOf(outline);
-		walk(
-			outline.outline,
-			folder ? [...folderPath, folder] : folderPath,
-			out,
-			seen,
-			counter,
-			depth + 1
-		);
+		let nextPath = folderPath;
+		if (folder) {
+			if (depth < MAX_DEPTH) {
+				nextPath = [...folderPath, folder];
+			} else {
+				counter.skipped += 1;
+				addIssue(invalid, folder, 'profundidade máxima');
+			}
+		}
+		walk(outline.outline, nextPath, out, seen, counter, invalid, depth + 1);
 	}
 }
 
@@ -113,16 +124,22 @@ function walk(
  */
 export function parseOpml(xml: string): ParsedOpml {
 	const sources: ParsedOpmlSource[] = [];
+	const invalid: ImportIssue[] = [];
 	const counter = { skipped: 0 };
 
 	try {
 		const parsed = parser.parse(xml) as { opml?: { body?: { outline?: unknown } } };
-		walk(parsed.opml?.body?.outline, [], sources, new Set<string>(), counter, 0);
+		if (!parsed.opml) {
+			addIssue(invalid, '', 'XML inválido ou sem <opml>');
+			return { sources: [], skipped: 1, invalid };
+		}
+		walk(parsed.opml.body?.outline, [], sources, new Set<string>(), counter, invalid, 0);
 	} catch {
-		return { sources: [], skipped: 0 };
+		addIssue(invalid, '', 'XML inválido ou sem <opml>');
+		return { sources: [], skipped: 1, invalid };
 	}
 
-	return { sources, skipped: counter.skipped };
+	return { sources, skipped: counter.skipped, invalid };
 }
 
 export function inferSourceType(feedUrl: string): FeedSourceType {

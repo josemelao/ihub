@@ -7,6 +7,7 @@ import {
 	type FileImportSummary
 } from './apply';
 import { parseBookmarksHtml } from './bookmarks';
+import type { ImportIssue } from './issues';
 import { parseOpml } from './opml';
 
 export type FileImportFormat = 'bookmarks' | 'opml';
@@ -15,6 +16,7 @@ export interface FileImportPreview {
 	format: FileImportFormat;
 	summary: FileImportSummary;
 	samples: string[];
+	invalid: ImportIssue[];
 }
 
 export const fileImportPayloadSchema = z.object({
@@ -32,19 +34,21 @@ function runFileImport(
 	format: FileImportFormat,
 	content: string,
 	categoryName?: string
-): { result: FileImportResult; samples: string[] } {
+): { result: FileImportResult; samples: string[]; invalid: ImportIssue[] } {
 	if (format === 'bookmarks') {
 		const parsed = parseBookmarksHtml(content);
 		return {
 			result: applyBookmarksImport(hub, parsed, { categoryName }),
-			samples: parsed.bookmarks.slice(0, 8).map((bookmark) => bookmark.title)
+			samples: parsed.bookmarks.slice(0, 8).map((bookmark) => bookmark.title),
+			invalid: parsed.invalid ?? []
 		};
 	}
 
 	const parsed = parseOpml(content);
 	return {
 		result: applyOpmlImport(hub, parsed, { categoryName }),
-		samples: parsed.sources.slice(0, 8).map((source) => source.name)
+		samples: parsed.sources.slice(0, 8).map((source) => source.name),
+		invalid: parsed.invalid ?? []
 	};
 }
 
@@ -63,6 +67,6 @@ export function previewFileImport(
 	content: string,
 	categoryName?: string
 ): FileImportPreview {
-	const { result, samples } = runFileImport(hub, format, content, categoryName);
-	return { format, summary: result.summary, samples };
+	const { result, samples, invalid } = runFileImport(hub, format, content, categoryName);
+	return { format, summary: result.summary, samples, invalid };
 }

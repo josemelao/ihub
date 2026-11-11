@@ -98,7 +98,66 @@ describe('parseBookmarksHtml', () => {
 	it('returns an empty result for non-bookmark HTML', () => {
 		expect(parseBookmarksHtml('<html><body>nada</body></html>')).toEqual({
 			bookmarks: [],
-			skipped: 0
+			skipped: 0,
+			invalid: []
 		});
+	});
+
+	it('recovers from unclosed anchor tags', () => {
+		const html = `<DL><p>
+			<DT><A HREF="https://example.com/a">Sem fechar
+			<DT><A HREF="https://example.com/b">B</A>
+		</DL><p>`;
+		const { bookmarks, skipped } = parseBookmarksHtml(html);
+
+		expect(bookmarks.map((bookmark) => bookmark.url)).toEqual([
+			'https://example.com/a',
+			'https://example.com/b'
+		]);
+		expect(skipped).toBe(1);
+	});
+
+	it('caps folder depth and reports it', () => {
+		let html = '<DL><p>';
+		for (let index = 0; index < 60; index += 1) {
+			html += `<DT><H3>N${index}</H3><DL><p>`;
+		}
+		html += '<DT><A HREF="https://example.com/deep">Deep</A>';
+		html += '</DL><p>'.repeat(61);
+
+		const { bookmarks, skipped, invalid } = parseBookmarksHtml(html);
+
+		expect(bookmarks).toHaveLength(1);
+		expect(bookmarks[0].folderPath).toHaveLength(50);
+		expect(skipped).toBeGreaterThan(0);
+		expect(invalid?.some((issue) => issue.reason.includes('profundidade'))).toBe(true);
+	});
+
+	it('lists invalid entries with reasons', () => {
+		const html = `<DL><p>
+			<DT><A HREF="javascript:alert(1)">Ruim</A>
+			<DT><A HREF="https://example.com/a">A</A>
+			<DT><A HREF="https://example.com/a">A repetido</A>
+		</DL><p>`;
+		const { invalid } = parseBookmarksHtml(html);
+
+		expect(invalid?.map((issue) => issue.reason)).toEqual(
+			expect.arrayContaining(['URL não http(s)', 'URL duplicada'])
+		);
+	});
+
+	it('parses many unclosed anchors in linear time', () => {
+		const html = `<DL><p>${Array.from(
+			{ length: 20_000 },
+			(_, index) => `<DT><A HREF="https://example.com/${index}">Item ${index}`
+		).join('\n')}`;
+
+		const started = performance.now();
+		const { bookmarks, skipped } = parseBookmarksHtml(html);
+		const elapsed = performance.now() - started;
+
+		expect(bookmarks).toHaveLength(20_000);
+		expect(skipped).toBe(20_000);
+		expect(elapsed).toBeLessThan(1000);
 	});
 });
