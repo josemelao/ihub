@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline e autostart no Windows.
-- **Versão atual:** `v0.16.0` · **414 testes** em 55 arquivos.
-- **Próximos blocos planejados:** tags como filtro e leitura (reader/highlights).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows e tags como filtro.
+- **Versão atual:** `v0.17.0` · **433 testes** em 57 arquivos.
+- **Próximos blocos planejados:** leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -162,6 +162,16 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - **Descrição curta** opcional por item aparece no card da Biblioteca, no tooltip do Acesso rápido e na busca.
 - O campo opcional `icon` sobrescreve o ícone: use um slug do Simple Icons (`github`) ou uma URL `https://...`.
 - A rota antiga `/apps` redireciona para `/biblioteca`.
+
+### Tags
+
+- A **Biblioteca** mostra uma linha de chips com as tags e a contagem de itens.
+- Clicar em uma tag filtra a lista; o filtro combina com busca, abas de tipo e categorias.
+- A URL reflete o filtro (`/biblioteca?tag=build`) e sobrevive a reload/compartilhamento.
+- Em **Gerenciar → Tags**, renomeie uma tag e ela é atualizada em todos os itens; se o destino já existir, as tags são mescladas. **Remover** tira a tag de todos os itens sem apagar os itens.
+- O editor de item sugere as tags já existentes.
+- `Build`, `build ` e `BUILD` contam como a mesma tag; a primeira grafia é preservada.
+- Detalhes: [docs/tags.md](docs/tags.md).
 
 ### Feed (M3)
 

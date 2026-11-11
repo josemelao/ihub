@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart (v0.16.0)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -269,7 +269,7 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-Próximo bloco definido: **tags como filtro (ORG-03)**; depois leitura (READ-01/02).
+Próximo bloco definido: **leitura (READ-01/02)** — reader mode e highlights/notas.
 
 1. Fila de escrita/otimistic lock no storage.
 2. Validar `bundle.state` antes de importar.
@@ -497,3 +497,18 @@ Executada em 11/11/2026 sobre `v0.15.0`.
 - Detalhes em [`docs/pwa.md`](docs/pwa.md).
 - Branch `feat/pwa-autostart`; tag `v0.16.0`; as branches `feat/captura-rapida` e `feat/organizacao-manual` continuam empilhadas e ainda não foram integradas ao `master`.
 - **Próximo passo:** ORG-03 — tags como filtro de primeira classe (chips na Biblioteca, URL `?tag=`, renomear tag em massa e normalizar duplicatas).
+
+## 22. Fase 2 — tags como filtro (v0.17.0)
+
+Executada em 11/11/2026 sobre `v0.16.0`.
+
+- **ORG-03**: tags normalizadas e filtro de primeira classe.
+  - `src/lib/tags.ts`: chave sem caixa/acento/espaço, dedupe preservando a primeira grafia, contagem, teste de tag e rename em massa.
+  - `parseHub` normaliza tags no load; add/update item normaliza ao salvar.
+  - Biblioteca: chips com contagem, “Todas”, combinação com busca/tipo/categoria e URL `?tag=...` (sobrevive a reload).
+  - Gerenciar → Tags: lista com contagem e renomeação por linha; destino existente é mesclado; vazio é rejeitado; remoção em massa com confirmação.
+  - Editor de item sugere tags existentes (datalist).
+  - Ação `rename-tag` e `remove-tag` no `/api/hub`.
+- `npm run verify` verde com **433 testes** em 57 arquivos.
+- Edge/CDP: `build · 2` filtrou para 2 itens, URL `?tag=build` persistiu no reload; renomear `build` → `Build final` atualizou os 2 itens.
+- Detalhes em [`docs/tags.md`](docs/tags.md).

@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16) e PWA (PLAT-01) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
+> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1100,10 +1100,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Clicar em “build” mostra só itens com a tag.
-- [ ] Renomear uma tag atualiza todos os itens.
-- [ ] Tags duplicadas por caixa/espaço são normalizadas.
-- [ ] A URL reflete o filtro.
+- [x] Clicar em "build" mostra só itens com a tag.
+- [x] Renomear uma tag atualiza todos os itens.
+- [x] Tags duplicadas por caixa/espaço são normalizadas.
+- [x] A URL reflete o filtro.
 
 ---
 
