@@ -9,8 +9,11 @@ import {
 	unlink,
 	writeFile
 } from 'node:fs/promises';
+import { constants as fsConstants } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_STATE } from '../defaults';
+import { migrateHub } from '../migrations/hub';
+import { migrateFeedCache, migrateState } from '../migrations/state';
 import { HubValidationError, parseFeedCache, parseHub, parseHubState } from '../schema';
 import { recoverHubState } from '../state-recovery';
 import type {
@@ -139,7 +142,9 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	private persistHub(data: HubData): Promise<void> {
-		return this.writeJsonAtomic('hub.json', parseHub(data), (value) => {
+		// Todo arquivo gravado já sai na versão atual do schema.
+		const migrated = migrateHub(data).data;
+		return this.writeJsonAtomic('hub.json', parseHub(migrated), (value) => {
 			try {
 				parseHub(value);
 				return true;
@@ -247,11 +252,34 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async loadHub(): Promise<HubData> {
-		return parseHub(await this.readJson('hub.json'));
+		return this.migrateAndParseHub(await this.readJson('hub.json'));
+	}
+
+	/**
+	 * Migra o dado cru até a versão atual e valida. Quando houve migração,
+	 * guarda uma cópia `hub.json.pre-vN.bak` e grava o resultado migrado —
+	 * carregar o arquivo já migrado não escreve nada.
+	 */
+	private async migrateAndParseHub(raw: unknown): Promise<HubData> {
+		const { data, from, to } = migrateHub(raw);
+		const hub = parseHub(data);
+		if (from > 0 && to > from) await this.persistHubMigration(hub, from);
+		return hub;
+	}
+
+	private async persistHubMigration(hub: HubData, from: number): Promise<void> {
+		const source = this.path('hub.json');
+		const pre = `${source}.pre-v${from}.bak`;
+		try {
+			await copyFile(source, pre, fsConstants.COPYFILE_EXCL);
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+		}
+		await this.persistHub(hub);
 	}
 
 	async loadHubFromBackup(): Promise<HubData | null> {
-		return this.loadFromBackup('hub.json', parseHub);
+		return this.loadFromBackup('hub.json', (raw) => parseHub(migrateHub(raw).data));
 	}
 
 	async loadHubWithFallback(): Promise<HubLoadResult> {
@@ -286,7 +314,8 @@ export class JsonFileStorage implements HubStorage {
 	 */
 	async loadStateWithRecovery(): Promise<StateLoadResult> {
 		try {
-			const { state, recovery } = recoverHubState(await this.readJson('estado.json'));
+			const raw = await this.readJson('estado.json');
+			const { state, recovery } = recoverHubState(migrateState(raw).data);
 			const touched = recovery.removedSnapshots + recovery.removedRead + recovery.removedSaved;
 			return { state, recovery: touched > 0 ? recovery : null };
 		} catch (error) {
@@ -307,7 +336,8 @@ export class JsonFileStorage implements HubStorage {
 
 	async loadFeedCache(): Promise<FeedCache> {
 		try {
-			return parseFeedCache(await this.readJson('feed-cache.json'));
+			const raw = await this.readJson('feed-cache.json');
+			return parseFeedCache(migrateFeedCache(raw).data);
 		} catch (error) {
 			if (isMissingFile(error)) {
 				return structuredClone(EMPTY_FEED_CACHE);

@@ -1,0 +1,83 @@
+{
+	"version": 1,
+	"settings": { "accent": "#8AA4FF" },
+	"categories": [
+		{ "id": "jogos", "name": "Jogos", "color": "#8AA4FF", "order": 1 },
+		{ "id": "trabalho", "name": "Trabalho", "color": "#F2A65A", "order": 2 }
+	],
+	"groups": [{ "id": "darktide", "categoryId": "jogos", "name": "Darktide", "order": 1 }],
+	"items": [
+		{
+			"id": "wiki",
+			"type": "link",
+			"name": "Wiki",
+			"url": "https://example.com/wiki",
+			"categoryId": "jogos",
+			"groupId": "darktide",
+			"tags": ["build"],
+			"pinned": true,
+			"order": 1
+		},
+		{
+			"id": "planilha",
+			"type": "link",
+			"name": "Planilha",
+			"url": "https://example.com/planilha",
+			"categoryId": "trabalho",
+			"tags": [],
+			"pinned": false,
+			"order": 1
+		}
+	],
+	"feedSources": [
+		{
+			"id": "rss-jogos",
+			"type": "rss",
+			"name": "RSS Jogos",
+			"target": "https://example.com/jogos.xml",
+			"categoryId": "jogos",
+			"intervalMinutes": 30,
+			"enabled": true,
+			"include": [],
+			"exclude": [],
+			"matchMode": "any",
+			"order": 4
+		},
+		{
+			"id": "rss-trabalho",
+			"type": "rss",
+			"name": "RSS Trabalho",
+			"target": "https://example.com/trabalho.xml",
+			"categoryId": "trabalho",
+			"intervalMinutes": 60,
+			"enabled": true,
+			"include": [],
+			"exclude": [],
+			"matchMode": "any"
+		},
+		{
+			"id": "reddit-darktide",
+			"type": "reddit",
+			"name": "r/Darktide",
+			"target": "Darktide",
+			"categoryId": "jogos",
+			"groupId": "darktide",
+			"intervalMinutes": 30,
+			"enabled": true,
+			"include": ["patch"],
+			"exclude": [],
+			"matchMode": "any",
+			"order": 1
+		}
+	],
+	"savedFilters": [
+		{
+			"id": "patch-jogos",
+			"label": "Patch em Jogos",
+			"include": ["patch"],
+			"exclude": [],
+			"matchMode": "any",
+			"categoryId": "jogos"
+		}
+	]
+}

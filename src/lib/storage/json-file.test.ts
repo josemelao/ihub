@@ -33,7 +33,7 @@ describe('JsonFileStorage', () => {
 		await storage.saveHub(hub('Jogos'));
 		const loaded = await storage.loadHub();
 		expect(loaded.categories[0].name).toBe('Jogos');
-		expect(loaded.version).toBe(1);
+		expect(loaded.version).toBe(2);
 	});
 
 	it('cria backup do arquivo anterior ao gravar de novo', async () => {
