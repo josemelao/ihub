@@ -28,9 +28,10 @@ function hubWith(sources: FeedSource[]): HubData {
 }
 
 describe('normalizeSourceOrders', () => {
-	it('fills missing orders with the array position', () => {
+	it('renumera de 1..n preservando a ordem visual', () => {
 		const sources = [source('a'), source('b', { order: 7 }), source('c')];
-		expect(normalizeSourceOrders(sources).map((entry) => entry.order)).toEqual([1, 7, 3]);
+		// a (sem order = 0) primeiro, depois b (7) e c (0, empate resolvido pela posição)
+		expect(normalizeSourceOrders(sources).map((entry) => entry.order)).toEqual([1, 3, 2]);
 	});
 
 	it('does not mutate the original sources', () => {
