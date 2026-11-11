@@ -285,10 +285,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Em Bento, Compacto e Completo, clicar no título abre o post em nova aba.
-- [ ] Tab alcança o link do título em todas as visões.
-- [ ] O destaque de busca continua funcionando.
-- [ ] Nenhum `href` vazio/indefinido é renderizado.
+- [x] Em Bento, Compacto e Completo, clicar no título abre o post em nova aba.
+- [x] Tab alcança o link do título em todas as visões.
+- [x] O destaque de busca continua funcionando.
+- [x] Nenhum `href` vazio/indefinido é renderizado.
 
 **Testes:** manual nas 3 visões + teste de componente (quando a infra de componente existir).
 
@@ -315,10 +315,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Buscar por título de post retorna o post.
-- [ ] A paleta diferencia visualmente Link, App, Categoria e Post.
-- [ ] O índice não é reconstruído a cada tecla.
-- [ ] A busca continua rápida com 500 posts em cache.
+- [x] Buscar por título de post retorna o post.
+- [x] A paleta diferencia visualmente Link, App, Categoria e Post.
+- [x] O índice não é reconstruído a cada tecla.
+- [x] A busca continua rápida com 500 posts em cache.
 
 **Testes:** unitário de `searchHub` com feed; manual de performance.
 
@@ -342,10 +342,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Da Biblioteca, “Adicionar item” abre o editor de link já na aba Itens.
-- [ ] Da categoria “Jogos”, o formulário abre com categoria Jogos.
-- [ ] “Cancelar” volta para a página de origem.
-- [ ] O deep link é compartilhável e sobrevive a reload.
+- [x] Da Biblioteca, “Adicionar item” abre o editor de link já na aba Itens.
+- [x] Da categoria “Jogos”, o formulário abre com categoria Jogos.
+- [x] “Cancelar” volta para a página de origem.
+- [x] O deep link é compartilhável e sobrevive a reload.
 
 ---
 
@@ -365,9 +365,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] “Nova categoria” abre a criação de categoria.
-- [ ] “editar” de um grupo abre Grupos com o grupo em foco.
-- [ ] O foco visual não quebra em mobile.
+- [x] “Nova categoria” abre a criação de categoria.
+- [x] “editar” de um grupo abre Grupos com o grupo em foco.
+- [x] O foco visual não quebra em mobile.
 
 ---
 
@@ -387,9 +387,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Desligar uma fonte com erro remove o alerta da home.
-- [ ] O contador volta a subir se a fonte for religada e falhar.
-- [ ] O tooltip lista as fontes com erro.
+- [x] Desligar uma fonte com erro remove o alerta da home.
+- [x] O contador volta a subir se a fonte for religada e falhar.
+- [x] O tooltip lista as fontes com erro.
 
 ---
 
@@ -409,9 +409,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Trocar a URL remove os posts antigos imediatamente.
-- [ ] A próxima atualização popula os posts novos.
-- [ ] Nenhum post de outra fonte é afetado.
+- [x] Trocar a URL remove os posts antigos imediatamente.
+- [x] A próxima atualização popula os posts novos.
+- [x] Nenhum post de outra fonte é afetado.
 
 ---
 
@@ -433,9 +433,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Todo número/linha leva a uma visão coerente.
-- [ ] O filtro aplicado é visível e removível.
-- [ ] Funciona por teclado.
+- [x] Todo número/linha leva a uma visão coerente.
+- [x] O filtro aplicado é visível e removível.
+- [x] Funciona por teclado.
 
 ---
 
@@ -455,9 +455,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Buscar uma palavra que só existe no resumo encontra o salvo.
-- [ ] O trecho encontrado aparece destacado no resumo.
-- [ ] Sem regressão no destaque de título.
+- [x] Buscar uma palavra que só existe no resumo encontra o salvo.
+- [x] O trecho encontrado aparece destacado no resumo.
+- [x] Sem regressão no destaque de título.
 
 ---
 
@@ -479,10 +479,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] A ação pede confirmação.
-- [ ] O toast permite desfazer e restaura exatamente o estado anterior.
-- [ ] Funciona com filtro aplicado (marca apenas o conjunto filtrado).
-- [ ] Acessível por teclado e com `role="status"`.
+- [x] A ação pede confirmação.
+- [x] O toast permite desfazer e restaura exatamente o estado anterior.
+- [x] Funciona com filtro aplicado (marca apenas o conjunto filtrado).
+- [x] Acessível por teclado e com `role="status"`.
 
 ---
 
@@ -508,9 +508,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Um termo por conceito em toda a UI.
-- [ ] O glossário está documentado.
-- [ ] Nenhum texto diz “Favoritos” e “Salvos” na mesma tela para a mesma ação.
+- [x] Um termo por conceito em toda a UI.
+- [x] O glossário está documentado.
+- [x] Nenhum texto diz “Favoritos” e “Salvos” na mesma tela para a mesma ação.
 
 ---
 
@@ -532,11 +532,11 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Tab não escapa da palette.
-- [ ] Clicar fora fecha.
-- [ ] O fundo não rola.
-- [ ] O foco volta ao botão de busca ao fechar.
-- [ ] Teste com leitor de tela não anuncia conteúdo de trás como ativo.
+- [x] Tab não escapa da palette.
+- [x] Clicar fora fecha.
+- [x] O fundo não rola.
+- [x] O foco volta ao botão de busca ao fechar.
+- [x] Teste com leitor de tela não anuncia conteúdo de trás como ativo.
 
 ---
 
@@ -556,9 +556,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Leitor de tela anuncia “switch, ligado/desligado”.
-- [ ] Teclado alterna com Enter/Espaço.
-- [ ] O estado visual e o `aria-checked` nunca divergem.
+- [x] Leitor de tela anuncia “switch, ligado/desligado”.
+- [x] Teclado alterna com Enter/Espaço.
+- [x] O estado visual e o `aria-checked` nunca divergem.
 
 ---
 
@@ -579,10 +579,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Fechar sem mudanças não pergunta nada.
-- [ ] Fechar com mudanças pede confirmação.
-- [ ] “Cancelar” e “Salvar” continuam previsíveis.
-- [ ] O comportamento é o mesmo em todos os tipos de editor (link, app, fonte, categoria, grupo, filtro).
+- [x] Fechar sem mudanças não pergunta nada.
+- [x] Fechar com mudanças pede confirmação.
+- [x] “Cancelar” e “Salvar” continuam previsíveis.
+- [x] O comportamento é o mesmo em todos os tipos de editor (link, app, fonte, categoria, grupo, filtro).
 
 ---
 
@@ -604,10 +604,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Nenhum texto normal abaixo de 4,5:1.
-- [ ] Cards lidos continuam distinguíveis sem perder legibilidade.
-- [ ] Trocar o accent atualiza mark/badges.
-- [ ] Accent escuro não deixa botão primário ilegível.
+- [x] Nenhum texto normal abaixo de 4,5:1.
+- [x] Cards lidos continuam distinguíveis sem perder legibilidade.
+- [x] Trocar o accent atualiza mark/badges.
+- [x] Accent escuro não deixa botão primário ilegível.
 
 ---
 
@@ -626,9 +626,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] A aba mostra o ícone.
-- [ ] O ícone funciona em 16/32/180 px.
-- [ ] Nenhum 404 no console.
+- [x] A aba mostra o ícone.
+- [x] O ícone funciona em 16/32/180 px.
+- [x] Nenhum 404 no console.
 
 ---
 
@@ -648,9 +648,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] O texto descreve exatamente o comportamento.
-- [ ] Nenhum usuário espera que “destacar” remova itens.
-- [ ] A documentação foi atualizada.
+- [x] O texto descreve exatamente o comportamento.
+- [x] Nenhum usuário espera que “destacar” remova itens.
+- [x] A documentação foi atualizada.
 
 ---
 
@@ -677,11 +677,11 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Nenhum item de feed com esquema inválido entra no cache.
-- [ ] Nenhum snapshot com URL inválida é salvo.
-- [ ] Import rejeita bundle com URL inválida e mostra o caminho do problema.
-- [ ] Teste unitário cobre os esquemas perigosos.
-- [ ] Itens antigos inválidos não geram link clicável.
+- [x] Nenhum item de feed com esquema inválido entra no cache.
+- [x] Nenhum snapshot com URL inválida é salvo.
+- [x] Import rejeita bundle com URL inválida e mostra o caminho do problema.
+- [x] Teste unitário cobre os esquemas perigosos.
+- [x] Itens antigos inválidos não geram link clicável.
 
 ---
 
@@ -734,10 +734,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Estado/cache inválidos não derrubam o app.
-- [ ] O app avisa que usou backup/vazio.
-- [ ] Import com estado inválido não grava nada.
-- [ ] Testes cobrem cada arquivo corrompido.
+- [x] Estado/cache inválidos não derrubam o app.
+- [x] O app avisa que usou backup/vazio.
+- [x] Import com estado inválido não grava nada.
+- [x] Testes cobrem cada arquivo corrompido.
 
 ---
 
@@ -759,9 +759,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Payload acima do limite retorna 413 sem gravar.
-- [ ] Payload normal continua funcionando.
-- [ ] O limite está documentado.
+- [x] Payload acima do limite retorna 413 sem gravar.
+- [x] Payload normal continua funcionando.
+- [x] O limite está documentado.
 
 ---
 
@@ -780,10 +780,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Fonte apontando para localhost/privado falha com mensagem clara.
-- [ ] Redirect para privado é bloqueado.
-- [ ] Feeds públicos continuam funcionando.
-- [ ] O status da fonte registra o erro.
+- [x] Fonte apontando para localhost/privado falha com mensagem clara.
+- [x] Redirect para privado é bloqueado.
+- [x] Feeds públicos continuam funcionando.
+- [x] O status da fonte registra o erro.
 
 ---
 
@@ -810,10 +810,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] 10 toggles concorrentes não perdem nenhum.
-- [ ] Duas abas não sobrescrevem o estado uma da outra.
-- [ ] O lock não bloqueia leituras (ou bloqueia por tempo mínimo).
-- [ ] Teste de estresse passa.
+- [x] 10 toggles concorrentes não perdem nenhum.
+- [x] Duas abas não sobrescrevem o estado uma da outra.
+- [x] O lock não bloqueia leituras (ou bloqueia por tempo mínimo).
+- [x] Teste de estresse passa.
 
 **Nota:** se o esforço crescer, uma alternativa é migrar `estado.json` para SQLite (ver PLAT-12), mas o lock é o caminho mais barato agora.
 
@@ -835,9 +835,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Duas chamadas simultâneas não duplicam requisições.
-- [ ] A segunda recebe o resultado da primeira.
-- [ ] Refresh individual (`sourceId`) não conflita com o global.
+- [x] Duas chamadas simultâneas não duplicam requisições.
+- [x] A segunda recebe o resultado da primeira.
+- [x] Refresh individual (`sourceId`) não conflita com o global.
 
 ---
 
@@ -883,9 +883,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Salvar em pasta do OneDrive não falha intermitentemente.
-- [ ] Nenhum `.tmp-*` fica para trás em caso de erro.
-- [ ] O erro final é claro para o usuário.
+- [x] Salvar em pasta do OneDrive não falha intermitentemente.
+- [x] Nenhum `.tmp-*` fica para trás em caso de erro.
+- [x] O erro final é claro para o usuário.
 
 ---
 
@@ -906,10 +906,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] `estado.json` não cresce indefinidamente.
-- [ ] Posts salvos nunca são podados.
-- [ ] A poda é idempotente.
-- [ ] Documentar a retenção.
+- [x] `estado.json` não cresce indefinidamente.
+- [x] Posts salvos nunca são podados.
+- [x] A poda é idempotente.
+- [x] Documentar a retenção.
 
 ---
 
@@ -927,9 +927,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Nenhum item órfão permanece.
-- [ ] O status não aparece em lugar nenhum.
-- [ ] A operação é atômica com a remoção do hub.
+- [x] Nenhum item órfão permanece.
+- [x] O status não aparece em lugar nenhum.
+- [x] A operação é atômica com a remoção do hub.
 
 ---
 
@@ -978,10 +978,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] O usuário vê o que será adicionado/alterado/removido antes de confirmar.
-- [ ] Settings não são sobrescritos sem escolha.
-- [ ] Import inválido não grava nada.
-- [ ] Backup é criado e mencionado.
+- [x] O usuário vê o que será adicionado/alterado/removido antes de confirmar.
+- [x] Settings não são sobrescritos sem escolha.
+- [x] Import inválido não grava nada.
+- [x] Backup é criado e mencionado.
 
 ---
 
@@ -1001,10 +1001,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Existem pelo menos 3 gerações de backup.
-- [ ] O backup mais antigo é rotacionado, não o mais novo.
-- [ ] O usuário consegue baixar um backup manual.
-- [ ] O diagnóstico mostra a idade.
+- [x] Existem pelo menos 3 gerações de backup.
+- [x] O backup mais antigo é rotacionado, não o mais novo.
+- [x] O usuário consegue baixar um backup manual.
+- [x] O diagnóstico mostra a idade.
 
 ---
 
@@ -1023,9 +1023,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] O layout não conhece `JsonFileStorage`.
-- [ ] O comportamento de fallback é idêntico.
-- [ ] A interface documenta o contrato.
+- [x] O layout não conhece `JsonFileStorage`.
+- [x] O comportamento de fallback é idêntico.
+- [x] A interface documenta o contrato.
 
 ---
 
@@ -1052,10 +1052,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Selecionar 20 itens e mover para outra categoria funciona.
-- [ ] “Desfazer” restaura o estado anterior.
-- [ ] Teclado: espaço seleciona, Shift+setas estende.
-- [ ] A seleção não interfere no scroll/masonry.
+- [x] Selecionar 20 itens e mover para outra categoria funciona.
+- [x] “Desfazer” restaura o estado anterior.
+- [x] Teclado: espaço seleciona, Shift+setas estende.
+- [x] A seleção não interfere no scroll/masonry.
 
 ---
 
@@ -1124,10 +1124,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Importar um bookmarks.html do Chrome cria categorias/grupos/links.
-- [ ] Importar um OPML cria fontes e não duplica.
-- [ ] Exportar OPML reimporta sem perda.
-- [ ] Itens inválidos são listados, não silenciados.
+- [x] Importar um bookmarks.html do Chrome cria categorias/grupos/links.
+- [x] Importar um OPML cria fontes e não duplica.
+- [x] Exportar OPML reimporta sem perda.
+- [x] Itens inválidos são listados, não silenciados.
 
 ---
 
@@ -1155,10 +1155,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Salvar a aba atual leva ao formulário preenchido em ≤ 2 cliques.
-- [ ] Título/descrição são sugeridos quando possível.
-- [ ] Falha de metadata não impede salvar manualmente.
-- [ ] O bookmarklet funciona em Chrome/Edge/Firefox.
+- [x] Salvar a aba atual leva ao formulário preenchido em ≤ 2 cliques.
+- [x] Título/descrição são sugeridos quando possível.
+- [x] Falha de metadata não impede salvar manualmente.
+- [x] O bookmarklet funciona em Chrome/Edge/Firefox.
 
 ---
 
@@ -1204,10 +1204,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Categoria com 5 não lidos mostra “5”.
-- [ ] Marcar um post como lido decrementa.
-- [ ] Fonte desligada não conta.
-- [ ] A contagem não inclui posts filtrados por regra da fonte.
+- [x] Categoria com 5 não lidos mostra “5”.
+- [x] Marcar um post como lido decrementa.
+- [x] Fonte desligada não conta.
+- [x] A contagem não inclui posts filtrados por regra da fonte.
 
 ---
 
@@ -1227,9 +1227,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] “Mais de 7 dias” marca só posts com `publishedAt` anterior.
-- [ ] Posts sem data não são marcados por engano.
-- [ ] Desfazer restaura.
+- [x] “Mais de 7 dias” marca só posts com `publishedAt` anterior.
+- [x] Posts sem data não são marcados por engano.
+- [x] Desfazer restaura.
 
 ---
 
@@ -1250,10 +1250,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] `j`/`k` navegam sem abrir o post.
-- [ ] `s` salva e `m` marca lido.
-- [ ] `?` abre a ajuda.
-- [ ] Atalhos não disparam ao digitar na busca.
+- [x] `j`/`k` navegam sem abrir o post.
+- [x] `s` salva e `m` marca lido.
+- [x] `?` abre a ajuda.
+- [x] Atalhos não disparam ao digitar na busca.
 
 ---
 
@@ -1273,9 +1273,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Salvar “Jogos + não lidos + patch” reaplica a visão.
-- [ ] Filtros antigos continuam funcionando.
-- [ ] A contagem do chip respeita o escopo.
+- [x] Salvar “Jogos + não lidos + patch” reaplica a visão.
+- [x] Filtros antigos continuam funcionando.
+- [x] A contagem do chip respeita o escopo.
 
 ---
 
@@ -1342,9 +1342,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Clicar em “r/Darktide” mostra só posts dessa fonte.
-- [ ] Combina com “Não lidos”.
-- [ ] A URL é compartilhável.
+- [x] Clicar em “r/Darktide” mostra só posts dessa fonte.
+- [x] Combina com “Não lidos”.
+- [x] A URL é compartilhável.
 
 ---
 

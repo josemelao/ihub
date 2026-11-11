@@ -269,6 +269,8 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
+Próximo bloco definido: **ORG-16 (ordem de fontes) + ORG-02 (drag & drop com fallback de teclado)**.
+
 1. Fila de escrita/otimistic lock no storage.
 2. Validar `bundle.state` antes de importar.
 3. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
@@ -437,3 +439,16 @@ Executada em 11/11/2026 sobre `v0.13.2`.
 - APIs novas: `POST /api/import/file/preview`, `POST /api/import/file/apply`, `GET /api/export/opml`, `GET /api/export/bookmarks`, `POST /api/link-metadata`.
 - `npm run verify` verde com **380 testes** em 49 arquivos.
 - Detalhes em [`docs/capture.md`](docs/capture.md).
+
+### Revisão pós-implementação
+
+- Revisão independente apontou e foram corrigidos:
+  - parser de bookmarks quadrático com tags `<A>` sem fechamento → scanner linear + caps (100k itens, profundidade 50);
+  - quick add não abria o editor quando o Gerenciar já estava aberto → parâmetros tratados por `$effect` reativo;
+  - merge O(n²) → helpers `addLinks`/`addSources` em lote;
+  - export de bookmarks HTML ausente → `GET /api/export/bookmarks` + `buildBookmarksHtml`;
+  - inválidos silenciados → preview e diálogo listam motivo, limitado a 20;
+  - testes de truncamento, profundidade, performance e host privado adicionados.
+- Validação real no Edge/CDP: quick add a partir de `/gerenciar`, bookmarklet arrastável e diálogo de importação com input de arquivo.
+- Branch `feat/captura-rapida`; tag local `v0.14.0`; nenhum push.
+- `core.autocrlf` local foi definido como `false` para o `lint` não falhar em todos os arquivos por CRLF.
