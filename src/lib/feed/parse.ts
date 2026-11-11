@@ -58,14 +58,25 @@ function stripTags(value: string): string {
 		.trim();
 }
 
+function relOf(value: unknown): string {
+	if (!value || typeof value !== 'object') return '';
+	const rel = (value as Record<string, unknown>)['@_rel'];
+	return typeof rel === 'string' ? rel.trim().toLowerCase() : '';
+}
+
 function linkOf(value: unknown): string {
 	if (typeof value === 'string') return value.trim();
 	if (Array.isArray(value)) {
+		// Atom repete <link> com rel: o self/enclosure/edit não é o artigo.
+		let fallback = '';
 		for (const entry of value) {
 			const link = linkOf(entry);
-			if (link) return link;
+			if (!link) continue;
+			const rel = relOf(entry);
+			if (rel === '' || rel === 'alternate') return link;
+			if (!fallback) fallback = link;
 		}
-		return '';
+		return fallback;
 	}
 	if (value && typeof value === 'object') {
 		const object = value as Record<string, unknown>;
@@ -118,6 +129,15 @@ function publishedAtOf(value: string): string {
 	if (!value) return '';
 	const date = new Date(value);
 	return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+}
+
+/** Primeira data legível do item: RSS, Atom e Dublin Core. */
+function firstDateOf(item: Record<string, unknown>): string {
+	for (const key of ['pubDate', 'published', 'updated', 'dc:date', 'date']) {
+		const value = textOf(item[key]);
+		if (value) return value;
+	}
+	return '';
 }
 
 function makeId(sourceId: string, guid: string, url: string, title: string): string {
@@ -198,7 +218,7 @@ export function parseFeed(xml: string, sourceId: string): FeedItem[] {
 		).slice(0, 700);
 
 		const guid = textOf(item.guid ?? item.id);
-		const publishedAt = publishedAtOf(textOf(item.pubDate ?? item.published ?? item.updated));
+		const publishedAt = publishedAtOf(firstDateOf(item));
 		const id = makeId(sourceId, guid, url, title);
 
 		if (seen.has(url)) continue;
