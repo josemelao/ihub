@@ -463,9 +463,14 @@ Executada em 11/11/2026 sobre `v0.14.0`.
   - Listas de fontes ordenadas na home, feed, categoria e seletor de filtros.
 - **ORG-02**: DnD de itens em Gerenciar → Itens.
   - Handle **⋮⋮** por linha; drop em outro grupo/“Sem grupo”.
+  - Durante o arraste, todos os grupos (inclusive vazios) e um “Sem grupo” por categoria aparecem como destino.
   - `moveItemTo` atualiza `categoryId`/`groupId` e põe o item no fim do grupo; ação `move-item-to`.
   - Destaque da drop zone; fallback por ↑/↓, editor e mobile.
-  - Fora do bloco: DnD de grupos/categorias/fontes e drop em grupo vazio.
-- `npm run verify` verde com **397 testes** em 52 arquivos.
+  - Fora do bloco: DnD de grupos/categorias/fontes.
+- Revisão pós-implementação corrigiu:
+  - drop targets escondidos por busca/filtro/grupo vazio → todos aparecem durante o arraste;
+  - ordem de fonte não recalculada ao mudar de categoria → `updateSource`/`updateGroup` reatribuem para o fim da categoria destino;
+  - testes de mudança de categoria e grupo adicionados.
+- `npm run verify` verde com **399 testes** em 52 arquivos.
 - Edge/CDP: item movido de Darktide para Risk of Rain Returns e fonte r/Darktide ↔ Steam News; ambos persistidos no `hub.json`.
 - Detalhes em [`docs/organization.md`](docs/organization.md).
