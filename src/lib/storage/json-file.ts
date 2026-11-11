@@ -520,60 +520,63 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async backupNow(): Promise<BackupCreated> {
+		return fileLocks.withLocks(
+			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
+			() => this.createBackupUnlocked()
+		);
+	}
+
+	/** Cópia manual dos arquivos atuais. O chamador precisa segurar os locks. */
+	private async createBackupUnlocked(): Promise<BackupCreated> {
 		const createdAt = new Date();
 		const stamp = createdAt.toISOString().replace(/[:.]/g, '-');
 		const id = `manual-${stamp}`;
 		const directory = resolve(this.dataDir, 'backups', id);
 
-		return fileLocks.withLocks(
-			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
-			async () => {
-				await mkdir(directory, { recursive: true });
+		await mkdir(directory, { recursive: true });
 
-				let entries: string[];
+		let entries: string[];
+		try {
+			entries = await readdir(this.dataDir);
+		} catch {
+			entries = [];
+		}
+
+		const files: string[] = [];
+		for (const base of ['hub.json', 'estado.json', 'feed-cache.json']) {
+			const candidates = entries
+				.filter((name) => name === base || name.startsWith(`${base}.bak`))
+				.sort();
+			for (const name of candidates) {
 				try {
-					entries = await readdir(this.dataDir);
-				} catch {
-					entries = [];
+					await copyFile(this.path(name), join(directory, name));
+					files.push(name);
+				} catch (error) {
+					if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
 				}
-
-				const files: string[] = [];
-				for (const base of ['hub.json', 'estado.json', 'feed-cache.json']) {
-					const candidates = entries
-						.filter((name) => name === base || name.startsWith(`${base}.bak`))
-						.sort();
-					for (const name of candidates) {
-						try {
-							await copyFile(this.path(name), join(directory, name));
-							files.push(name);
-						} catch (error) {
-							if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-						}
-					}
-				}
-
-				await writeFile(
-					join(directory, 'backup-info.txt'),
-					`Backup manual\nData: ${createdAt.toISOString()}\nArquivos: ${files.join(', ')}\n`,
-					'utf-8'
-				);
-
-				const entry = (await this.listManualBackups()).find((candidate) => candidate.id === id) ?? {
-					id,
-					createdAt: createdAt.toISOString(),
-					path: directory,
-					files: files.length,
-					sizeBytes: 0,
-					hasHub: files.includes('hub.json'),
-					hasState: files.includes('estado.json'),
-					hasCache: files.includes('feed-cache.json')
-				};
-
-				await this.pruneManualBackups();
-
-				return { directory, createdAt: createdAt.toISOString(), files, entry };
 			}
+		}
+
+		await writeFile(
+			join(directory, 'backup-info.txt'),
+			`Backup manual\nData: ${createdAt.toISOString()}\nArquivos: ${files.join(', ')}\n`,
+			'utf-8'
 		);
+
+		const entry = (await this.listManualBackups()).find((candidate) => candidate.id === id) ?? {
+			id,
+			createdAt: createdAt.toISOString(),
+			path: directory,
+			files: files.length,
+			sizeBytes: 0,
+			hasHub: files.includes('hub.json'),
+			hasState: files.includes('estado.json'),
+			hasCache: files.includes('feed-cache.json')
+		};
+
+		await this.pruneManualBackups();
+
+		return { directory, createdAt: createdAt.toISOString(), files, entry };
 	}
 
 	async backupInfo(): Promise<BackupInfo> {
@@ -637,18 +640,44 @@ export class JsonFileStorage implements HubStorage {
 		}
 
 		// Antes de sobrescrever, guarda o estado atual para permitir desfazer.
-		const safety = await this.backupNow();
-
-		await fileLocks.withLocks(
+		// Tudo acontece sob os três locks, e qualquer falha de escrita desfaz o
+		// que já foi gravado para não deixar hub/estado/cache misturados.
+		return fileLocks.withLocks(
 			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
 			async () => {
-				await this.persistHub(hub);
-				if (state) await this.persistState(state);
-				if (cache) await this.persistFeedCache(cache);
+				const previousHub = await this.loadHub().catch((error) => {
+					if (error instanceof HubValidationError) return null;
+					throw error;
+				});
+				const previousState = await this.loadState().catch((error) => {
+					if (error instanceof HubValidationError) return null;
+					throw error;
+				});
+				const previousCache = await this.loadFeedCache().catch((error) => {
+					if (error instanceof HubValidationError) return null;
+					throw error;
+				});
+
+				const safety = await this.createBackupUnlocked();
+
+				try {
+					await this.persistHub(hub);
+					if (state) await this.persistState(state);
+					if (cache) await this.persistFeedCache(cache);
+				} catch (error) {
+					if (previousHub) await this.persistHub(previousHub).catch(() => undefined);
+					if (state && previousState) {
+						await this.persistState(previousState).catch(() => undefined);
+					}
+					if (cache && previousCache) {
+						await this.persistFeedCache(previousCache).catch(() => undefined);
+					}
+					throw error;
+				}
+
+				return { restored: entry, safety: safety.entry };
 			}
 		);
-
-		return { restored: entry, safety: safety.entry };
 	}
 
 	async deleteBackup(id: string): Promise<{ id: string }> {
