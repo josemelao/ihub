@@ -12,6 +12,7 @@
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
 	import { sortFeedSources } from '#lib/feed/order';
+	import { collectTags, tagKey } from '#lib/tags';
 	import type { ImportPreview } from '#lib/import-preview';
 	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
 	import { HubValidationError, parseHub } from '#lib/schema';
@@ -39,6 +40,7 @@
 	const linkCount = $derived(hub.items.filter((item) => item.type === 'link').length);
 	const appCount = $derived(hub.items.filter((item) => item.type === 'app').length);
 	const sortedCategories = $derived([...hub.categories].sort((a, b) => a.order - b.order));
+	const tags = $derived(collectTags(hub));
 
 	function normalizeText(value: string): string {
 		return value
@@ -179,7 +181,8 @@
 		reddit: 'Reddit'
 	};
 
-	type Tab = 'fontes' | 'itens' | 'grupos' | 'categorias' | 'filtros' | 'backups' | 'aparencia';
+	type Tab =
+		'fontes' | 'itens' | 'tags' | 'grupos' | 'categorias' | 'filtros' | 'backups' | 'aparencia';
 	type EditorKind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
 	type EditorPreset = {
 		categoryId?: string;
@@ -224,6 +227,7 @@
 	const tabs = $derived([
 		{ id: 'fontes' as const, label: `Fontes do feed · ${hub.feedSources.length}` },
 		{ id: 'itens' as const, label: `Itens · ${hub.items.length}` },
+		{ id: 'tags' as const, label: `Tags · ${tags.length}` },
 		{ id: 'grupos' as const, label: `Grupos · ${hub.groups.length}` },
 		{ id: 'categorias' as const, label: `Categorias · ${hub.categories.length}` },
 		{ id: 'filtros' as const, label: `Filtros salvos · ${hub.savedFilters.length}` },
@@ -269,6 +273,7 @@
 		const validTabs: Tab[] = [
 			'fontes',
 			'itens',
+			'tags',
 			'grupos',
 			'categorias',
 			'filtros',
@@ -374,6 +379,23 @@
 		draggingItemId = null;
 		if (!id) return;
 		void mutate({ action: 'move-item-to', id, categoryId, groupId });
+	}
+
+	function renameTagFromForm(event: SubmitEvent, from: string): void {
+		event.preventDefault();
+		const form = event.currentTarget as HTMLFormElement;
+		const to = String(new FormData(form).get('name') ?? '').trim();
+		if (!to) {
+			actionError = 'Informe o novo nome da tag.';
+			actionMessage = '';
+			return;
+		}
+		if (tagKey(to) === tagKey(from)) {
+			actionMessage = 'A tag não mudou.';
+			actionError = '';
+			return;
+		}
+		void mutate({ action: 'rename-tag', from, to });
 	}
 
 	async function mutate(payload: Record<string, unknown>): Promise<void> {
@@ -843,7 +865,7 @@
 				<Icon name="plus" size={16} />
 				App
 			</button>
-		{:else if tab !== 'aparencia' && tab !== 'backups'}
+		{:else if tab !== 'aparencia' && tab !== 'backups' && tab !== 'tags'}
 			<button class="btn btn-primary" type="button" onclick={() => openEditor(addKind)}>
 				<Icon name="plus" size={16} />
 				{addLabel}
@@ -1288,6 +1310,44 @@
 			<p class="muted">
 				{hub.items.length === 0 ? 'Nenhum item cadastrado.' : 'Nenhum item encontrado.'}
 			</p>
+		{/if}
+	</div>
+{:else if tab === 'tags'}
+	<div class="panel section">
+		<div class="section-head">
+			<h2 style="font-size: 16px">Tags</h2>
+			<span class="muted small">{tags.length} tags</span>
+		</div>
+		<p class="muted small">
+			Renomear uma tag atualiza todos os itens. Caixa, acento e espaços extras são normalizados
+			automaticamente.
+		</p>
+		{#if tags.length === 0}
+			<p class="muted">Nenhuma tag cadastrada. Edite um item para adicionar tags.</p>
+		{:else}
+			<div class="manage-list">
+				{#each tags as tag (tag.key)}
+					<div class="manage-row">
+						<span class="manage-main">
+							<span class="manage-name">{tag.tag}</span>
+							<span class="manage-sub">
+								{tag.count}
+								{tag.count === 1 ? 'item' : 'itens'}
+							</span>
+						</span>
+						<form class="manage-actions" onsubmit={(event) => renameTagFromForm(event, tag.tag)}>
+							<input
+								class="tag-rename-input"
+								name="name"
+								value={tag.tag}
+								aria-label={`Novo nome para a tag ${tag.tag}`}
+								maxlength="40"
+							/>
+							<button class="mini-btn" type="submit">Renomear</button>
+						</form>
+					</div>
+				{/each}
+			</div>
 		{/if}
 	</div>
 {:else if tab === 'grupos'}
