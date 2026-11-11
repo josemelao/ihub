@@ -28,9 +28,6 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (error instanceof HubValidationError) {
 			return json({ ok: false, error: error.message, issues: error.issues }, { status: 400 });
 		}
-		return json(
-			{ ok: false, error: error instanceof Error ? error.message : String(error) },
-			{ status: 500 }
-		);
+		return json({ ok: false, error: 'Falha ao restaurar o backup.' }, { status: 500 });
 	}
 };

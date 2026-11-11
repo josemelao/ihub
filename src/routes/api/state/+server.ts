@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { EMPTY_STATE } from '#lib/defaults';
-import { readJsonLimited, RequestBodyError } from '#lib/net/body';
+import { readJsonLimited, RequestBodyError, isRecord, isInternalError } from '#lib/net/body';
 import { HubValidationError } from '#lib/schema';
 import { applyStateAction, type StatePayload } from '#lib/state-actions';
 import { getStorage } from '#lib/storage';
@@ -21,15 +21,20 @@ export const GET: RequestHandler = async () => {
 };
 
 export const POST: RequestHandler = async ({ request }) => {
-	let payload: StatePayload;
+	let parsed: unknown;
 	try {
-		payload = (await readJsonLimited(request, MAX_BODY_BYTES)) as StatePayload;
+		parsed = await readJsonLimited(request, MAX_BODY_BYTES);
 	} catch (error) {
 		if (error instanceof RequestBodyError) {
 			return json({ ok: false, error: error.message }, { status: error.status });
 		}
 		return json({ ok: false, error: 'Corpo JSON inválido.' }, { status: 400 });
 	}
+
+	if (!isRecord(parsed) || typeof parsed.action !== 'string' || !parsed.action) {
+		return json({ ok: false, error: 'Payload inválido: informe "action".' }, { status: 400 });
+	}
+	const payload = parsed as unknown as StatePayload;
 
 	const now = new Date().toISOString();
 
@@ -48,6 +53,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (error instanceof HubValidationError) {
 			return json({ ok: false, error: error.message, issues: error.issues }, { status: 400 });
 		}
-		throw error;
+		if (!isInternalError(error)) throw error;
+		return json({ ok: false, error: 'Falha inesperada ao atualizar o estado.' }, { status: 500 });
 	}
 };

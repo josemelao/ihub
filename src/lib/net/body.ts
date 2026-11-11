@@ -1,3 +1,17 @@
+export function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** Erros que indicam bug nosso, não payload errado: a mensagem não vai ao cliente. */
+export function isInternalError(error: unknown): boolean {
+	return (
+		error instanceof TypeError ||
+		error instanceof ReferenceError ||
+		error instanceof RangeError ||
+		error instanceof SyntaxError
+	);
+}
+
 export class RequestBodyError extends Error {
 	readonly status: number;
 
