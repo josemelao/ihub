@@ -28,7 +28,7 @@ function asArray<T>(value: T | T[] | undefined): T[] {
 	return Array.isArray(value) ? value : [value];
 }
 
-function decodeEntities(value: string): string {
+export function decodeEntities(value: string): string {
 	return value
 		.replace(/&nbsp;/gi, ' ')
 		.replace(/&amp;/gi, '&')
