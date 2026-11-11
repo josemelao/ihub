@@ -168,6 +168,14 @@
 
 	type Tab = 'fontes' | 'itens' | 'grupos' | 'categorias' | 'filtros' | 'backups' | 'aparencia';
 	type EditorKind = 'link' | 'app' | 'source' | 'category' | 'group' | 'filter';
+	type EditorPreset = {
+		categoryId?: string;
+		groupId?: string;
+		url?: string;
+		name?: string;
+		description?: string;
+		icon?: string;
+	};
 
 	let tab = $state<Tab>('fontes');
 	let backupInfo = $state<BackupInfo | null>(null);
@@ -188,7 +196,7 @@
 	let editor = $state<{
 		kind: EditorKind;
 		initial: HubItem | FeedSource | Category | Group | SavedFilter | null;
-		preset: { categoryId?: string; groupId?: string };
+		preset: EditorPreset;
 		key: number;
 	} | null>(null);
 
@@ -235,7 +243,7 @@
 	function openEditor(
 		kind: EditorKind,
 		initial: HubItem | FeedSource | Category | Group | SavedFilter | null = null,
-		preset: { categoryId?: string; groupId?: string } = {}
+		preset: EditorPreset = {}
 	): void {
 		editor = { kind, initial, preset, key: Date.now() };
 	}
@@ -300,7 +308,11 @@
 							: 'filtros';
 		openEditor(kind, null, {
 			categoryId: params.get('category') ?? undefined,
-			groupId: params.get('group') ?? undefined
+			groupId: params.get('group') ?? undefined,
+			url: params.get('url') ?? undefined,
+			name: params.get('name') ?? undefined,
+			description: params.get('description') ?? undefined,
+			icon: params.get('icon') ?? undefined
 		});
 	});
 
@@ -1458,6 +1470,10 @@
 			initial={editor.initial}
 			presetCategoryId={editor.preset.categoryId}
 			presetGroupId={editor.preset.groupId}
+			presetUrl={editor.preset.url}
+			presetName={editor.preset.name}
+			presetDescription={editor.preset.description}
+			presetIcon={editor.preset.icon}
 			onclose={() => (editor = null)}
 		/>
 	{/key}

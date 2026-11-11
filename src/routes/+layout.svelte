@@ -2,6 +2,7 @@
 	import '../app.css';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
+	import QuickAddDialog from '#lib/components/QuickAddDialog.svelte';
 	import { contrastText } from '#lib/display';
 	import { countUnread } from '#lib/feed/triage';
 	import { buildFeedView } from '#lib/feed/view';
@@ -84,4 +85,8 @@
 
 {#if ui.paletteOpen}
 	<CommandPalette hub={data.hub} feed={data.feed} onclose={() => ui.closePalette()} />
+{/if}
+
+{#if ui.quickAddOpen}
+	<QuickAddDialog onclose={() => ui.closeQuickAdd()} />
 {/if}

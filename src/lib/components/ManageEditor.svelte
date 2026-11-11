@@ -28,6 +28,10 @@
 		initial = null,
 		presetCategoryId,
 		presetGroupId,
+		presetUrl,
+		presetName,
+		presetDescription,
+		presetIcon,
 		onclose
 	}: {
 		kind: Kind;
@@ -35,6 +39,10 @@
 		initial?: HubItem | FeedSource | Category | Group | SavedFilter | null;
 		presetCategoryId?: string;
 		presetGroupId?: string;
+		presetUrl?: string;
+		presetName?: string;
+		presetDescription?: string;
+		presetIcon?: string;
 		onclose: () => void;
 	} = $props();
 
@@ -72,7 +80,11 @@
 		source: HubItem | FeedSource | Category | Group | SavedFilter | null,
 		data: HubData,
 		presetCategoryId?: string,
-		presetGroupId?: string
+		presetGroupId?: string,
+		presetUrl?: string,
+		presetName?: string,
+		presetDescription?: string,
+		presetIcon?: string
 	): Seed {
 		const isFeedSource =
 			source !== null &&
@@ -95,11 +107,11 @@
 				: '';
 
 		return {
-			name: (source && 'name' in source ? source.name : '') || '',
-			description: item?.description ?? '',
-			url: item?.type === 'link' ? item.url : '',
+			name: (source && 'name' in source ? source.name : '') || presetName || '',
+			description: item?.description ?? presetDescription ?? '',
+			url: item?.type === 'link' ? item.url : (presetUrl ?? ''),
 			launchValue: item?.type === 'app' ? item.launch.value : '',
-			icon: item?.icon ?? '',
+			icon: item?.icon ?? presetIcon ?? '',
 			categoryId,
 			groupId: (source && 'groupId' in source ? source.groupId : presetGroup) ?? '',
 			tags: item ? item.tags.join(', ') : '',
@@ -125,7 +137,18 @@
 		};
 	}
 
-	const seed = untrack(() => buildSeed(initial, hub, presetCategoryId, presetGroupId));
+	const seed = untrack(() =>
+		buildSeed(
+			initial,
+			hub,
+			presetCategoryId,
+			presetGroupId,
+			presetUrl,
+			presetName,
+			presetDescription,
+			presetIcon
+		)
+	);
 
 	let name = $state(seed.name);
 	let description = $state(seed.description);

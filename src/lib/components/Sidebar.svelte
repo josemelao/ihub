@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { categoryItemCounts, categorySourceCounts } from '#lib/display';
 	import type { HubData } from '#lib/types';
+	import { ui } from '#lib/ui.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -101,6 +102,15 @@
 				<Icon name="plus" size={16} />
 				Nova categoria
 			</a>
+			<button
+				class="nav-link nav-button"
+				type="button"
+				title="Adicionar um link já com título e descrição"
+				onclick={() => ui.openQuickAdd()}
+			>
+				<Icon name="plus" size={16} />
+				Adicionar rápido
+			</button>
 		</div>
 	</div>
 
@@ -112,3 +122,14 @@
 		<div class="sidebar-footnote">Feed com atualização automática</div>
 	</div>
 </nav>
+
+<style>
+	.nav-button {
+		width: 100%;
+		background: none;
+		border: 0;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+</style>
