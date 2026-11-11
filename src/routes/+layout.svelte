@@ -18,7 +18,7 @@
 
 	onMount(() => {
 		if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-			navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+			navigator.serviceWorker.register('/service-worker.js').catch(() => undefined);
 		}
 	});
 

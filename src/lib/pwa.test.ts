@@ -56,7 +56,7 @@ describe('PWA manifest', () => {
 			'rel="manifest" href="/manifest.webmanifest"'
 		);
 		expect(readFileSync(join(root, 'src', 'routes', '+layout.svelte'), 'utf8')).toContain(
-			"serviceWorker.register('/sw.js')"
+			"serviceWorker.register('/service-worker.js')"
 		);
 		expect(readFileSync(join(root, 'src', 'lib', 'security', 'headers.ts'), 'utf8')).toContain(
 			"worker-src 'self'"
@@ -75,8 +75,10 @@ describe('offline page', () => {
 });
 
 describe('service worker', () => {
+	const readWorker = () => readFileSync(join(root, 'src', 'service-worker.ts'), 'utf8');
+
 	it('handles install, activate and fetch', () => {
-		const sw = readStatic('sw.js');
+		const sw = readWorker();
 
 		expect(sw).toContain("addEventListener('install'");
 		expect(sw).toContain("addEventListener('activate'");
@@ -84,8 +86,30 @@ describe('service worker', () => {
 		expect(sw).toContain('/offline.html');
 	});
 
+	it('versions the cache with the build version', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain("from '$app/env'");
+		expect(sw).toContain('/_app/immutable/');
+		expect(sw).toContain('${version}');
+	});
+
+	it('drops caches from older builds', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain('startsWith(CACHE_PREFIX)');
+		expect(sw).toContain('caches.delete(key)');
+	});
+
+	it('bounds the number of cached entries', () => {
+		const sw = readWorker();
+
+		expect(sw).toContain('MAX_ENTRIES');
+		expect(sw).toContain('trimCache');
+	});
+
 	it('never caches API or non-GET requests', () => {
-		const sw = readStatic('sw.js');
+		const sw = readWorker();
 
 		expect(sw).toContain("request.method !== 'GET'");
 		expect(sw).toContain("pathname.startsWith('/api/')");
@@ -93,7 +117,7 @@ describe('service worker', () => {
 	});
 
 	it('only caches the static shell', () => {
-		const sw = readStatic('sw.js');
+		const sw = readWorker();
 
 		expect(sw).toContain("pathname.startsWith('/_app/immutable/')");
 		expect(sw).toContain("pathname.startsWith('/icons/')");
