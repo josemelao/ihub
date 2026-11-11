@@ -138,6 +138,39 @@ export function addLink(hub: HubData, input: LinkInput): HubData {
 	return { ...hub, items: [...hub.items, item] };
 }
 
+/**
+ * Versão em lote de `addLink`: pré-computa ids e ordens uma vez para manter
+ * importações grandes em O(n).
+ */
+export function addLinks(hub: HubData, inputs: LinkInput[]): HubData {
+	if (inputs.length === 0) return hub;
+
+	const ids = new Set(hub.items.map((item) => item.id));
+	const orders = new Map<string, number>();
+	for (const item of hub.items) {
+		const key = `${item.categoryId}\u0000${item.groupId ?? ''}`;
+		orders.set(key, Math.max(orders.get(key) ?? 0, item.order));
+	}
+
+	const added: LinkItem[] = inputs.map((input) => {
+		const id = uniqueId(slugify(input.name), ids);
+		ids.add(id);
+		const key = `${input.categoryId}\u0000${input.groupId ?? ''}`;
+		const order = (orders.get(key) ?? 0) + 1;
+		orders.set(key, order);
+
+		return {
+			...itemBase(input),
+			id,
+			type: 'link',
+			url: input.url,
+			order
+		};
+	});
+
+	return { ...hub, items: [...hub.items, ...added] };
+}
+
 export function addApp(hub: HubData, input: AppInput): HubData {
 	const id = uniqueId(slugify(input.name), new Set(hub.items.map((item) => item.id)));
 	const item: AppItem = {
@@ -223,23 +256,36 @@ export function moveItem(hub: HubData, id: string, direction: 'up' | 'down'): Hu
 }
 
 export function addSource(hub: HubData, input: SourceInput): HubData {
-	const id = uniqueId(slugify(input.name), new Set(hub.feedSources.map((source) => source.id)));
-	const source: FeedSource = {
-		id,
-		type: input.type,
-		name: input.name,
-		target: input.target,
-		categoryId: input.categoryId,
-		...(input.groupId ? { groupId: input.groupId } : {}),
-		intervalMinutes: input.intervalMinutes,
-		...(input.maxItems ? { maxItems: input.maxItems } : {}),
-		...(input.locale ? { locale: input.locale } : {}),
-		enabled: input.enabled,
-		include: input.include,
-		exclude: input.exclude,
-		matchMode: input.matchMode
-	};
-	return { ...hub, feedSources: [...hub.feedSources, source] };
+	return addSources(hub, [input]);
+}
+
+/** Versão em lote de `addSource`: ids únicos calculados uma vez. */
+export function addSources(hub: HubData, inputs: SourceInput[]): HubData {
+	if (inputs.length === 0) return hub;
+
+	const ids = new Set(hub.feedSources.map((source) => source.id));
+	const added: FeedSource[] = inputs.map((input) => {
+		const id = uniqueId(slugify(input.name), ids);
+		ids.add(id);
+
+		return {
+			id,
+			type: input.type,
+			name: input.name,
+			target: input.target,
+			categoryId: input.categoryId,
+			...(input.groupId ? { groupId: input.groupId } : {}),
+			intervalMinutes: input.intervalMinutes,
+			...(input.maxItems ? { maxItems: input.maxItems } : {}),
+			...(input.locale ? { locale: input.locale } : {}),
+			enabled: input.enabled,
+			include: input.include,
+			exclude: input.exclude,
+			matchMode: input.matchMode
+		};
+	});
+
+	return { ...hub, feedSources: [...hub.feedSources, ...added] };
 }
 
 export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubData {

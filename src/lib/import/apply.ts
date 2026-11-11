@@ -1,4 +1,11 @@
-import { addCategory, addGroup, addLink, addSource } from '../hub-edit';
+import {
+	addCategory,
+	addGroup,
+	addLinks,
+	addSources,
+	type LinkInput,
+	type SourceInput
+} from '../hub-edit';
 import type { HubData } from '../types';
 import type { ParsedBookmarks } from './bookmarks';
 import { inferSourceType, type ParsedOpml } from './opml';
@@ -127,6 +134,7 @@ export function applyBookmarksImport(
 	const urls = new Set(
 		hub.items.filter((item) => item.type === 'link').map((item) => item.url.trim().toLowerCase())
 	);
+	const inputs: LinkInput[] = [];
 	let next = hub;
 
 	for (const bookmark of parsed.bookmarks) {
@@ -138,17 +146,18 @@ export function applyBookmarksImport(
 		urls.add(key);
 
 		const target = bookmarkTarget(next, bookmark.folderPath, options, summary);
-		next = addLink(target.hub, {
+		next = target.hub;
+		inputs.push({
 			name: bookmark.title,
 			url: bookmark.url,
 			categoryId: target.categoryId,
 			groupId: target.groupId,
 			tags: ['importado']
 		});
-		summary.itemsAdded += 1;
 	}
 
-	return { hub: next, summary };
+	summary.itemsAdded = inputs.length;
+	return { hub: addLinks(next, inputs), summary };
 }
 
 export function applyOpmlImport(
@@ -158,6 +167,7 @@ export function applyOpmlImport(
 ): FileImportResult {
 	const summary = emptySummary(parsed.skipped);
 	const feeds = new Set(hub.feedSources.map((source) => feedKey(source.target)));
+	const inputs: SourceInput[] = [];
 	let next = hub;
 
 	for (const entry of parsed.sources) {
@@ -169,7 +179,8 @@ export function applyOpmlImport(
 		feeds.add(key);
 
 		const target = opmlTarget(next, entry.folderPath, options, summary);
-		next = addSource(target.hub, {
+		next = target.hub;
+		inputs.push({
 			type: inferSourceType(entry.feedUrl),
 			name: entry.name,
 			target: entry.feedUrl,
@@ -181,8 +192,8 @@ export function applyOpmlImport(
 			exclude: [],
 			matchMode: 'any'
 		});
-		summary.sourcesAdded += 1;
 	}
 
-	return { hub: next, summary };
+	summary.sourcesAdded = inputs.length;
+	return { hub: addSources(next, inputs), summary };
 }
