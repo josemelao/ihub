@@ -4,13 +4,14 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { relativeTime } from '#lib/display';
+	import { sortFeedSources } from '#lib/feed/order';
 	import { buildFeedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	const hub = $derived(data.hub);
 	const catName = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.name])));
-	const sources = $derived(hub.feedSources);
+	const sources = $derived(sortFeedSources(hub.feedSources));
 	const enabledCount = $derived(sources.filter((source) => source.enabled).length);
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 	const initialFilterId = $derived(page.url.searchParams.get('filtro'));

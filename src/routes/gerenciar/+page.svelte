@@ -11,6 +11,7 @@
 	import ManageEditor from '#lib/components/ManageEditor.svelte';
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
+	import { sortFeedSources } from '#lib/feed/order';
 	import type { ImportPreview } from '#lib/import-preview';
 	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
 	import { HubValidationError, parseHub } from '#lib/schema';
@@ -61,17 +62,19 @@
 		sortedCategories
 			.map((category) => ({
 				category,
-				sources: hub.feedSources.filter(
-					(source) =>
-						source.categoryId === category.id &&
-						(sourceStatusFilter === 'all' || Boolean(data.feed.sources[source.id]?.error)) &&
-						matchesQuery(
-							sourceQuery,
-							source.name,
-							source.target,
-							groupName[source.groupId ?? ''],
-							category.name
-						)
+				sources: sortFeedSources(
+					hub.feedSources.filter(
+						(source) =>
+							source.categoryId === category.id &&
+							(sourceStatusFilter === 'all' || Boolean(data.feed.sources[source.id]?.error)) &&
+							matchesQuery(
+								sourceQuery,
+								source.name,
+								source.target,
+								groupName[source.groupId ?? ''],
+								category.name
+							)
+					)
 				)
 			}))
 			.filter((section) => section.sources.length > 0)
@@ -1063,6 +1066,25 @@
 								</span>
 							</button>
 							<div class="manage-actions">
+								<button
+									class="mini-btn icon"
+									type="button"
+									title="Mover fonte para cima"
+									aria-label={`Mover ${source.name} para cima`}
+									onclick={() => mutate({ action: 'move-source', id: source.id, direction: 'up' })}
+								>
+									<Icon name="chevron-up" size={14} />
+								</button>
+								<button
+									class="mini-btn icon"
+									type="button"
+									title="Mover fonte para baixo"
+									aria-label={`Mover ${source.name} para baixo`}
+									onclick={() =>
+										mutate({ action: 'move-source', id: source.id, direction: 'down' })}
+								>
+									<Icon name="chevron-down" size={14} />
+								</button>
 								<button
 									class="mini-btn icon"
 									type="button"

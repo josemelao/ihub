@@ -3,6 +3,7 @@
 	import GroupCard from '#lib/components/GroupCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { resolve } from '$app/paths';
+	import { sortFeedSources } from '#lib/feed/order';
 	import { buildFeedView } from '#lib/feed/view';
 	import type { HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
@@ -97,6 +98,8 @@
 	{entries}
 	title={`Feed de ${category.name}`}
 	savedFilters={data.hub.savedFilters}
-	sources={data.hub.feedSources.filter((source) => source.categoryId === category.id)}
+	sources={sortFeedSources(
+		data.hub.feedSources.filter((source) => source.categoryId === category.id)
+	)}
 	contextNote={`Só fontes desta categoria · ${sourceCount} fontes`}
 />

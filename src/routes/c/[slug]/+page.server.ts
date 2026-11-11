@@ -1,4 +1,5 @@
 import { error } from '@sveltejs/kit';
+import { sortFeedSources } from '#lib/feed/order';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, parent }) => {
@@ -29,7 +30,9 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		});
 	}
 
-	const sources = hub.feedSources.filter((source) => source.categoryId === category.id);
+	const sources = sortFeedSources(
+		hub.feedSources.filter((source) => source.categoryId === category.id)
+	);
 
 	return { category, groups, items, sources, ungroupedIds: ungrouped.map((item) => item.id) };
 };

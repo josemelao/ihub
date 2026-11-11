@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { sortFeedSources } from '#lib/feed/order';
 	import { onMount } from 'svelte';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import HomeDashboard from '#lib/components/HomeDashboard.svelte';
@@ -14,7 +15,7 @@
 
 	const hub = $derived(data.hub);
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
-	const sources = $derived(hub.feedSources.filter((source) => source.enabled));
+	const sources = $derived(sortFeedSources(hub.feedSources.filter((source) => source.enabled)));
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 	const savedRecent = $derived(buildSavedView(hub, data.feed, data.state).slice(0, 3));
 

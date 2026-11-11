@@ -16,6 +16,7 @@
 		shouldCloseOnBackdropClick,
 		type BackdropPointerState
 	} from '#lib/dialog-backdrop';
+	import { sortFeedSources } from '#lib/feed/order';
 	import Icon from './Icon.svelte';
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import ItemIcon from './ItemIcon.svelte';
@@ -799,7 +800,7 @@
 						<label for="e-filter-source">Fonte</label>
 						<select id="e-filter-source" bind:value={filterSourceId}>
 							<option value="">Todas</option>
-							{#each hub.feedSources.filter((source) => !filterCategoryId || source.categoryId === filterCategoryId) as source (source.id)}
+							{#each sortFeedSources(hub.feedSources.filter((source) => !filterCategoryId || source.categoryId === filterCategoryId)) as source (source.id)}
 								<option value={source.id}>{source.name}</option>
 							{/each}
 						</select>
