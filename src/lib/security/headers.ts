@@ -16,6 +16,7 @@ export const CONTENT_SECURITY_POLICY = [
 	"font-src 'self' https://fonts.gstatic.com data:",
 	"img-src 'self' https: data:",
 	"connect-src 'self'",
+	"worker-src 'self'",
 	"frame-src 'self' https://www.youtube-nocookie.com https://www.redditmedia.com",
 	"media-src 'self' https:"
 ].join('; ');

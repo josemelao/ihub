@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import '../app.css';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
@@ -14,6 +15,12 @@
 	const feedEntries = $derived(buildFeedView(data.hub, data.feed, data.state));
 	const unread = $derived(feedEntries.filter((entry) => !entry.read).length);
 	const unreadByCategory = $derived(countUnread(feedEntries).byCategory);
+
+	onMount(() => {
+		if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+		}
+	});
 
 	function onKeydown(event: KeyboardEvent): void {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
