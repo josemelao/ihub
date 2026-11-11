@@ -81,6 +81,7 @@
 	);
 
 	const itemSections = $derived.by(() => {
+		const dragActive = draggingItemId !== null;
 		return sortedCategories
 			.map((category) => {
 				const groups = hub.groups
@@ -95,40 +96,42 @@
 								(item) =>
 									item.categoryId === category.id &&
 									item.groupId === group.id &&
-									(itemTypeFilter === 'todos' || item.type === itemTypeFilter) &&
-									matchesQuery(
-										itemQuery,
-										item.name,
-										item.description,
-										itemTarget(item),
-										item.tags.join(' '),
-										category.name,
-										group.name
-									)
+									(dragActive || itemTypeFilter === 'todos' || item.type === itemTypeFilter) &&
+									(dragActive ||
+										matchesQuery(
+											itemQuery,
+											item.name,
+											item.description,
+											itemTarget(item),
+											item.tags.join(' '),
+											category.name,
+											group.name
+										))
 							)
 							.sort((a, b) => a.order - b.order)
 					}))
-					.filter((group) => group.items.length > 0);
+					.filter((group) => group.items.length > 0 || dragActive);
 
 				const ungrouped = hub.items
 					.filter(
 						(item) =>
 							item.categoryId === category.id &&
 							!item.groupId &&
-							(itemTypeFilter === 'todos' || item.type === itemTypeFilter) &&
-							matchesQuery(
-								itemQuery,
-								item.name,
-								item.description,
-								itemTarget(item),
-								item.tags.join(' '),
-								category.name,
-								'Sem grupo'
-							)
+							(dragActive || itemTypeFilter === 'todos' || item.type === itemTypeFilter) &&
+							(dragActive ||
+								matchesQuery(
+									itemQuery,
+									item.name,
+									item.description,
+									itemTarget(item),
+									item.tags.join(' '),
+									category.name,
+									'Sem grupo'
+								))
 					)
 					.sort((a, b) => a.order - b.order);
 
-				if (ungrouped.length > 0) {
+				if (ungrouped.length > 0 || dragActive) {
 					groups.push({
 						id: '__sem-grupo',
 						key: `${category.id}:__sem-grupo`,
@@ -143,7 +146,7 @@
 					total: groups.reduce((sum, group) => sum + group.items.length, 0)
 				};
 			})
-			.filter((section) => section.total > 0);
+			.filter((section) => section.total > 0 || dragActive);
 	});
 
 	const groupSections = $derived(

@@ -105,6 +105,19 @@ function nextItemOrder(hub: HubData, categoryId: string, groupId?: string): numb
 	return siblings.reduce((max, item) => Math.max(max, item.order), 0) + 1;
 }
 
+function nextSourceOrder(
+	hub: HubData,
+	categoryId: string,
+	exclude: (source: FeedSource) => boolean = () => false
+): number {
+	let max = 0;
+	hub.feedSources.forEach((source, index) => {
+		if (source.categoryId !== categoryId || exclude(source)) return;
+		max = Math.max(max, source.order ?? index + 1);
+	});
+	return max + 1;
+}
+
 function itemBase(input: {
 	name: string;
 	description?: string;
@@ -341,12 +354,14 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 		feedSources: hub.feedSources.map((source) => {
 			if (source.id !== id) return source;
 
+			const categoryId = patch.categoryId ?? source.categoryId;
 			const next: FeedSource = {
 				...source,
 				type: patch.type ?? source.type,
 				name: patch.name ?? source.name,
 				target: patch.target ?? source.target,
-				categoryId: patch.categoryId ?? source.categoryId,
+				categoryId,
+				order: categoryId !== source.categoryId ? nextSourceOrder(hub, categoryId) : source.order,
 				intervalMinutes: patch.intervalMinutes ?? source.intervalMinutes,
 				enabled: patch.enabled ?? source.enabled,
 				include: patch.include ?? source.include,
@@ -467,6 +482,9 @@ export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>
 				.filter((group) => group.categoryId === categoryId)
 				.reduce((max, group) => Math.max(max, group.order), 0) + 1
 		: current.order;
+	let nextGroupSourceOrder = categoryChanged
+		? nextSourceOrder(hub, categoryId, (source) => source.groupId === id)
+		: 0;
 
 	return {
 		...hub,
@@ -478,7 +496,7 @@ export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>
 			: hub.items,
 		feedSources: categoryChanged
 			? hub.feedSources.map((source) =>
-					source.groupId === id ? { ...source, categoryId } : source
+					source.groupId === id ? { ...source, categoryId, order: nextGroupSourceOrder++ } : source
 				)
 			: hub.feedSources
 	};

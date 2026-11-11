@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_HUB } from './defaults';
 import type { FeedSource, HubData } from './types';
-import { addSources, moveSource } from './hub-edit';
+import { addSources, moveSource, updateGroup, updateSource } from './hub-edit';
 
 function source(id: string, categoryId: string, order: number): FeedSource {
 	return {
@@ -80,5 +80,25 @@ describe('moveSource', () => {
 
 		expect(moved.feedSources.every((entry) => typeof entry.order === 'number')).toBe(true);
 		expect(moved.feedSources.find((entry) => entry.id === 's2')?.order).toBe(1);
+	});
+});
+
+describe('source order on category change', () => {
+	it('appends a source when updateSource changes its category', () => {
+		const moved = updateSource(base(), 's1', { categoryId: 'c2' });
+		const source = moved.feedSources.find((entry) => entry.id === 's1');
+
+		expect(source).toMatchObject({ categoryId: 'c2', order: 2 });
+	});
+
+	it('appends moved sources when updateGroup changes category', () => {
+		const hub = base();
+		hub.groups = [{ id: 'g1', name: 'G1', categoryId: 'c1', order: 1 }];
+		hub.feedSources[0] = { ...hub.feedSources[0], groupId: 'g1' };
+
+		const moved = updateGroup(hub, 'g1', { categoryId: 'c2' });
+		const source = moved.feedSources.find((entry) => entry.id === 's1');
+
+		expect(source).toMatchObject({ categoryId: 'c2', order: 2 });
 	});
 });
