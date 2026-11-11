@@ -255,13 +255,10 @@ export function moveItemTo(
 		...hub,
 		items: hub.items.map((entry) => {
 			if (entry.id !== id) return entry;
-			const { groupId: _currentGroup, ...rest } = entry;
-			return {
-				...rest,
-				categoryId,
-				...(nextGroupId ? { groupId: nextGroupId } : {}),
-				order
-			};
+			const next = { ...entry, categoryId, order } as HubItem;
+			if (nextGroupId) next.groupId = nextGroupId;
+			else delete (next as { groupId?: string }).groupId;
+			return next;
 		})
 	};
 }
