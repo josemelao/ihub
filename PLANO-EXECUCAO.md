@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13) e captura rápida (ORG-04/05) executados  
+> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05) e organização manual (ORG-02/16) executados  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1076,10 +1076,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Arrastar um item para outro grupo muda categoria/grupo e ordem.
-- [ ] Recarregar mantém a ordem.
-- [ ] Teclado consegue reordenar (↑/↓ ou menu “Mover para”).
-- [ ] Mobile tem alternativa (menu “Mover para cima/baixo”).
+- [x] Arrastar um item para outro grupo muda categoria/grupo e ordem.
+- [x] Recarregar mantém a ordem.
+- [x] Teclado consegue reordenar (↑/↓ ou menu “Mover para”).
+- [x] Mobile tem alternativa (menu “Mover para cima/baixo”).
 
 ---
 
@@ -1408,9 +1408,9 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Fontes aparecem na ordem definida.
-- [ ] Reordenar persiste.
-- [ ] Dados antigos migram sem erro.
+- [x] Fontes aparecem na ordem definida.
+- [x] Reordenar persiste.
+- [x] Dados antigos migram sem erro.
 
 ---
 

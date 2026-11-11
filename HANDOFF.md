@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida (v0.14.0)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual (v0.15.0)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -263,13 +263,13 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
 - YouTube aceita `@handle`, URL do canal, ID `UC...` ou URL de feed; o ID é resolvido automaticamente no refresh e pelo botão **Detectar**.
-- Fontes de feed não têm reordenação (modelo não tem `order`).
+- Fontes de feed têm `order` opcional; DnD de grupos/categorias/fontes ainda não entrou (↑/↓ cobre).
 - `npm audit` completo tem avisos em dependências de desenvolvimento (ESLint).
 - O feed é sempre por data; não há ordenação alternativa.
 
 ## 11. Próximos passos sugeridos
 
-Próximo bloco definido: **ORG-16 (ordem de fontes) + ORG-02 (drag & drop com fallback de teclado)**.
+Próximo bloco definido: **PWA/autostart (PLAT-01/02)**; depois tags como filtro (ORG-03) e leitura (READ-01/02).
 
 1. Fila de escrita/otimistic lock no storage.
 2. Validar `bundle.state` antes de importar.
@@ -452,3 +452,20 @@ Executada em 11/11/2026 sobre `v0.13.2`.
 - Validação real no Edge/CDP: quick add a partir de `/gerenciar`, bookmarklet arrastável e diálogo de importação com input de arquivo.
 - Branch `feat/captura-rapida`; tag local `v0.14.0`; nenhum push.
 - `core.autocrlf` local foi definido como `false` para o `lint` não falhar em todos os arquivos por CRLF.
+
+## 20. Fase 2 — organização manual (v0.15.0)
+
+Executada em 11/11/2026 sobre `v0.14.0`.
+
+- **ORG-16**: `FeedSource.order` opcional, normalizado no `parseHub` (fontes antigas recebem a posição atual).
+  - `addSources` coloca novas fontes no fim da categoria.
+  - `moveSource` troca com a vizinha da mesma categoria; ↑/↓ em Gerenciar → Fontes.
+  - Listas de fontes ordenadas na home, feed, categoria e seletor de filtros.
+- **ORG-02**: DnD de itens em Gerenciar → Itens.
+  - Handle **⋮⋮** por linha; drop em outro grupo/“Sem grupo”.
+  - `moveItemTo` atualiza `categoryId`/`groupId` e põe o item no fim do grupo; ação `move-item-to`.
+  - Destaque da drop zone; fallback por ↑/↓, editor e mobile.
+  - Fora do bloco: DnD de grupos/categorias/fontes e drop em grupo vazio.
+- `npm run verify` verde com **397 testes** em 52 arquivos.
+- Edge/CDP: item movido de Darktide para Risk of Rain Returns e fonte r/Darktide ↔ Steam News; ambos persistidos no `hub.json`.
+- Detalhes em [`docs/organization.md`](docs/organization.md).

@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos e captura rápida (bookmarks/OPML, quick add e bookmarklet).
-- **Versão atual:** `v0.14.0` · **380 testes** em 49 arquivos.
-- **Próximos blocos planejados:** organização manual (drag & drop, ordem de fontes), PWA/autostart e leitura (reader/highlights).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet) e organização manual (ordem de fontes e drag & drop de itens).
+- **Versão atual:** `v0.15.0` · **397 testes** em 52 arquivos.
+- **Próximos blocos planejados:** PWA/autostart, tags como filtro e leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -188,6 +188,13 @@ Na tela **Gerenciar**:
 - **Adicionar rápido** (sidebar): cole uma URL e o app busca título, descrição e ícone antes de abrir o editor. Se a página não puder ser lida, o editor abre só com a URL.
 - **Bookmarklet** em Gerenciar → Itens: arraste **Salvar no Hub** para a barra de favoritos e clique em qualquer site para abrir o editor já preenchido. Sites com CSP rígida podem bloquear bookmarklets; nesse caso use **Adicionar rápido**.
 - Detalhes, limites e checklist: [docs/capture.md](docs/capture.md).
+
+### Organização manual
+
+- **Ordem de fontes**: em Gerenciar → Fontes, use ↑/↓ para reordenar dentro da categoria. A ordem vale para home, feed, categoria e filtros salvos e é gravada no `hub.json` (fontes antigas recebem a posição atual no load).
+- **Drag & drop de itens**: em Gerenciar → Itens, arraste pelo handle **⋮⋮** e solte em outro grupo (ou “Sem grupo”). O item vai para o fim do grupo destino, com `categoryId`/`groupId` e ordem atualizados.
+- **Fallback**: ↑/↓ continua reordenando; no mobile, use **Editar** ou os botões ↑/↓. DnD de grupos/categorias/fontes ainda não entrou.
+- Detalhes: [docs/organization.md](docs/organization.md).
 
 ### Editar pela interface (M4)
 
