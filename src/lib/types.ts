@@ -56,6 +56,8 @@ export interface FeedSource {
 	intervalMinutes: number;
 	maxItems?: number;
 	locale?: string;
+	/** Ordem de exibição dentro da categoria; normalizada no load. */
+	order?: number;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { withSourceOrders } from './feed/order';
 import type { FeedCache, HubData, HubState, ValidationIssue } from './types';
 
 export class HubValidationError extends Error {
@@ -114,6 +115,7 @@ const feedSourceSchema = z.object({
 	intervalMinutes: z.number().int().min(1).default(30),
 	maxItems: z.number().int().min(1).max(200).optional(),
 	locale: localeSchema.optional(),
+	order: z.number().int().nonnegative().optional(),
 	enabled: z.boolean().default(true),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),
@@ -302,7 +304,7 @@ export function parseHub(input: unknown): HubData {
 	if (!result.success) {
 		throw new HubValidationError(issuesFrom(result.error));
 	}
-	return result.data as HubData;
+	return withSourceOrders(result.data as HubData);
 }
 
 export function parseHubState(input: unknown): HubState {
