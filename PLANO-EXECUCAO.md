@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05) e organização manual (ORG-02/16) executados  
+> **Status:** aprovado com escopo ajustado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16) e PWA (PLAT-01) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1654,10 +1654,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] O app instala como PWA.
-- [ ] Abre offline com o shell e uma mensagem clara.
-- [ ] Ícones corretos em 192/512.
-- [ ] Nenhum dado sensível no cache do service worker.
+- [x] O app instala como PWA.
+- [x] Abre offline com o shell e uma mensagem clara.
+- [x] Ícones corretos em 192/512.
+- [x] Nenhum dado sensível no cache do service worker.
 
 ---
 
@@ -1680,8 +1680,8 @@ Diferenciação / depois        → AVALIAR
 
 - [ ] Ao logar no Windows, o hub está acessível em `127.0.0.1:5757`.
 - [ ] Fechar a janela do terminal não derruba o servidor.
-- [ ] O usuário consegue desativar o autostart.
-- [ ] Há instruções no README.
+- [x] O usuário consegue desativar o autostart.
+- [x] Há instruções no README.
 
 ---
 

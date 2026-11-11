@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet) e organização manual (ordem de fontes e drag & drop de itens).
-- **Versão atual:** `v0.15.0` · **399 testes** em 52 arquivos.
-- **Próximos blocos planejados:** PWA/autostart, tags como filtro e leitura (reader/highlights).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline e autostart no Windows.
+- **Versão atual:** `v0.16.0` · **408 testes** em 54 arquivos.
+- **Próximos blocos planejados:** tags como filtro e leitura (reader/highlights).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -114,10 +114,21 @@ npm start
 
 ### 9. Iniciar com o Windows
 
-Ainda **não há autostart automático** (PLAT-02 pendente). Por enquanto:
+Autostart por usuário, sem admin:
 
-- deixe o `npm start` em uma janela do PowerShell; ou
-- crie uma tarefa no **Agendador de Tarefas** com gatilho “Ao fazer logon”, ação iniciando `npm` com argumento `start` e “Iniciar em” apontando para a pasta do projeto.
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1
+```
+
+O script cria um atalho `Meu Hub.lnk` na pasta **Startup** que roda `scripts/start-hidden.vbs` oculto, iniciando `node scripts/start.mjs`. Requer Node 24+ e `npm run build` já executado.
+
+Para desativar:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\uninstall-autostart.ps1
+```
+
+Detalhes e limitações: [docs/pwa.md](docs/pwa.md).
 
 ## Dados
 
@@ -261,6 +272,13 @@ data/hub.json             # seus dados (ignorado pelo Git)
 mockups/                  # referências visuais (.dc.html) — não é o app
 PLANEJAMENTO-hub.md       # decisões, fases e critérios de aceite
 ```
+
+## PWA e offline
+
+- Manifest e service worker permitem instalar o hub no Chrome/Edge e abrir uma tela de aviso quando o servidor local está parado.
+- O service worker guarda apenas o shell estático e `offline.html`; nunca cacheia `/api/` nem arquivos de `data/`.
+- No Chrome/Edge, use **Instalar aplicativo** em <http://127.0.0.1:5757>.
+- Detalhes: [docs/pwa.md](docs/pwa.md).
 
 ## Qualidade
 

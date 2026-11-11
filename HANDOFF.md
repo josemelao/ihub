@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-10
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual (v0.15.0)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart (v0.16.0)**. Projeto local, funcional e com testes verdes.
 
 ## 1. O que é
 
@@ -269,7 +269,7 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-Próximo bloco definido: **PWA/autostart (PLAT-01/02)**; depois tags como filtro (ORG-03) e leitura (READ-01/02).
+Próximo bloco definido: **tags como filtro (ORG-03)**; depois leitura (READ-01/02).
 
 1. Fila de escrita/otimistic lock no storage.
 2. Validar `bundle.state` antes de importar.
@@ -475,3 +475,19 @@ Executada em 11/11/2026 sobre `v0.14.0`.
 - Edge/CDP: item movido de Darktide para Risk of Rain Returns e fonte r/Darktide ↔ Steam News; ambos persistidos no `hub.json`.
 - Detalhes em [`docs/organization.md`](docs/organization.md).
 - **Validação manual do dono (11/11/2026): aprovada** — DnD entre grupos/“Sem grupo” e reordenação de fontes conferidos com o servidor em `127.0.0.1:5757`.
+
+## 21. Fase 4 — PWA e autostart (v0.16.0)
+
+Executada em 11/11/2026 sobre `v0.15.0`.
+
+- **PLAT-01**: manifest (`static/manifest.webmanifest`), ícones 192/512 (any + maskable), `offline.html`, service worker e registro em produção.
+  - SW faz network-first para navegação com fallback offline e cache-first apenas para `/_app/immutable`, `/icons`, manifest e favicon.
+  - Nunca intercepta `/api/`, métodos não-GET ou outra origem.
+  - CSP ganhou `worker-src 'self'` (Report-Only).
+- **PLAT-02**: `scripts/install-autostart.ps1`, `scripts/uninstall-autostart.ps1` e `scripts/start-hidden.vbs`.
+  - Atalho por usuário na pasta Startup, sem admin, com janela oculta.
+  - Instalação/remoção testada em pasta Startup temporária; **não foi instalado no Windows do dono**.
+  - Validação real de logon fica pendente (instalar, sair/entrar e abrir `127.0.0.1:5757`).
+- `npm run verify` verde com **408 testes** em 54 arquivos.
+- Edge/CDP: `Page.getInstallabilityErrors` vazio, SW `activated`/controlando, cache `meu-hub-shell-v1`; com rede e cache HTTP desligados, navegação serviu “Meu Hub está offline”.
+- Detalhes em [`docs/pwa.md`](docs/pwa.md).
