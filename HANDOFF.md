@@ -495,3 +495,5 @@ Executada em 11/11/2026 sobre `v0.15.0`.
   - teste do atalho só verificava existência → agora confere target/arguments/workdir em caminho com espaços;
   - `npm run setup` adicionado para `.env` e `data/hub.json`.
 - Detalhes em [`docs/pwa.md`](docs/pwa.md).
+- Branch `feat/pwa-autostart`; tag `v0.16.0`; as branches `feat/captura-rapida` e `feat/organizacao-manual` continuam empilhadas e ainda não foram integradas ao `master`.
+- **Próximo passo:** ORG-03 — tags como filtro de primeira classe (chips na Biblioteca, URL `?tag=`, renomear tag em massa e normalizar duplicatas).
