@@ -6,6 +6,14 @@ export interface RedditPostInfo {
 	embedUrl: string;
 }
 
+function safeDecode(value: string): string | null {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return null;
+	}
+}
+
 export function redditPostInfo(url: string): RedditPostInfo | null {
 	let parsed: URL;
 	try {
@@ -20,9 +28,11 @@ export function redditPostInfo(url: string): RedditPostInfo | null {
 	const match = parsed.pathname.match(/^\/r\/([^/]+)\/comments\/([a-z0-9]+)(?:\/([^/?#]*))?/i);
 	if (!match) return null;
 
-	const subreddit = decodeURIComponent(match[1]);
+	const subreddit = safeDecode(match[1]);
 	const id = match[2];
-	const slug = match[3] ? decodeURIComponent(match[3]) : '';
+	const slug = match[3] ? safeDecode(match[3]) : '';
+
+	if (subreddit === null || slug === null) return null;
 
 	if (!/^[A-Za-z0-9_]+$/.test(subreddit) || !/^[A-Za-z0-9]+$/.test(id)) return null;
 
