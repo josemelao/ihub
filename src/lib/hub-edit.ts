@@ -228,6 +228,20 @@ export function updateItem(hub: HubData, id: string, patch: ItemPatch): HubData 
 				next.groupId = patch.groupId;
 			}
 
+			// Grupo de outra categoria deixaria o hub inconsistente na validação.
+			if (next.groupId) {
+				const group = hub.groups.find((entry) => entry.id === next.groupId);
+				if (group && group.categoryId !== next.categoryId)
+					delete (next as { groupId?: string }).groupId;
+			}
+
+			// Mudar de categoria/grupo mantém a ordem antiga e cria duplicatas no
+			// destino: o item passa a ser o último do novo bucket.
+			const bucketChanged =
+				next.categoryId !== item.categoryId ||
+				(next.groupId ?? undefined) !== (item.groupId ?? undefined);
+			if (bucketChanged) next.order = nextItemOrder(hub, next.categoryId, next.groupId);
+
 			if (next.type === 'link' && patch.url !== undefined) {
 				next.url = patch.url;
 			}

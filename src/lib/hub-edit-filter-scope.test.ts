@@ -113,13 +113,20 @@ describe('saved filter scope follows moved sources', () => {
 	it('drops a group that does not belong to the destination category', () => {
 		const moved = updateSource(base(), 'reddit-patch', { categoryId: 'trabalho' });
 
-		expect(moved.feedSources.find((source) => source.id === 'reddit-patch')?.groupId).toBeUndefined();
+		expect(
+			moved.feedSources.find((source) => source.id === 'reddit-patch')?.groupId
+		).toBeUndefined();
 		expect(() => parseHub(moved)).not.toThrow();
 	});
 
 	it('keeps the group when the destination category owns it', () => {
 		const withGroup = base();
-		withGroup.groups.push({ id: 'trabalho-extra', categoryId: 'trabalho', name: 'Extra', order: 2 });
+		withGroup.groups.push({
+			id: 'trabalho-extra',
+			categoryId: 'trabalho',
+			name: 'Extra',
+			order: 2
+		});
 
 		const moved = updateSource(withGroup, 'reddit-patch', {
 			categoryId: 'trabalho',
