@@ -6,11 +6,7 @@ export const MAX_HIGHLIGHT_QUOTE_LENGTH = 2_000;
 export const MAX_HIGHLIGHT_NOTE_LENGTH = 2_000;
 
 export type HighlightErrorCode =
-	| 'empty-quote'
-	| 'quote-too-long'
-	| 'note-too-long'
-	| 'invalid-color'
-	| 'not-found';
+	'empty-quote' | 'quote-too-long' | 'note-too-long' | 'invalid-color' | 'not-found';
 
 export class HighlightError extends Error {
 	readonly code: HighlightErrorCode;
@@ -37,7 +33,9 @@ function nowIso(): string {
 }
 
 function highlightId(itemId: string, quote: string, occurrence: number): string {
-	const digest = createHash('sha1').update(`${itemId}\u0000${quote}\u0000${occurrence}`).digest('hex');
+	const digest = createHash('sha1')
+		.update(`${itemId}\u0000${quote}\u0000${occurrence}`)
+		.digest('hex');
 	return `hl-${digest.slice(0, 16)}`;
 }
 
@@ -115,7 +113,11 @@ export function updateHighlight(
 
 	const color = patch.color === undefined ? existing.color : normalizeColor(patch.color);
 	const note =
-		patch.note === null ? undefined : patch.note === undefined ? existing.note : normalizeNote(patch.note);
+		patch.note === null
+			? undefined
+			: patch.note === undefined
+				? existing.note
+				: normalizeNote(patch.note);
 
 	const updated: ReadingHighlight = {
 		...existing,

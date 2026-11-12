@@ -53,6 +53,7 @@ export interface SourceInput {
 	intervalMinutes: number;
 	maxItems?: number;
 	locale?: string;
+	fullText?: boolean;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];
@@ -358,6 +359,7 @@ export function addSources(hub: HubData, inputs: SourceInput[]): HubData {
 			intervalMinutes: input.intervalMinutes,
 			...(input.maxItems ? { maxItems: input.maxItems } : {}),
 			...(input.locale ? { locale: input.locale } : {}),
+			...(input.fullText ? { fullText: true } : {}),
 			order,
 			enabled: input.enabled,
 			include: input.include,
@@ -405,7 +407,8 @@ export function updateSource(hub: HubData, id: string, patch: SourcePatch): HubD
 			enabled: patch.enabled ?? source.enabled,
 			include: patch.include ?? source.include,
 			exclude: patch.exclude ?? source.exclude,
-			matchMode: patch.matchMode ?? source.matchMode
+			matchMode: patch.matchMode ?? source.matchMode,
+			...(patch.fullText !== undefined ? { fullText: patch.fullText } : {})
 		};
 
 		if (patch.groupId === null) {

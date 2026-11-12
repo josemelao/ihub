@@ -126,14 +126,17 @@ function htmlToText(html: string): string {
 	return (document.body?.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 
-export function extractReadable(html: string, finalUrl: string): ExtractedArticle {
-	let parsed: ReturnType<Readability['parse']> = null;
+function parseReadable(html: string): ReturnType<Readability['parse']> {
 	try {
 		const { document } = parseHTML(html);
-		parsed = new Readability(document, { charThreshold: 250 }).parse();
+		return new Readability(document, { charThreshold: 250 }).parse();
 	} catch {
-		parsed = null;
+		return null;
 	}
+}
+
+export function extractReadable(html: string, finalUrl: string): ExtractedArticle {
+	const parsed = parseReadable(html);
 
 	if (!parsed?.content) {
 		throw new ReaderError('Não foi possível extrair o conteúdo principal.', 'no-content');

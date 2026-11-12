@@ -65,6 +65,7 @@
 		intervalMinutes: number;
 		maxItems: number;
 		locale: string;
+		fullText: boolean;
 		enabled: boolean;
 		include: string;
 		exclude: string;
@@ -123,6 +124,7 @@
 			intervalMinutes: feedSource?.intervalMinutes ?? 30,
 			maxItems: feedSource?.maxItems ?? 30,
 			locale: feedSource?.locale ?? '',
+			fullText: feedSource?.fullText ?? false,
 			enabled: feedSource?.enabled ?? true,
 			include: (feedSource?.include ?? []).join(', '),
 			exclude: (feedSource?.exclude ?? []).join(', '),
@@ -167,6 +169,7 @@
 	let intervalMinutes = $state(seed.intervalMinutes);
 	let maxItems = $state(seed.maxItems);
 	let redditEnglish = $state(seed.locale === 'en');
+	let fullText = $state(seed.fullText);
 	let enabled = $state(seed.enabled);
 	let include = $state(seed.include);
 	let exclude = $state(seed.exclude);
@@ -198,6 +201,7 @@
 			intervalMinutes,
 			maxItems,
 			redditEnglish,
+			fullText,
 			enabled,
 			include,
 			exclude,
@@ -455,6 +459,7 @@
 				categoryId,
 				intervalMinutes,
 				maxItems,
+				fullText,
 				enabled,
 				include: parseList(include),
 				exclude: parseList(exclude),
@@ -766,6 +771,19 @@
 						</div>
 					</div>
 				</div>
+
+				{#if sourceType === 'rss'}
+					<div class="editor-section">
+						<span class="editor-section-label">Leitura</span>
+						<label class="check">
+							<input type="checkbox" bind:checked={fullText} />
+							Buscar texto completo (reader)
+						</label>
+						<span class="muted small">
+							Extrai o texto da página ao abrir o reader; fica salvo localmente.
+						</span>
+					</div>
+				{/if}
 
 				<div class="editor-section">
 					<span class="editor-section-label">Filtros</span>

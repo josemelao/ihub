@@ -120,6 +120,8 @@ export interface FeedSource {
 	locale?: string;
 	/** Ordem de exibição dentro da categoria; normalizada no load. */
 	order?: number;
+	/** Extrair texto completo no reader (fontes RSS). */
+	fullText?: boolean;
 	enabled: boolean;
 	include: string[];
 	exclude: string[];
@@ -290,7 +292,9 @@ export interface HubStorage {
 	deleteArticle(id: string): Promise<void>;
 	loadHighlights(): Promise<HighlightsData>;
 	loadHighlightsFromBackup(): Promise<HighlightsData | null>;
-	updateHighlights(fn: (data: HighlightsData) => HighlightsData | Promise<HighlightsData>): Promise<HighlightsData>;
+	updateHighlights(
+		fn: (data: HighlightsData) => HighlightsData | Promise<HighlightsData>
+	): Promise<HighlightsData>;
 	saveHighlights(data: HighlightsData): Promise<void>;
 	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */
 	updateHubAndCache(

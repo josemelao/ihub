@@ -125,6 +125,7 @@ const feedSourceSchema = z.object({
 	maxItems: z.number().int().min(1).max(200).optional(),
 	locale: localeSchema.optional(),
 	order: z.number().int().nonnegative().optional(),
+	fullText: z.boolean().default(false),
 	enabled: z.boolean().default(true),
 	include: z.array(z.string()).default([]),
 	exclude: z.array(z.string()).default([]),

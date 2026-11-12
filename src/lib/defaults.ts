@@ -1,12 +1,6 @@
 import { HUB_SCHEMA_VERSION } from './migrations/hub';
 import { CACHE_SCHEMA_VERSION, STATE_SCHEMA_VERSION } from './migrations/state';
-import type {
-	FeedCache,
-	HighlightsData,
-	HubData,
-	HubState,
-	NotesData
-} from './types';
+import type { FeedCache, HighlightsData, HubData, HubState, NotesData } from './types';
 
 export const EMPTY_HUB: HubData = {
 	version: HUB_SCHEMA_VERSION,

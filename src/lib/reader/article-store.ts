@@ -33,10 +33,7 @@ export async function readArticleFile(dir: string, id: string): Promise<ReadingA
 		return parseReadingArticle(JSON.parse(raw));
 	} catch (error) {
 		if (error instanceof HubValidationError) throw error;
-		throw new HubValidationError(
-			[{ path: [], message: 'reading: JSON inválido.' }],
-			'reading'
-		);
+		throw new HubValidationError([{ path: [], message: 'reading: JSON inválido.' }], 'reading');
 	}
 }
 

@@ -28,21 +28,19 @@ describe('destaques', () => {
 	});
 
 	it('rejeita quote vazia, longa e cor inválida', () => {
-		expect(() => addHighlight(EMPTY_HIGHLIGHTS, { ...input, quote: '  ' })).toThrow(
-			HighlightError
-		);
+		expect(() => addHighlight(EMPTY_HIGHLIGHTS, { ...input, quote: '  ' })).toThrow(HighlightError);
 		expect(() => addHighlight(EMPTY_HIGHLIGHTS, { ...input, quote: 'x'.repeat(2001) })).toThrow(
 			HighlightError
 		);
-		expect(() =>
-			addHighlight(EMPTY_HIGHLIGHTS, { ...input, color: 'roxo' as never })
-		).toThrow(HighlightError);
+		expect(() => addHighlight(EMPTY_HIGHLIGHTS, { ...input, color: 'roxo' as never })).toThrow(
+			HighlightError
+		);
 	});
 
 	it('rejeita nota acima de 2.000 caracteres', () => {
-		expect(() =>
-			addHighlight(EMPTY_HIGHLIGHTS, { ...input, note: 'x'.repeat(2001) })
-		).toThrow(HighlightError);
+		expect(() => addHighlight(EMPTY_HIGHLIGHTS, { ...input, note: 'x'.repeat(2001) })).toThrow(
+			HighlightError
+		);
 	});
 
 	it('atualiza nota e remove', () => {

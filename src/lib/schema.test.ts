@@ -62,6 +62,24 @@ describe('parseHub', () => {
 		}
 	});
 
+	it('normaliza fullText da fonte para false quando ausente', () => {
+		const hubWithSource = extendedBase();
+		hubWithSource.feedSources.push({
+			id: 'fonte',
+			type: 'rss',
+			name: 'Fonte',
+			target: 'https://example.com/feed',
+			categoryId: 'jogos',
+			intervalMinutes: 30,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+
+		expect(parseHub(hubWithSource).feedSources[0].fullText).toBe(false);
+	});
+
 	it('aceita filtro salvo com escopo válido', () => {
 		const hubWithFilter = extendedBase();
 		hubWithFilter.feedSources.push({

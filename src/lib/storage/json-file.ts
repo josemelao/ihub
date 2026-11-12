@@ -1,13 +1,4 @@
-import {
-	access,
-	copyFile,
-	mkdir,
-	readFile,
-	readdir,
-	rm,
-	stat,
-	writeFile
-} from 'node:fs/promises';
+import { access, copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { constants as fsConstants } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
@@ -455,7 +446,9 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async loadHighlightsFromBackup(): Promise<HighlightsData | null> {
-		return this.loadFromBackup('highlights.json', (raw) => parseHighlights(migrateHighlights(raw).data));
+		return this.loadFromBackup('highlights.json', (raw) =>
+			parseHighlights(migrateHighlights(raw).data)
+		);
 	}
 
 	async updateHighlights(

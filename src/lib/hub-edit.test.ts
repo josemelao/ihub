@@ -209,6 +209,30 @@ describe('fontes', () => {
 		const hub = updateSource(base(), 'reddit-patch', { intervalMinutes: 120, enabled: false });
 		expect(hub.feedSources[0]).toMatchObject({ intervalMinutes: 120, enabled: false });
 	});
+
+	it('adiciona fonte com fullText desligado por padrão', () => {
+		const hub = addSource(base(), {
+			type: 'rss',
+			name: 'Blog',
+			target: 'https://blog.example.com/feed',
+			categoryId: 'jogos',
+			intervalMinutes: 60,
+			enabled: true,
+			include: [],
+			exclude: [],
+			matchMode: 'any'
+		});
+
+		expect(parseHub(hub).feedSources[hub.feedSources.length - 1].fullText).toBe(false);
+	});
+
+	it('liga e desliga fullText', () => {
+		const on = updateSource(base(), 'reddit-patch', { fullText: true });
+		expect(on.feedSources[0].fullText).toBe(true);
+
+		const off = updateSource(on, 'reddit-patch', { fullText: false });
+		expect(off.feedSources[0].fullText).toBe(false);
+	});
 });
 
 describe('categorias e filtros', () => {
