@@ -632,3 +632,4 @@ Executada em 12/11/2026 sobre `v0.27.0`.
 - **SEC-02**: decisão registrada — headers de segurança cobrem HTML/API; assets estáticos são servidos pelo adapter-node antes do `hooks.server`. A limitação fica documentada no README (sem wrapper de servidor).
 - **PLAT-02 e 2 fluxos E2E**: validação de logon e os fluxos de importar bookmarks/testar fonte seguem **manuais** (checklist abaixo); nada de código pendente.
 - `npm run verify` e `npx playwright test` verdes.
+- Checklists do plano (seção 9) atualizados com o que foi verificado; validação manual restante em [`docs/validacao-v0.28.md`](docs/validacao-v0.28.md).

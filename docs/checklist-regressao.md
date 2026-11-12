@@ -110,8 +110,8 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] `Referrer-Policy` não quebra os players.
 - [x] CSP em enforce desde v0.19.0; console conferido nas 6 páginas.
 - [ ] Remover `'unsafe-inline'` de `script-src` com nonce/hash.
-- [ ] Confirmar URL de feed/snapshot só `http(s)`.
-- [ ] Confirmar limite de corpo (413) e SSRF no refresh.
+- [x] Confirmar URL de feed/snapshot só `http(s)`.
+- [x] Confirmar limite de corpo (413) e SSRF no refresh.
 
 ## Dados e concorrência
 
@@ -132,3 +132,8 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [x] Preview de importação mostra novos/atualizados/removidos.
 - [x] Merge mantém as settings atuais por padrão.
 - [x] Leituras com mais de 90 dias são podadas; posts salvos ficam.
+
+## Feed (v0.28.0)
+
+- [x] Reddit usa o endpoint canônico `/r/<sub>/.rss` e UA compatível; fonte r/Darktide retornou 25 posts.
+- [ ] Rodada manual de refresh com 1, 4 e 10 fontes.

@@ -1678,8 +1678,8 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Ao logar no Windows, o hub está acessível em `127.0.0.1:5757`.
-- [ ] Fechar a janela do terminal não derruba o servidor.
+- [ ] Ao logar no Windows, o hub está acessível em `127.0.0.1:5757` (artefatos cobertos por teste; logon real pendente).
+- [ ] Fechar a janela do terminal não derruba o servidor (VBS oculto validado por script; logon real pendente).
 - [x] O usuário consegue desativar o autostart.
 - [x] Há instruções no README.
 
@@ -1971,30 +1971,32 @@ Diferenciação / depois        → AVALIAR
 
 ### 9.5 Segurança
 
-- [ ] URL de feed/snapshot só `http(s)`.
-- [ ] CSP enforced sem erros.
-- [ ] Headers completos.
-- [ ] Body limits.
-- [ ] SSRF no refresh.
-- [ ] Sem `javascript:`/`data:` em href/src.
-- [ ] Sem command execution.
-- [ ] Host/Origin allowlist.
-- [ ] Sem segredos no Git.
-- [ ] `npm audit --omit=dev` limpo.
-- [ ] Token opcional se expor na LAN.
+- [x] URL de feed/snapshot só `http(s)`.
+- [x] CSP enforced sem erros.
+- [x] Headers completos.
+- [x] Body limits.
+- [x] SSRF no refresh.
+- [x] Sem `javascript:`/`data:` em href/src.
+- [x] Sem command execution.
+- [x] Host/Origin allowlist.
+- [x] Sem segredos no Git.
+- [x] `npm audit --omit=dev` limpo.
+- [x] Token opcional se expor na LAN (`HUB_API_TOKEN` + Bearer desde v0.25.0).
 
 ### 9.6 Manual (checklist por release)
 
-- [ ] Abrir com `hub.json` válido, inválido e ausente.
-- [ ] Fonte quebrada não derruba as outras.
+> Verificado por testes/E2E + servidor local em 12/11/2026 (v0.28.0). Os itens ainda desmarcados estão no checklist de validação manual em [`docs/validacao-v0.28.md`](docs/validacao-v0.28.md).
+
+- [x] Abrir com `hub.json` válido, inválido e ausente.
+- [x] Fonte quebrada não derruba as outras.
 - [ ] Refresh com 1, 4 e 10 fontes.
 - [ ] Editar categoria/grupo/fonte e recarregar.
 - [ ] Importar/substituir/mesclar.
-- [ ] Exportar e reimportar.
+- [x] Exportar e reimportar.
 - [ ] Mobile 375 e desktop 1440.
 - [ ] Teclado em todas as telas.
 - [ ] Tema com accent claro/escuro.
-- [ ] Reiniciar o servidor e conferir dados.
+- [x] Reiniciar o servidor e conferir dados.
 
 ---
 
