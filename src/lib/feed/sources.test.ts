@@ -41,11 +41,20 @@ describe('feedUrlFor', () => {
 
 	it('monta o feed de um subreddit a partir do nome', () => {
 		expect(feedUrlFor(source({ type: 'reddit', target: 'Darktide' }))).toBe(
-			'https://www.reddit.com/r/Darktide/new.rss'
+			'https://www.reddit.com/r/Darktide/.rss'
 		);
 		expect(feedUrlFor(source({ type: 'reddit', target: 'r/Darktide/' }))).toBe(
-			'https://www.reddit.com/r/Darktide/new.rss'
+			'https://www.reddit.com/r/Darktide/.rss'
 		);
+	});
+
+	it('reescreve o alias legado /new.rss para .rss', () => {
+		expect(
+			feedUrlFor(source({ type: 'reddit', target: 'https://www.reddit.com/r/Darktide/new.rss' }))
+		).toBe('https://www.reddit.com/r/Darktide/.rss');
+		expect(
+			feedUrlFor(source({ type: 'reddit', target: 'https://www.reddit.com/r/Darktide/new/.rss' }))
+		).toBe('https://www.reddit.com/r/Darktide/.rss');
 	});
 
 	it('mantém URL de subreddit já completa', () => {

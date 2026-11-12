@@ -3,6 +3,19 @@ import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
 
+// Reddit (e outros sites) bloqueiam UA genérico com 429; formato compatível com
+// a política deles: Mozilla/5.0 (compatible; App/versão; +URL).
+const USER_AGENT = 'Mozilla/5.0 (compatible; MeuHub/0.1; +https://github.com/josemelao/ihub)';
+
+function httpError(status: number): Error {
+	if (status === 429) {
+		return new Error(
+			'O site limitou temporariamente as requisições (429). Tente de novo em alguns minutos.'
+		);
+	}
+	return new Error(`HTTP ${status}`);
+}
+
 function expandIpv6(value: string): string[] | null {
 	const normalized = normalizeIpv6(value);
 	const [head, tail] = normalized.split('::');
@@ -251,7 +264,7 @@ function requestPinned(
 				path: `${url.pathname}${url.search}`,
 				method: 'GET',
 				headers: {
-					'user-agent': 'MeuHub/0.1 (hub pessoal local)',
+					'user-agent': USER_AGENT,
 					accept: 'text/html, application/rss+xml, application/atom+xml, application/xml, */*'
 				},
 				lookup: pinnedLookup(pinned) as never
@@ -320,7 +333,7 @@ function fetchTextPinned(
 			}
 
 			if (response.status < 200 || response.status >= 300) {
-				throw new Error(`HTTP ${response.status}`);
+				throw httpError(response.status);
 			}
 
 			const contentType = headerOf(response.headers, 'content-type');
@@ -348,7 +361,7 @@ async function fetchTextWithFetcher(
 		const response = await fetcher(current.toString(), {
 			redirect: 'manual',
 			headers: {
-				'user-agent': 'MeuHub/0.1 (hub pessoal local)',
+				'user-agent': USER_AGENT,
 				accept: 'text/html, application/rss+xml, application/atom+xml, application/xml, */*'
 			},
 			signal: AbortSignal.timeout(options.timeoutMs)

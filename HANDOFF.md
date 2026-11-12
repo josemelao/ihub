@@ -622,3 +622,13 @@ Executada em 12/11/2026 sobre `v0.26.0`.
 - **Rotas**: backup inexistente responde **404**; `/api/state` mantém fallback para backup; `/api/hub` e `/api/export` devolvem JSON 500 com `code` em erro de storage.
 - **Compatibilidade**: nomes de arquivo mantidos (`estado.json`, não `state.json`) — renomear exigiria migração de backups sem ganho funcional. Arquivos antigos continuam válidos.
 - **Testes**: 5 do `StorageError` + ajustes das expectativas de storage e rota (688 testes verdes).
+
+## 32. Leva pequena — Reddit 429 e fechamentos (v0.28.0)
+
+Executada em 12/11/2026 sobre `v0.27.0`.
+
+- **Reddit 429 corrigido**: o app montava `/r/<sub>/new.rss`, alias bloqueado para acesso não autenticado. Agora usa `/r/<sub>/.rss` e reescreve URLs legadas salvas (`/new.rss` e `/new/.rss`). O User-Agent virou `Mozilla/5.0 (compatible; MeuHub/0.1; +https://github.com/josemelao/ihub)`, aceito pelo Reddit; o UA antigo era bloqueado mesmo no endpoint correto.
+- **Erro 429 legível**: mensagem “O site limitou temporariamente as requisições (429). Tente de novo em alguns minutos.”
+- **SEC-02**: decisão registrada — headers de segurança cobrem HTML/API; assets estáticos são servidos pelo adapter-node antes do `hooks.server`. A limitação fica documentada no README (sem wrapper de servidor).
+- **PLAT-02 e 2 fluxos E2E**: validação de logon e os fluxos de importar bookmarks/testar fonte seguem **manuais** (checklist abaixo); nada de código pendente.
+- `npm run verify` e `npx playwright test` verdes.

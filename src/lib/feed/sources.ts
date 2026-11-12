@@ -92,6 +92,24 @@ export async function resolveFeedUrl(
 	}
 }
 
+/**
+ * O alias legado `/new.rss` é bloqueado pelo Reddit (429) para acesso não
+ * autenticado; a listagem canônica responde em `/r/<sub>/.rss`.
+ */
+export function normalizeRedditFeedUrl(value: string): string {
+	try {
+		const url = new URL(value);
+		const host = url.hostname.toLowerCase();
+		if (host === 'www.reddit.com' || host === 'reddit.com' || host === 'old.reddit.com') {
+			url.pathname = url.pathname.replace(/\/new(?:\.rss|\/\.rss)$/i, '/.rss');
+			return url.toString();
+		}
+	} catch {
+		// URL inválida: mantém como veio e deixa o fetch reportar
+	}
+	return value;
+}
+
 export function feedUrlFor(source: FeedSource): string {
 	switch (source.type) {
 		case 'rss':
@@ -99,9 +117,11 @@ export function feedUrlFor(source: FeedSource): string {
 
 		case 'reddit': {
 			const target = source.target.trim();
-			if (target.startsWith('http://') || target.startsWith('https://')) return target;
+			if (target.startsWith('http://') || target.startsWith('https://')) {
+				return normalizeRedditFeedUrl(target);
+			}
 			const subreddit = target.replace(/^\/?r\//i, '').replace(/\/+$/, '');
-			return `https://www.reddit.com/r/${subreddit}/new.rss`;
+			return `https://www.reddit.com/r/${subreddit}/.rss`;
 		}
 
 		case 'youtube': {

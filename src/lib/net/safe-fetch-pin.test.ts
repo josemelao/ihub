@@ -13,7 +13,7 @@ const lookupMock = vi.mocked(lookup);
 const httpsMock = vi.mocked(httpsRequest);
 const httpMock = vi.mocked(httpRequest);
 
-function fakeRequest(body: string) {
+function fakeRequest(body: string, status = 200) {
 	return (
 		_options: unknown,
 		callback: (response: EventEmitter & Record<string, unknown>) => void
@@ -23,7 +23,7 @@ function fakeRequest(body: string) {
 		request.destroy = vi.fn();
 		request.end = vi.fn(() => {
 			const response = new EventEmitter() as EventEmitter & Record<string, unknown>;
-			response.statusCode = 200;
+			response.statusCode = status;
 			response.headers = { 'content-type': 'application/xml' };
 			callback(response);
 			response.emit('data', Buffer.from(body));
@@ -83,6 +83,36 @@ describe('fetchPublicText pinando o IP validado', () => {
 		const callback = vi.fn();
 		options.lookup('example.test', {}, callback);
 		expect(callback).toHaveBeenCalledWith(null, '93.184.216.34', 4);
+	});
+
+	it('envia UA compatível com a política dos feeds', async () => {
+		lookupMock.mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
+		let userAgent: string | null = null;
+		let pending: (EventEmitter & Record<string, unknown>) | null = null;
+
+		httpsMock.mockImplementation(((options: { headers?: Record<string, string> }) => {
+			userAgent = options.headers?.['user-agent'] ?? null;
+			const request = new EventEmitter() as EventEmitter & Record<string, unknown>;
+			request.setTimeout = vi.fn();
+			request.destroy = vi.fn();
+			request.end = vi.fn();
+			pending = request;
+			return request;
+		}) as never);
+
+		const promise = fetchPublicText('https://exemplo.test/feed');
+		await vi.waitFor(() => expect(userAgent).not.toBeNull());
+		expect(userAgent).toContain('compatible; MeuHub');
+
+		(pending as unknown as EventEmitter).emit('error', new Error('fim do teste'));
+		await promise.catch(() => undefined);
+	});
+
+		it('explica 429 com mensagem clara', async () => {
+		lookupMock.mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
+		httpsMock.mockImplementation(fakeRequest('', 429) as never);
+
+		await expect(fetchPublicText('https://exemplo.test/feed')).rejects.toThrow(/429/);
 	});
 
 	it('recusa o host antes de conectar quando o DNS aponta para IP privado', async () => {
