@@ -17,7 +17,9 @@
 	import type { ImportPreview } from '#lib/import-preview';
 	import { HttpResponseError, readJsonResponse } from '#lib/net/response';
 	import { HubValidationError, parseHub } from '#lib/schema';
+	import { summarizeArchive } from '#lib/archive/summary';
 	import type {
+		ArchiveEntry,
 		BackupEntry,
 		BackupInfo,
 		Category,
@@ -196,6 +198,11 @@
 
 	let tab = $state<Tab>('fontes');
 	let backupInfo = $state<BackupInfo | null>(null);
+	let archiveEntries = $state<ArchiveEntry[]>([]);
+	let archiveBusyId = $state<string | null>(null);
+	let archiveError = $state('');
+	let archivePoll: ReturnType<typeof setInterval> | null = null;
+	let confirmingArchiveDelete = $state<ArchiveEntry | null>(null);
 	let itemTypeFilter = $state<'todos' | 'link' | 'app'>('todos');
 	let sourceQuery = $state('');
 	let itemQuery = $state('');
@@ -234,6 +241,7 @@
 	} | null>(null);
 
 	const accentPresets = ['#8AA4FF', '#7DD3A8', '#F2A65A', '#E58BC0', '#B79CFF', '#F28B82'];
+	const archiveSummary = $derived(summarizeArchive(archiveEntries));
 
 	let actionError = $state('');
 	let actionMessage = $state('');
@@ -703,8 +711,79 @@
 		}
 	}
 
+	async function loadArchiveEntries(): Promise<void> {
+		try {
+			const response = await fetch('/api/archive');
+			const body = (await response.json()) as {
+				ok?: boolean;
+				entries?: ArchiveEntry[];
+				error?: string;
+			};
+
+			if (!response.ok || !body.ok) {
+				archiveError = body.error ?? 'Falha ao carregar os arquivos.';
+				return;
+			}
+			archiveEntries = body.entries ?? [];
+			archiveError = '';
+			syncArchivePolling();
+		} catch {
+			archiveError = 'Falha de rede ao carregar os arquivos.';
+		}
+	}
+
+	function syncArchivePolling(): void {
+		const pending = archiveEntries.some((entry) => entry.status === 'pending');
+		if (!pending) {
+			if (archivePoll) {
+				clearInterval(archivePoll);
+				archivePoll = null;
+			}
+			return;
+		}
+		if (archivePoll) return;
+		archivePoll = setInterval(() => {
+			void loadArchiveEntries();
+		}, 2_000);
+	}
+
+	async function archiveAction(id: string, action: 'retry' | 'delete'): Promise<void> {
+		archiveBusyId = id;
+		archiveError = '';
+
+		try {
+			const response = await fetch('/api/archive', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ action, itemId: id })
+			});
+			const body = (await response.json()) as { ok?: boolean; error?: string };
+
+			if (!response.ok || !body.ok) {
+				archiveError = body.error ?? 'Falha ao atualizar o arquivo.';
+				return;
+			}
+			await loadArchiveEntries();
+		} catch {
+			archiveError = 'Falha de rede ao atualizar o arquivo.';
+		} finally {
+			archiveBusyId = null;
+		}
+	}
+
+	function confirmArchiveDelete(): void {
+		if (!confirmingArchiveDelete) return;
+		const id = confirmingArchiveDelete.id;
+		confirmingArchiveDelete = null;
+		void archiveAction(id, 'delete');
+	}
+
 	onMount(() => {
 		void loadBackupInfo();
+		void loadArchiveEntries();
+		return () => {
+			if (archivePoll) clearInterval(archivePoll);
+		};
 	});
 
 	function resetFeedback(): void {
@@ -1661,6 +1740,71 @@
 	{:else}
 		<p class="muted">Nenhum ponto manual ainda. Crie um antes de mudanças grandes.</p>
 	{/if}
+
+	<div class="section-head" style="margin-top: 28px">
+		<h2 class="fs-16">Leitura arquivada</h2>
+		<div class="chips">
+			<button class="btn" type="button" onclick={loadArchiveEntries}>Atualizar</button>
+		</div>
+	</div>
+	<p class="muted small">
+		Cópias locais das páginas salvas. {archiveSummary.count}
+		{archiveSummary.count === 1 ? 'arquivo' : 'arquivos'} · {formatBytes(archiveSummary.bytes)}.
+		{#if archiveSummary.pending}
+			{archiveSummary.pending} em andamento.
+		{/if}
+	</p>
+
+	{#if archiveError}
+		<div class="alert" role="status">{archiveError}</div>
+	{/if}
+
+	{#if archiveEntries.length}
+		<ul class="restore-list">
+			{#each archiveEntries as entry (entry.id)}
+				<li class="restore-item">
+					<div class="restore-meta">
+						<strong>{entry.title || entry.url}</strong>
+						<span class="muted small">
+							{entry.status} · {formatBytes(entry.bytes)} · {entry.assets}
+							{entry.assets === 1 ? 'imagem' : 'imagens'} · {relativeTime(entry.updatedAt)}
+							{#if !data.state.saved.includes(entry.id)}
+								· não salvo
+							{/if}
+						</span>
+						{#if entry.error}
+							<span class="muted small">{entry.error}</span>
+						{/if}
+					</div>
+					<div class="chips">
+						{#if entry.status === 'ready'}
+							<a class="btn" href={resolve('/arquivo/[id]', { id: entry.id })}>Abrir</a>
+						{/if}
+						{#if entry.status === 'failed'}
+							<button
+								class="btn"
+								type="button"
+								disabled={archiveBusyId === entry.id}
+								onclick={() => void archiveAction(entry.id, 'retry')}
+							>
+								{archiveBusyId === entry.id ? 'Tentando...' : 'Tentar de novo'}
+							</button>
+						{/if}
+						<button
+							class="btn"
+							type="button"
+							disabled={archiveBusyId === entry.id}
+							onclick={() => (confirmingArchiveDelete = entry)}
+						>
+							Apagar
+						</button>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<p class="muted">Nenhuma página arquivada ainda.</p>
+	{/if}
 {:else}
 	<div class="appearance-card">
 		<span class="appearance-preview" style="background: {accent}" aria-hidden="true"></span>
@@ -1794,6 +1938,15 @@
 		confirmLabel="Restaurar"
 		onconfirm={confirmRestoreBackup}
 		oncancel={() => (confirmingBackup = null)}
+	/>
+{/if}
+
+{#if confirmingArchiveDelete}
+	<ConfirmDialog
+		title="Apagar arquivo"
+		message={`Apagar a cópia local de “${confirmingArchiveDelete.title || confirmingArchiveDelete.url}”? O post continua salvo.`}
+		onconfirm={confirmArchiveDelete}
+		oncancel={() => (confirmingArchiveDelete = null)}
 	/>
 {/if}
 
