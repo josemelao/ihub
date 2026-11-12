@@ -1584,10 +1584,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Exportar 10 salvos gera 10 arquivos Markdown válidos.
-- [ ] Frontmatter contém URL/data/tags.
-- [ ] Nomes de arquivo não colidem.
-- [ ] Funciona sem dependências novas pesadas.
+- [x] Exportar 10 salvos gera 10 arquivos Markdown válidos.
+- [x] Frontmatter contém URL/data/tags.
+- [x] Nomes de arquivo não colidem.
+- [x] Funciona sem dependências novas pesadas.
 
 ---
 

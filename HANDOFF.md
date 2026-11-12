@@ -679,3 +679,16 @@ Executada em 12/11/2026 sobre `v0.29.0`, implementando READ-03.
 - **Testes:** 780 unitários em 112 arquivos e 28 E2E (arquivo sem rede externa, link no reader, Gerenciar, axe em `/arquivo/e2e-post`); `npm run verify` e Playwright verdes.
 - **Adiado:** export/backup dos arquivos (ficam locais), mídia pesada (vídeo/áudio), SVG e retry automático em loop.
 - **Docs:** `docs/archive.md` e plano em `C:\Users\Usuario\.opencode\plan\archive-reader.md`.
+
+## 36. Fase 3 — export Markdown (v0.31.0)
+
+Executada em 12/11/2026 sobre `v0.30.0`, implementando READ-04 e fechando o aceite adiado do READ-02.
+
+- **API:** `GET /api/export/markdown` monta em memória um ZIP (`fflate`, ~8 KB) com `index.md` + um `.md` por item salvo ou destacado. `content-disposition` com `meu-hub-export-AAAA-MM-DD.zip`; nenhum arquivo temporário no disco.
+- **Builder puro:** `src/lib/export/markdown.ts` com frontmatter YAML (título, URL, fonte, categoria, datas, `saved`, `archived`, tags), resumo, links para `/ler/<id>`, original e `/arquivo/<id>` (quando arquivado), e destaques com cor/nota. Links usam `event.url.origin`; nomes `<slug>-<id>.md` (id completo) evitam colisão.
+- **Metadados:** snapshot manda; feed/hub preenchem o que faltar. Item só com destaque entra com `saved: false`; salvo sem snapshot vira stub ou resolve pelo feed, sem sumir.
+- **YAML:** strings com aspas escapadas e quebras normalizadas; tags normalizadas (categoria/fonte), sem cores.
+- **UI:** Gerenciar → Backups → **Exportar salvos em Markdown** (download direto).
+- **Testes:** 791 unitários em 114 arquivos (builder com 6 casos + rota descompactando o ZIP) e 29 E2E (download real no Gerenciar, conferindo frontmatter e destaque); `npm run verify` e Playwright verdes.
+- **Adiado:** conversão do HTML arquivado para Markdown, imagens no ZIP e exportar itens da Biblioteca.
+- **Docs:** `docs/markdown-export.md`; plano em `C:\Users\Usuario\.opencode\plan\markdown-export.md` (ledger em `.superpowers/sdd/markdown-export`).

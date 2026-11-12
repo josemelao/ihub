@@ -1742,6 +1742,20 @@
 	{/if}
 
 	<div class="section-head" style="margin-top: 28px">
+		<h2 class="fs-16">Exportar salvos</h2>
+		<div class="chips">
+			<a class="btn" href={resolve('/api/export/markdown')} download>
+				<Icon name="download" size={16} />
+				Exportar salvos em Markdown
+			</a>
+		</div>
+	</div>
+	<p class="muted small">
+		ZIP com um <code>.md</code> por post salvo ou destacado: frontmatter (URL, datas, tags), resumo, links
+		e destaques.
+	</p>
+
+	<div class="section-head" style="margin-top: 28px">
 		<h2 class="fs-16">Leitura arquivada</h2>
 		<div class="chips">
 			<button class="btn" type="button" onclick={loadArchiveEntries}>Atualizar</button>

@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques e arquivo/offline do salvo.
-- **Versão atual:** `v0.30.0` · **780 testes** em 112 arquivos · **28 E2E**.
-- **Próximos blocos planejados:** exportar destaques em Markdown (READ-04) e busca full-text (READ-05).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo e export Markdown.
+- **Versão atual:** `v0.31.0` · **791 testes** em 114 arquivos · **29 E2E**.
+- **Próximos blocos planejados:** busca full-text nos salvos (READ-05).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -249,6 +249,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 Na tela **Gerenciar**:
 
 - **Exportar dados** baixa um `hub-export-AAAA-MM-DD.json` com o hub e o estado.
+- **Exportar salvos em Markdown** (Gerenciar → Backups) baixa `meu-hub-export-AAAA-MM-DD.zip` com `index.md` + um `.md` por post salvo ou destacado: frontmatter (URL, datas, tags), resumo, links e destaques.
 - **Importar dados** lê o arquivo, valida e mostra um resumo antes de confirmar. Escolha **substituir tudo** ou **mesclar por id**. Um backup do `hub.json` atual é criado automaticamente.
 
 ### Captura rápida
