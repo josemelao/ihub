@@ -28,7 +28,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	try {
 		const feed = await storage.loadFeedCache();
-		const item = feed.items.find((entry) => entry.id === itemId);
+		let item = feed.items.find((entry) => entry.id === itemId);
+		if (!item) {
+			const state = await storage.loadState();
+			item = state.savedItems?.[itemId]?.item;
+		}
 		if (!item) {
 			return json({ ok: false, error: 'Post não encontrado no cache.' }, { status: 404 });
 		}

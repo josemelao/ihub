@@ -27,14 +27,24 @@ export async function getOrExtractArticle(
 	if (!url) throw new ReaderError('URL do post inválida.', 'invalid-url');
 
 	const fetchText = options.fetchText ?? defaultFetcher;
-	const { text, finalUrl } = await fetchText(url);
-	const extracted = extractReadable(text, finalUrl);
+	let fetched: { text: string; finalUrl: string };
+	try {
+		fetched = await fetchText(url);
+	} catch (error) {
+		const message =
+			error instanceof Error && error.message
+				? error.message
+				: 'Não foi possível buscar a página para leitura.';
+		throw new ReaderError(message, 'fetch-failed');
+	}
+
+	const extracted = extractReadable(fetched.text, fetched.finalUrl);
 	const now = options.now ?? (() => new Date());
 
 	const article: ReadingArticle = {
 		id: item.id,
 		url,
-		finalUrl,
+		finalUrl: fetched.finalUrl,
 		title: extracted.title || item.title,
 		byline: extracted.byline,
 		siteName: extracted.siteName,

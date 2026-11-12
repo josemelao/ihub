@@ -2,7 +2,7 @@ import { Readability } from '@mozilla/readability';
 import { parseHTML } from 'linkedom';
 import sanitizeHtml from 'sanitize-html';
 
-export type ReaderErrorCode = 'no-content' | 'too-large' | 'invalid-url';
+export type ReaderErrorCode = 'no-content' | 'too-large' | 'invalid-url' | 'fetch-failed';
 
 export class ReaderError extends Error {
 	readonly code: ReaderErrorCode;

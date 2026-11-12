@@ -56,4 +56,18 @@ describe('getOrExtractArticle', () => {
 		await expect(getOrExtractArticle(storage, item, { fetchText })).rejects.toThrow();
 		expect(storage.saveArticle).not.toHaveBeenCalled();
 	});
+
+	it('converte falha de rede em ReaderError com mensagem segura', async () => {
+		const storage = fakeStorage(null);
+		const fetchText = vi.fn(async () => {
+			throw new Error('O site limitou temporariamente as requisições (429).');
+		});
+
+		await expect(getOrExtractArticle(storage, item, { fetchText })).rejects.toMatchObject({
+			name: 'ReaderError',
+			code: 'fetch-failed',
+			message: expect.stringContaining('429')
+		});
+		expect(storage.saveArticle).not.toHaveBeenCalled();
+	});
 });

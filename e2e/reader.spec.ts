@@ -14,6 +14,29 @@ test('reader mostra artigo cacheado e persiste destaque', async ({ page }) => {
 	await expect(page.locator('.reader-highlights')).toContainText('amarelo');
 });
 
+test('remover destaque pede confirmação', async ({ page }) => {
+	await page.goto('/ler/e2e-post');
+	const remove = page.getByRole('button', { name: /Remover destaque/ }).first();
+	await remove.click();
+
+	const dialog = page.getByRole('dialog');
+	await expect(dialog).toBeVisible();
+	await dialog.getByRole('button', { name: 'Cancelar' }).click();
+	await expect(page.locator('.reader-highlights')).toHaveCount(1);
+
+	await remove.click();
+	await page.getByRole('dialog').getByRole('button', { name: 'Remover' }).click();
+	await expect(page.locator('.reader-highlights')).toHaveCount(0);
+});
+
+test('reader mostra fallback quando a extração falha', async ({ page }) => {
+	await page.goto('/ler/e2e-post-erro');
+
+	await expect(page.getByRole('link', { name: 'Abrir original' })).toBeVisible();
+	await expect(page.getByRole('status').first()).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Tentar de novo' })).toBeVisible();
+});
+
 test('reader cacheado abre sem nenhuma requisição externa', async ({ page }) => {
 	const external: string[] = [];
 	page.on('request', (request) => {

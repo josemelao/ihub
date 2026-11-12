@@ -38,6 +38,19 @@ fixture.feedSources = [
 		include: [],
 		exclude: [],
 		matchMode: 'any'
+	},
+	{
+		id: 'e2e-fonte-erro',
+		type: 'rss',
+		name: 'Fonte E2E com erro de extração',
+		target: 'https://example.invalid/feed-erro.xml',
+		categoryId,
+		intervalMinutes: 1440,
+		fullText: true,
+		enabled: false,
+		include: [],
+		exclude: [],
+		matchMode: 'any'
 	}
 ];
 
@@ -64,11 +77,21 @@ const cache = {
 			url: 'https://example.com/post-e2e-off',
 			publishedAt: now,
 			thumbnail: null
+		},
+		{
+			id: 'e2e-post-erro',
+			sourceId: 'e2e-fonte-erro',
+			title: 'Post com extração falhando',
+			summary: 'A página deste post não existe.',
+			url: 'https://example.invalid/post-erro',
+			publishedAt: now,
+			thumbnail: null
 		}
 	],
 	sources: {
 		'e2e-fonte': { lastFetchedAt: now, error: null, count: 1 },
-		'e2e-fonte-off': { lastFetchedAt: now, error: null, count: 1 }
+		'e2e-fonte-off': { lastFetchedAt: now, error: null, count: 1 },
+		'e2e-fonte-erro': { lastFetchedAt: now, error: null, count: 1 }
 	}
 };
 

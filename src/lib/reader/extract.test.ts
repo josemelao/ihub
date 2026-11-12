@@ -27,6 +27,17 @@ describe('extração e sanitização', () => {
 		expect(html).toContain('src="https://exemplo.com/post/img/a.png"');
 	});
 
+	it('sanitiza HTML diretamente no ponto de entrada', () => {
+		const html = sanitizeArticleHtml(
+			'<p onclick="x()">ok</p><script>alert(1)</script>',
+			'https://e.com/'
+		);
+
+		expect(html).toContain('ok');
+		expect(html).not.toContain('script');
+		expect(html).not.toContain('onclick');
+	});
+
 	it('remove javascript:, data: e atributos de evento', () => {
 		const html = sanitizeArticleHtml(
 			'<a href="javascript:alert(1)">x</a><img src="data:image/png;base64,AA" onerror="alert(1)"><p onclick="x()">ok</p>',

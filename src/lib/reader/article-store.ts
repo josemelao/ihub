@@ -4,6 +4,7 @@ import { HubValidationError, parseReadingArticle } from '../schema';
 import type { ReadingArticle } from '../types';
 import { writeFileAtomically } from '../storage/atomic';
 import { nodeFileDeps } from '../storage/node-deps';
+import { sanitizeArticleHtml } from './extract';
 
 export const MAX_ARTICLES = 300;
 
@@ -30,7 +31,10 @@ export async function readArticleFile(dir: string, id: string): Promise<ReadingA
 	}
 
 	try {
-		return parseReadingArticle(JSON.parse(raw));
+		const article = parseReadingArticle(JSON.parse(raw));
+		// Defesa em profundidade: o arquivo é local e editável; o `{@html}` só
+		// deve receber HTML que passou pelo sanitizador nesta leitura.
+		return { ...article, html: sanitizeArticleHtml(article.html, article.finalUrl) };
 	} catch (error) {
 		if (error instanceof HubValidationError) throw error;
 		throw new HubValidationError([{ path: [], message: 'reading: JSON inválido.' }], 'reading');

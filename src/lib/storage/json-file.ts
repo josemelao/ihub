@@ -25,7 +25,12 @@ import {
 } from '../schema';
 import { isNotFound, isRecoverableDataError, StorageError } from './errors';
 import { recoverHubState } from '../state-recovery';
-import { pruneArticleFiles, readArticleFile, writeArticleFile } from '../reader/article-store';
+import {
+	assertArticleId,
+	pruneArticleFiles,
+	readArticleFile,
+	writeArticleFile
+} from '../reader/article-store';
 import type {
 	BackupCreated,
 	BackupEntry,
@@ -421,6 +426,7 @@ export class JsonFileStorage implements HubStorage {
 	}
 
 	async deleteArticle(id: string): Promise<void> {
+		assertArticleId(id);
 		await rm(join(this.readingDir(), `${id}.json`), { force: true });
 	}
 

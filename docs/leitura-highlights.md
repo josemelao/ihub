@@ -110,8 +110,9 @@ mode) e READ-02 (destaques e notas) fecham essa lacuna.
      ocorrência da mesma `quote` no texto no momento da criação).
    - Destacar **não exige salvar o post** e não salva automaticamente: destaques são
      independentes do estado de salvos.
-8. **Resolução de `/ler/[id]`:** artigo em cache → item do `feed-cache.json` → snapshot em
-   `state.savedItems` → 404.
+8. **Resolução de `/ler/[id]`:** item do `feed-cache.json` → snapshot em `state.savedItems` →
+   metadados do artigo em cache → 404. O HTML do artigo é carregado em paralelo e usado sempre
+   que existir; a ordem acima decide apenas título/URL/fonte quando o post saiu do feed.
    - Post removido do cache mas salvo continua legível pelo snapshot; se houver artigo em
      cache, continua abrindo offline.
    - Fonte desligada/removida não bloqueia a leitura do que já foi salvo/extraído.

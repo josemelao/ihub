@@ -2,6 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
 	import Icon from '#lib/components/Icon.svelte';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import HighlightDialog from '#lib/components/HighlightDialog.svelte';
 	import HighlightToolbar from '#lib/components/HighlightToolbar.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
@@ -19,6 +20,7 @@
 	let errorMessage = $state('');
 	let highlightError = $state('');
 	let articleEl = $state<HTMLElement | null>(null);
+	let removing = $state<ReadingHighlight | null>(null);
 	let toolbar = $state<{ quote: string; occurrence: number; x: number; y: number } | null>(null);
 	let dialog = $state<{
 		id?: string;
@@ -247,6 +249,13 @@
 			highlightError = 'Falha de rede ao remover o destaque.';
 		}
 	}
+
+	function confirmRemove(): void {
+		if (!removing) return;
+		const id = removing.id;
+		removing = null;
+		void deleteHighlight(id);
+	}
 </script>
 
 <svelte:head>
@@ -343,6 +352,15 @@
 		<div class="alert reader-status" role="status">{highlightError}</div>
 	{/if}
 
+	{#if removing}
+		<ConfirmDialog
+			title="Remover destaque"
+			message={`Remover o destaque “${removing.quote.slice(0, 80)}”?`}
+			onconfirm={confirmRemove}
+			oncancel={() => (removing = null)}
+		/>
+	{/if}
+
 	{#if highlights.length > 0}
 		<section class="reader-highlights panel" aria-labelledby="t-reader-highlights">
 			<h2 id="t-reader-highlights">Seus destaques</h2>
@@ -353,10 +371,20 @@
 							<span class="tag hl-{highlight.color}">
 								{HIGHLIGHT_COLOR_LABELS[highlight.color]}
 							</span>
-							<button type="button" class="chip" onclick={() => editHighlight(highlight)}>
+							<button
+								type="button"
+								class="chip"
+								aria-label="Editar destaque {highlight.quote.slice(0, 40)}"
+								onclick={() => editHighlight(highlight)}
+							>
 								Editar
 							</button>
-							<button type="button" class="chip" onclick={() => void deleteHighlight(highlight.id)}>
+							<button
+								type="button"
+								class="chip"
+								aria-label="Remover destaque {highlight.quote.slice(0, 40)}"
+								onclick={() => (removing = highlight)}
+							>
 								Remover
 							</button>
 						</div>

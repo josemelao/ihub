@@ -59,6 +59,10 @@ describe('storage de leitura', () => {
 		expect(await storage.loadArticle('outro')).toBeNull();
 	});
 
+	it('rejeita id inválido ao apagar artigo', async () => {
+		await expect(storage.deleteArticle('../x')).rejects.toThrow();
+	});
+
 	it('grava, atualiza e lê destaques', async () => {
 		await storage.saveHighlights(highlights);
 		expect(await storage.loadHighlights()).toEqual(highlights);

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -48,6 +48,23 @@ describe('article-store', () => {
 
 	it('rejeita id com path traversal', () => {
 		expect(() => assertArticleId('../x')).toThrow();
+	});
+
+	it('sanitiza HTML adulterado ao ler', async () => {
+		await mkdir(dir, { recursive: true });
+		await writeFile(
+			join(dir, 'x.json'),
+			JSON.stringify({
+				...article('x', '2026-01-01T00:00:00.000Z'),
+				html: '<p>ok</p><script>alert(1)</script>'
+			}),
+			'utf-8'
+		);
+
+		const loaded = await readArticleFile(dir, 'x');
+
+		expect(loaded?.html).toContain('ok');
+		expect(loaded?.html).not.toContain('<script');
 	});
 
 	it('poda os mais antigos por fetchedAt', async () => {

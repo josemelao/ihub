@@ -1,9 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JsonFileStorage } from '#lib/storage/json-file';
+import { ReaderError } from '#lib/reader/extract';
+import { getOrExtractArticle } from '#lib/reader/service';
 import type { POST as ReaderPost } from './+server';
+
+vi.mock('#lib/reader/service', () => ({ getOrExtractArticle: vi.fn() }));
 
 let dir: string;
 let storage: JsonFileStorage;
@@ -67,6 +71,10 @@ beforeAll(async () => {
 	({ POST: readerPost } = await import('./+server'));
 });
 
+beforeEach(() => {
+	vi.mocked(getOrExtractArticle).mockReset();
+});
+
 afterAll(async () => {
 	delete process.env.HUB_DATA_DIR;
 	await rm(dir, { recursive: true, force: true });
@@ -112,5 +120,66 @@ describe('POST /api/reader', () => {
 		const response = await readerPost(event({ itemId: 'abc' }));
 
 		expect(response.status).toBe(200);
+	});
+
+	it('resolve post salvo fora do cache do feed', async () => {
+		await storage.saveHub(hub(false) as never);
+		await storage.saveFeedCache({ ...cache, items: [] } as never);
+		await storage.saveState({
+			version: 1,
+			read: {},
+			saved: ['salvo'],
+			savedItems: {
+				salvo: {
+					item: {
+						id: 'salvo',
+						sourceId: 's',
+						title: 'Salvo',
+						summary: '',
+						url: 'https://e.com/salvo',
+						publishedAt: '',
+						thumbnail: null
+					},
+					sourceId: 's',
+					sourceName: 'S',
+					savedAt: '2026-01-01T00:00:00.000Z'
+				}
+			}
+		} as never);
+		await storage.saveArticle({
+			id: 'salvo',
+			url: 'https://e.com/salvo',
+			finalUrl: 'https://e.com/salvo',
+			title: 'Salvo',
+			byline: '',
+			siteName: '',
+			excerpt: '',
+			publishedAt: '',
+			fetchedAt: '2026-01-01T00:00:00.000Z',
+			length: 1,
+			html: '<p>x</p>',
+			text: 'x'
+		});
+
+		const response = await readerPost(event({ itemId: 'salvo' }));
+
+		expect(response.status).toBe(200);
+	});
+
+	it('devolve 502 com a mensagem segura do ReaderError', async () => {
+		await storage.saveHub(hub(true) as never);
+		await storage.saveFeedCache(cache as never);
+		await storage.deleteArticle('abc');
+		vi.mocked(getOrExtractArticle).mockRejectedValueOnce(
+			new ReaderError('Artigo grande demais para o cache local.', 'too-large')
+		);
+
+		const response = await readerPost(event({ itemId: 'abc' }));
+
+		expect(response.status).toBe(502);
+		await expect(response.json()).resolves.toMatchObject({
+			code: 'too-large',
+			error: expect.stringContaining('grande demais')
+		});
 	});
 });
