@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { archiveItem, deleteArchive, MAX_ARCHIVES } from './service';
+import { archiveItem, deleteArchive, enqueueArchive } from './service';
 import { EMPTY_ARCHIVE_INDEX } from '../defaults';
 import { readArchiveDocument, writeArchiveDocument } from './store';
 import type { ArchiveEntry, ArchiveIndex, FeedItem } from '../types';
@@ -113,19 +113,73 @@ describe('archiveItem', () => {
 
 	it('recusa quando o teto de arquivos foi atingido', async () => {
 		const entries: Record<string, ArchiveEntry> = {};
-		for (let index = 0; index < MAX_ARCHIVES; index += 1) {
+		for (let index = 0; index < 200; index += 1) {
 			entries[`id${index}`] = entry(`id${index}`, 'ready');
 		}
 		const storage = fakeStorage({ version: 1, entries });
+		const text = vi.fn();
 
-		const result = await archiveItem(
+		const result = await enqueueArchive(
 			storage as never,
 			{ item, title: 'Post', sourceType: 'rss' },
-			{ archiveRoot: dir }
+			{ archiveRoot: dir, text }
 		);
 
 		expect(result.status).toBe('failed');
 		expect(result.error).toMatch(/Limite/i);
+		expect(text).not.toHaveBeenCalled();
+	});
+
+	it('reserva pending e deduplica job em andamento', async () => {
+		const storage = fakeStorage();
+		let release!: (value: { text: string; finalUrl: string }) => void;
+		const gate = new Promise<{ text: string; finalUrl: string }>((resolve) => {
+			release = resolve;
+		});
+		const text = vi.fn(async () => gate);
+
+		const first = await enqueueArchive(
+			storage as never,
+			{ item, title: 'Post', sourceType: 'rss' },
+			{ archiveRoot: dir, text }
+		);
+		const second = await enqueueArchive(
+			storage as never,
+			{ item, title: 'Post', sourceType: 'rss' },
+			{ archiveRoot: dir, text }
+		);
+
+		expect(first.status).toBe('pending');
+		expect(second.status).toBe('pending');
+		expect(storage.get().entries.abc.status).toBe('pending');
+
+		release({ text: '<html><body><p>oi</p></body></html>', finalUrl: 'https://e.com/' });
+		await vi.waitFor(() => expect(storage.get().entries.abc.status).toBe('failed'));
+	});
+
+	it('cancela job em andamento sem deixar pasta nem entrada', async () => {
+		const storage = fakeStorage();
+		let release!: (value: { text: string; finalUrl: string }) => void;
+		const gate = new Promise<{ text: string; finalUrl: string }>((resolve) => {
+			release = resolve;
+		});
+		const text = vi.fn(async () => gate);
+
+		await enqueueArchive(
+			storage as never,
+			{ item, title: 'Post', sourceType: 'rss' },
+			{ archiveRoot: dir, text }
+		);
+		await vi.waitFor(() => expect(text).toHaveBeenCalled());
+
+		await deleteArchive(storage as never, 'abc', { archiveRoot: dir });
+		release({
+			text: `<html><body><p>${'texto '.repeat(30)}</p></body></html>`,
+			finalUrl: 'https://e.com/post'
+		});
+
+		await vi.waitFor(() => expect(storage.get().entries.abc).toBeUndefined());
+		expect(await readArchiveDocument(join(dir, 'abc'))).toBeNull();
 	});
 
 	it('não arquiva fonte que não é RSS', async () => {

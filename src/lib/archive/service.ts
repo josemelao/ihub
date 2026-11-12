@@ -19,6 +19,8 @@ export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 export const MAX_IMAGES_BYTES = 20 * 1024 * 1024;
 export const MIN_TEXT_CHARS = 100;
 
+const MAX_JOBS = 2;
+
 const EXT_BY_TYPE: Record<string, string> = {
 	'image/png': 'png',
 	'image/jpeg': 'jpg',
@@ -46,12 +48,36 @@ export interface ArchiveDeps {
 	archiveRoot?: string;
 }
 
+interface JobToken {
+	cancelled: boolean;
+}
+
 type ArchiveStorage = Pick<
 	HubStorage,
 	'loadArchiveIndex' | 'updateArchiveIndex' | 'saveArchiveIndex'
 >;
 
-const cancelled = new Set<string>();
+const jobs = new Map<string, { token: JobToken; promise: Promise<ArchiveEntry> }>();
+const queue: (() => void)[] = [];
+let active = 0;
+
+function runWithSlot<T>(fn: () => Promise<T>): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const start = () => {
+			active += 1;
+			fn()
+				.then(resolve, reject)
+				.finally(() => {
+					active -= 1;
+					const next = queue.shift();
+					if (next) next();
+				});
+		};
+
+		if (active < MAX_JOBS) start();
+		else queue.push(start);
+	});
+}
 
 function nowIso(deps: ArchiveDeps): string {
 	return (deps.now?.() ?? new Date()).toISOString();
@@ -79,11 +105,17 @@ function errorText(error: unknown): string {
 	return message.slice(0, 300) || 'Falha ao arquivar.';
 }
 
-async function saveEntry(storage: ArchiveStorage, entry: ArchiveEntry): Promise<ArchiveEntry> {
-	await storage.updateArchiveIndex((data) => ({
-		...data,
-		entries: { ...data.entries, [entry.id]: entry }
-	}));
+async function saveEntry(
+	storage: ArchiveStorage,
+	entry: ArchiveEntry,
+	token?: JobToken
+): Promise<ArchiveEntry> {
+	await storage.updateArchiveIndex((data) => {
+		const entries = { ...data.entries };
+		if (token?.cancelled) delete entries[entry.id];
+		else entries[entry.id] = entry;
+		return { ...data, entries };
+	});
 	return entry;
 }
 
@@ -96,54 +128,115 @@ async function defaultBytes(url: string): Promise<{ bytes: Uint8Array; contentTy
 	return { bytes: result.bytes, contentType: result.contentType ?? 'application/octet-stream' };
 }
 
-export async function archiveItem(
+/**
+ * Reserva o slot `pending` e o teto dentro do lock do índice; só então dispara
+ * o job (máx. 2 em voo, um por item). Devolve a entrada persistida na reserva.
+ */
+export async function enqueueArchive(
 	storage: ArchiveStorage,
 	input: ArchiveInput,
 	deps: ArchiveDeps = {}
 ): Promise<ArchiveEntry> {
 	const at = nowIso(deps);
-	const id = input.item.id;
-	cancelled.delete(id);
 
 	if (input.sourceType !== 'rss') {
-		return saveEntry(storage, {
+		return {
 			...baseEntry(input, 'failed', at),
 			error: 'Arquivamento disponível para fontes RSS.'
-		});
+		};
 	}
 
-	const index = await storage.loadArchiveIndex();
-	const current = index.entries[id];
-	if (current?.status === 'ready') return current;
+	if (jobs.has(input.item.id)) return baseEntry(input, 'pending', at);
 
-	const entries = Object.values(index.entries);
-	const active = entries.filter(
-		(entry) => (entry.status === 'ready' || entry.status === 'pending') && entry.id !== id
-	);
-	const totalBytes = entries.reduce((total, entry) => total + entry.bytes, 0);
+	let reserved: ArchiveEntry | null = null;
+	let blocked: ArchiveEntry | null = null;
 
-	if (active.length >= MAX_ARCHIVES) {
-		return saveEntry(storage, {
-			...baseEntry(input, 'failed', at),
-			error: 'Limite de 200 arquivos atingido. Remova alguns em Gerenciar.'
-		});
-	}
-	if (totalBytes >= MAX_TOTAL_BYTES) {
-		return saveEntry(storage, {
-			...baseEntry(input, 'failed', at),
-			error: 'Limite de 500 MB de arquivos atingido. Remova alguns em Gerenciar.'
-		});
-	}
+	await storage.updateArchiveIndex((data) => {
+		const current = data.entries[input.item.id];
+		if (current && (current.status === 'ready' || current.status === 'pending')) {
+			reserved = current;
+			return data;
+		}
 
-	const pending = await saveEntry(storage, {
-		...baseEntry(input, 'pending', at),
-		createdAt: current?.createdAt ?? at
+		const entries = Object.values(data.entries).filter((entry) => entry.id !== input.item.id);
+		const activeEntries = entries.filter(
+			(entry) => entry.status === 'ready' || entry.status === 'pending'
+		);
+		const totalBytes = entries.reduce((total, entry) => total + entry.bytes, 0);
+
+		if (activeEntries.length >= MAX_ARCHIVES) {
+			blocked = saveBlocked(
+				input,
+				at,
+				'Limite de 200 arquivos atingido. Remova alguns em Gerenciar.'
+			);
+			return { ...data, entries: { ...data.entries, [input.item.id]: blocked } };
+		}
+		if (totalBytes >= MAX_TOTAL_BYTES) {
+			blocked = saveBlocked(
+				input,
+				at,
+				'Limite de 500 MB de arquivos atingido. Remova alguns em Gerenciar.'
+			);
+			return { ...data, entries: { ...data.entries, [input.item.id]: blocked } };
+		}
+
+		const pending: ArchiveEntry = {
+			...baseEntry(input, 'pending', at),
+			createdAt: current?.createdAt ?? at
+		};
+		reserved = pending;
+		return { ...data, entries: { ...data.entries, [input.item.id]: pending } };
 	});
+
+	if (blocked) return blocked;
+	if (!reserved) return baseEntry(input, 'failed', at);
+
+	const pending = reserved as ArchiveEntry;
+	if (pending.status !== 'pending') return pending;
+
+	const token: JobToken = { cancelled: false };
+	const promise = runWithSlot(() => archiveItem(storage, input, deps, token)).finally(() => {
+		const job = jobs.get(input.item.id);
+		if (job?.token === token) jobs.delete(input.item.id);
+	});
+	jobs.set(input.item.id, { token, promise });
+	void promise.catch(() => undefined);
+
+	return pending;
+}
+
+function saveBlocked(input: ArchiveInput, at: string, error: string): ArchiveEntry {
+	return { ...baseEntry(input, 'failed', at), error };
+}
+
+export async function archiveItem(
+	storage: ArchiveStorage,
+	input: ArchiveInput,
+	deps: ArchiveDeps = {},
+	token: JobToken = { cancelled: false }
+): Promise<ArchiveEntry> {
+	const at = nowIso(deps);
+	const id = input.item.id;
 	const dir = join(rootOf(deps), id);
 
+	if (input.sourceType !== 'rss') {
+		return saveEntry(
+			storage,
+			{ ...baseEntry(input, 'failed', at), error: 'Arquivamento disponível para fontes RSS.' },
+			token
+		);
+	}
+
+	const current = (await storage.loadArchiveIndex().catch(() => null))?.entries[id] ?? null;
+	if (current?.status === 'ready') return current;
+	const createdAt = current?.createdAt ?? at;
+
 	try {
+		if (token.cancelled) throw new Error('Arquivamento cancelado.');
+
 		const fetched = await (deps.text ?? defaultText)(input.item.url);
-		if (cancelled.has(id)) throw new Error('Arquivamento cancelado.');
+		if (token.cancelled) throw new Error('Arquivamento cancelado.');
 
 		const { html, imageUrls, textLength } = sanitizeArchiveBody(fetched.text, fetched.finalUrl);
 		if (textLength < MIN_TEXT_CHARS) {
@@ -187,41 +280,47 @@ export async function archiveItem(
 			generatedAt: at
 		});
 
-		if (cancelled.has(id)) throw new Error('Arquivamento cancelado.');
+		if (token.cancelled) throw new Error('Arquivamento cancelado.');
 
 		await writeArchiveAssets(dir, assets);
 		await writeArchiveDocument(dir, document);
+		if (token.cancelled) throw new Error('Arquivamento cancelado.');
+
 		const size = await archiveDirSize(dir);
 
-		return saveEntry(storage, {
-			...baseEntry(input, 'ready', nowIso(deps)),
-			bytes: size.bytes,
-			assets: size.assets,
-			createdAt: pending.createdAt
-		});
+		return saveEntry(
+			storage,
+			{
+				...baseEntry(input, 'ready', nowIso(deps)),
+				bytes: size.bytes,
+				assets: size.assets,
+				createdAt
+			},
+			token
+		);
 	} catch (error) {
 		await deleteArchiveDir(dir).catch(() => undefined);
-		if (cancelled.has(id)) {
-			cancelled.delete(id);
-			return { ...baseEntry(input, 'failed', nowIso(deps)), error: 'Arquivamento removido.' };
+		if (token.cancelled) {
+			return {
+				...baseEntry(input, 'failed', nowIso(deps)),
+				error: 'Arquivamento removido.'
+			};
 		}
-		return saveEntry(storage, {
-			...baseEntry(input, 'failed', nowIso(deps)),
-			error: errorText(error),
-			createdAt: pending.createdAt
-		});
+		return saveEntry(
+			storage,
+			{
+				...baseEntry(input, 'failed', nowIso(deps)),
+				error: errorText(error),
+				createdAt
+			},
+			token
+		);
 	}
 }
 
-/** Dispara o job sem bloquear a resposta de salvar. */
-export async function enqueueArchive(
-	storage: ArchiveStorage,
-	input: ArchiveInput,
-	deps: ArchiveDeps = {}
-): Promise<ArchiveEntry> {
-	const at = nowIso(deps);
-	void archiveItem(storage, input, deps).catch(() => undefined);
-	return baseEntry(input, 'pending', at);
+export function cancelArchive(id: string): void {
+	const job = jobs.get(id);
+	if (job) job.token.cancelled = true;
 }
 
 export async function deleteArchive(
@@ -229,7 +328,9 @@ export async function deleteArchive(
 	id: string,
 	deps: ArchiveDeps = {}
 ): Promise<boolean> {
-	cancelled.add(id);
+	const job = jobs.get(id);
+	cancelArchive(id);
+
 	const existed = Boolean((await storage.loadArchiveIndex()).entries[id]);
 	await deleteArchiveDir(join(rootOf(deps), id)).catch(() => undefined);
 
@@ -239,6 +340,10 @@ export async function deleteArchive(
 			delete entries[id];
 			return { ...data, entries };
 		});
+	}
+
+	if (job) {
+		void job.promise.finally(() => deleteArchiveDir(join(rootOf(deps), id)).catch(() => undefined));
 	}
 
 	return existed;

@@ -43,6 +43,7 @@ async function triggerArchive(
 		const snapshot = state.savedItems?.[id];
 		if (!snapshot) continue;
 		const source = hub?.feedSources.find((entry) => entry.id === snapshot.sourceId);
+		if (source && source.type !== 'rss') continue;
 		await enqueueArchive(storage, {
 			item: snapshot.item,
 			title: snapshot.item.title,

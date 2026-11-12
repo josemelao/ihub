@@ -51,6 +51,18 @@ beforeAll(async () => {
 				include: [],
 				exclude: [],
 				matchMode: 'any'
+			},
+			{
+				id: 'yt',
+				type: 'youtube',
+				name: 'YT',
+				target: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC123',
+				categoryId: 'c',
+				intervalMinutes: 30,
+				enabled: true,
+				include: [],
+				exclude: [],
+				matchMode: 'any'
 			}
 		],
 		savedFilters: []
@@ -58,7 +70,7 @@ beforeAll(async () => {
 	await storage.saveState({
 		version: 1,
 		read: {},
-		saved: ['abc'],
+		saved: ['abc', 'yt'],
 		savedItems: {
 			abc: {
 				item: {
@@ -72,6 +84,20 @@ beforeAll(async () => {
 				},
 				sourceId: 's',
 				sourceName: 'S',
+				savedAt: '2026-01-01T00:00:00.000Z'
+			},
+			yt: {
+				item: {
+					id: 'yt',
+					sourceId: 'yt',
+					title: 'Vídeo',
+					summary: '',
+					url: 'https://www.youtube.com/watch?v=abc',
+					publishedAt: '',
+					thumbnail: null
+				},
+				sourceId: 'yt',
+				sourceName: 'YT',
 				savedAt: '2026-01-01T00:00:00.000Z'
 			}
 		}
@@ -135,5 +161,9 @@ describe('API do arquivo', () => {
 
 	it('400 para payload inválido', async () => {
 		expect((await archivePost(event({}))).status).toBe(400);
+	});
+
+	it('409 para fonte que não é RSS', async () => {
+		expect((await archivePost(event({ action: 'archive', itemId: 'yt' }))).status).toBe(409);
 	});
 });

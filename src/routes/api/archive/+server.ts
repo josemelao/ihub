@@ -73,6 +73,12 @@ export const POST: RequestHandler = async ({ request }) => {
 
 			const hub = await storage.loadHub().catch(() => null);
 			const source = hub?.feedSources.find((entry) => entry.id === snapshot.sourceId);
+			if (source && source.type !== 'rss') {
+				return json(
+					{ ok: false, error: 'Arquivamento disponível apenas para fontes RSS.' },
+					{ status: 409 }
+				);
+			}
 			const entry = await enqueueArchive(storage, {
 				item: snapshot.item,
 				title: snapshot.item.title,

@@ -57,9 +57,10 @@ um 404.
    - `itemId` validado por regex (mesmo padrão de `reading`); nomes de asset são hash + extensão
      derivada do content-type; nenhum caminho vem do site.
 4. **Servição:** `GET /api/archive/[id]` devolve o HTML (nosniff, CSP já aplicada pelo hook);
-   `GET /api/archive/[id]/assets/[name]` devolve a imagem com o content-type guardado. Página
-   `/arquivo/[id]` mostra cabeçalho (título, tamanho, datas), “Abrir original”, “Remover
-   arquivo” e o conteúdo num iframe `self`.
+   `GET /api/archive/[id]/assets/[name]` devolve a imagem com o content-type guardado. A rota
+   `/arquivo/[id]` entrega o documento como página de topo (sem iframe), com cabeçalho (título,
+   data, tamanho), “Abrir original” e “Voltar ao hub”. Sem arquivo, responde 404 em HTML
+   explicando e oferecendo o original quando conhecido.
 5. **Gatilho:** depois de salvar (single e `save-many`), `enqueueArchive(item, snapshot)`
    fire-and-forget. Um `Set` em memória evita jobs duplicados por item. Se o processo reiniciar
    no meio, o item fica `pending` e o usuário pode repetir.
@@ -75,9 +76,9 @@ um 404.
    (título, tamanho, status) e “Apagar”. O `/arquivo/[id]` também mostra o tamanho e apaga.
 9. **Integração com o reader:** `/ler/[id]` mostra “Abrir versão arquivada” quando o arquivo
    existe (principalmente no fallback de extração/404). O reader limpo continua separado.
-10. **Sanitização do HTML completo:** mesma allowlist do reader, sem `style`/`class`/`id`/
+10. **Sanitização do HTML completo:** mesma allowlist ampliada, sem `style`/`class`/`id`/
     `script`/`iframe`/`form`; `img` só `http(s)` e depois reescrito para o asset local; imagens
-    que falham são removidas. CSS mínimo do app é injetado no documento arquivado; nenhum
+    que falham são removidas. O documento referencia `static/archive.css` (sem inline); nenhum
     recurso remoto permanece.
 11. **SVG não é arquivado** (risco de script); conta como imagem descartada. Formatos aceitos:
     png, jpeg, gif, webp, avif.
@@ -148,7 +149,7 @@ export interface ArchiveIndex {
 - **Salvar:** estado grava → `enqueueArchive` grava `pending` → busca HTML → sanitiza → baixa
   imagens → grava `index.html`/assets → `ready` (ou `failed` com motivo).
 - **Ler offline:** favorito → “Ler aqui” → reader; se não houver artigo/falhar, “Abrir versão
-  arquivada” → `/arquivo/<id>` → iframe do HTML local.
+  arquivada” → `/arquivo/<id>` → documento local (página de topo).
 - **Apagar arquivo:** em `/arquivo/<id>` ou Gerenciar → remove pasta, assets e entrada; o post
   continua salvo/snapshot.
 - **Dessalvar:** remove arquivo e entrada junto.

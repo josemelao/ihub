@@ -52,6 +52,10 @@ describe('GET /arquivo/[id]', () => {
 	});
 
 	it('404 quando não há arquivo', async () => {
-		expect((await get(event('x'))).status).toBe(404);
+		const response = await get(event('x'));
+
+		expect(response.status).toBe(404);
+		expect(response.headers.get('content-type')).toContain('text/html');
+		await expect(response.text()).resolves.toContain('Arquivo não encontrado');
 	});
 });

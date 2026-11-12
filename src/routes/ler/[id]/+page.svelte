@@ -39,6 +39,7 @@
 
 	const minutes = $derived(article ? Math.max(1, Math.round(article.length / 1000)) : 0);
 	const canActivate = $derived(Boolean(data.source && data.source.type === 'rss' && !fullText));
+	const canArchive = $derived(Boolean(data.source && data.source.type === 'rss'));
 
 	onMount(() => {
 		if (!article && data.source?.type === 'rss' && fullText) void extract();
@@ -461,11 +462,13 @@
 					Tentar de novo
 				</button>
 			{/if}
-		{:else if data.saved}
+		{:else if data.saved && canArchive}
 			<p class="muted small">Sem arquivo local para este post.</p>
 			<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
 				Arquivar agora
 			</button>
+		{:else if data.saved}
+			<p class="muted small">Arquivamento disponível apenas para fontes RSS.</p>
 		{:else}
 			<p class="muted small">Salve o post para guardar uma cópia local da página.</p>
 		{/if}

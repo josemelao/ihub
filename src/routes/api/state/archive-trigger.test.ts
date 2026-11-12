@@ -38,6 +38,18 @@ beforeAll(async () => {
 				include: [],
 				exclude: [],
 				matchMode: 'any'
+			},
+			{
+				id: 'yt',
+				type: 'youtube',
+				name: 'YT',
+				target: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC123',
+				categoryId: 'c',
+				intervalMinutes: 30,
+				enabled: true,
+				include: [],
+				exclude: [],
+				matchMode: 'any'
 			}
 		],
 		savedFilters: []
@@ -89,5 +101,28 @@ describe('/api/state dispara arquivamento', () => {
 		await vi.waitFor(() =>
 			expect(vi.mocked(deleteArchive)).toHaveBeenCalledWith(expect.anything(), 'abc')
 		);
+	});
+
+	it('não enfileira fonte que não é RSS', async () => {
+		vi.mocked(enqueueArchive).mockClear();
+
+		const youtube = {
+			item: {
+				id: 'yt',
+				sourceId: 'yt',
+				title: 'Vídeo',
+				summary: '',
+				url: 'https://www.youtube.com/watch?v=abc',
+				publishedAt: '',
+				thumbnail: null
+			},
+			sourceId: 'yt',
+			sourceName: 'YT',
+			savedAt: '2026-01-01T00:00:00.000Z'
+		};
+
+		expect((await post(event({ action: 'save', id: 'yt', snapshot: youtube }))).status).toBe(200);
+		await new Promise((resolve) => setTimeout(resolve, 10));
+		expect(vi.mocked(enqueueArchive)).not.toHaveBeenCalled();
 	});
 });
