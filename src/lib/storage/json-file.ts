@@ -2,6 +2,7 @@ import { access, copyFile, mkdir, readFile, readdir, rm, stat, writeFile } from 
 import { constants as fsConstants } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
+	EMPTY_ARCHIVE_INDEX,
 	EMPTY_FEED_CACHE,
 	EMPTY_HIGHLIGHTS,
 	EMPTY_HUB,
@@ -10,6 +11,7 @@ import {
 } from '../defaults';
 import { migrateHub } from '../migrations/hub';
 import {
+	migrateArchiveIndex,
 	migrateFeedCache,
 	migrateHighlights,
 	migrateNotes,
@@ -17,6 +19,7 @@ import {
 } from '../migrations/state';
 import {
 	HubValidationError,
+	parseArchiveIndex,
 	parseFeedCache,
 	parseHighlights,
 	parseHub,
@@ -32,6 +35,7 @@ import {
 	writeArticleFile
 } from '../reader/article-store';
 import type {
+	ArchiveIndex,
 	BackupCreated,
 	BackupEntry,
 	BackupInfo,
@@ -469,6 +473,47 @@ export class JsonFileStorage implements HubStorage {
 
 	async saveHighlights(data: HighlightsData): Promise<void> {
 		await this.persistHighlights(data);
+	}
+
+	private persistArchiveIndex(data: ArchiveIndex): Promise<void> {
+		return this.writeJsonAtomic('archive.json', parseArchiveIndex(data), (value) => {
+			try {
+				parseArchiveIndex(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+	}
+
+	async loadArchiveIndex(): Promise<ArchiveIndex> {
+		try {
+			const raw = await this.readJson('archive.json');
+			return parseArchiveIndex(migrateArchiveIndex(raw).data);
+		} catch (error) {
+			if (isMissingFile(error)) return structuredClone(EMPTY_ARCHIVE_INDEX);
+			throw error;
+		}
+	}
+
+	async loadArchiveIndexFromBackup(): Promise<ArchiveIndex | null> {
+		return this.loadFromBackup('archive.json', (raw) =>
+			parseArchiveIndex(migrateArchiveIndex(raw).data)
+		);
+	}
+
+	async updateArchiveIndex(
+		fn: (data: ArchiveIndex) => ArchiveIndex | Promise<ArchiveIndex>
+	): Promise<ArchiveIndex> {
+		return fileLocks.withLock(this.lockKey('archive.json'), async () => {
+			const next = parseArchiveIndex(await fn(await this.loadArchiveIndex()));
+			await this.persistArchiveIndex(next);
+			return next;
+		});
+	}
+
+	async saveArchiveIndex(data: ArchiveIndex): Promise<void> {
+		await this.persistArchiveIndex(data);
 	}
 
 	async exportBundle(): Promise<ExportBundle> {

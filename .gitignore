@@ -34,6 +34,8 @@ data/feed-cache.json
 data/notes.json
 data/highlights.json
 data/reading/
+data/archive.json
+data/archive/
 data/hub.json
 data/autostart.log
 data/*.tmp-*

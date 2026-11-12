@@ -12,7 +12,9 @@ describe('.gitignore de dados pessoais', () => {
 			'data/feed-cache.json',
 			'data/notes.json',
 			'data/highlights.json',
-			'data/reading/'
+			'data/reading/',
+			'data/archive.json',
+			'data/archive/'
 		]) {
 			expect(gitignore).toContain(file);
 		}

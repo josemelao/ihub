@@ -315,6 +315,12 @@ export interface HubStorage {
 		fn: (data: HighlightsData) => HighlightsData | Promise<HighlightsData>
 	): Promise<HighlightsData>;
 	saveHighlights(data: HighlightsData): Promise<void>;
+	loadArchiveIndex(): Promise<ArchiveIndex>;
+	loadArchiveIndexFromBackup(): Promise<ArchiveIndex | null>;
+	updateArchiveIndex(
+		fn: (data: ArchiveIndex) => ArchiveIndex | Promise<ArchiveIndex>
+	): Promise<ArchiveIndex>;
+	saveArchiveIndex(data: ArchiveIndex): Promise<void>;
 	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */
 	updateHubAndCache(
 		hubFn: (hub: HubData) => HubData | Promise<HubData>,
