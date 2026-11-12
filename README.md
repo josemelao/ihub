@@ -323,7 +323,11 @@ npm run verify  # check + lint + testes + build
 npm test        # Vitest (schema, storage, helpers, edição, feed, players e seed)
 npm run check   # svelte-check
 npm run lint    # Prettier + ESLint
+npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chromium)
+npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
+
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`) e cobre: adicionar link pela Biblioteca, nota rápida persistindo, palette (busca e comando) e axe nas telas principais. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 

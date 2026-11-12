@@ -35,3 +35,8 @@ data/notes.json
 data/hub.json
 data/autostart.log
 data/*.tmp-*
+
+# E2E (Playwright)
+.e2e-data/
+playwright-report/
+test-results/

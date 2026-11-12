@@ -565,3 +565,13 @@ Executada em 11/11/2026 sobre `v0.19.0`.
 - **ORG-17 — Acesso rápido**: `settings.quickAccessOrder` e `quickAccessLimit` (3–12); a home respeita a ordem manual, permite arrastar e reordenar (com botões ↑/↓ para teclado), desafixar no modo de edição e fixar/desafixar direto nos cards da Biblioteca.
 - **ORG-06 — palette de comandos**: índice único com links, apps, categorias, fontes, posts, notas e comandos; operadores `>`, `tag:`, `source:`, `is:unread`, `is:saved`; comandos “Adicionar link/fonte/categoria”, “Abrir Gerenciar”, “Biblioteca”, “Feed”, “Salvos”, “Exportar” e “Atualizar feed” (executa o job com progresso).
 - `npm run verify` verde com **657 testes** em 92 arquivos.
+
+## 26. Fase 4 — CI, E2E e acessibilidade (v0.21.0)
+
+Executada em 11/11/2026 sobre `v0.20.0`.
+
+- **CI**: `.github/workflows/ci.yml` roda em push/PR para `master`: `npm ci`, `check`, `lint`, `test`, `build`; em seguida o job `e2e` instala Chromium, builda e roda Playwright, com relatório como artefato em falha.
+- **Playwright**: `playwright.config.ts` sobe o build em `127.0.0.1:5760` com `HUB_DATA_DIR=.e2e-data` (recriado no global setup a partir de `data/hub.example.json`). `bypassCSP` apenas no teste, para o axe injetar o script.
+- **Fluxos cobertos (8)**: adicionar link pela Biblioteca → aparece na lista; nota rápida salva, sobrevive ao reload e entra na palette; palette encontra link e executa o comando “Adicionar link”; axe sem violações **críticas** em `/`, `/feed`, `/biblioteca` e `/gerenciar`.
+- Scripts novos: `npm run test:e2e` e `npm run test:e2e:report`.
+- `npm run verify` segue verde (657 testes em 92 arquivos) e `npx playwright test` passa 8/8 localmente.
