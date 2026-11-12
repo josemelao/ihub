@@ -7,6 +7,12 @@ export interface HubSettings {
 	quickAccessOrder?: string[];
 	/** Quantos atalhos mostrar (3–12). */
 	quickAccessLimit?: number;
+	/** Densidade da interface. */
+	density?: 'comfortable' | 'compact';
+	/** Tamanho base do texto (13–15 px). */
+	fontSize?: 13 | 14 | 15;
+	/** Contraste alto para leitura. */
+	highContrast?: boolean;
 }
 
 export interface Category {

@@ -207,6 +207,9 @@
 	let draggingItemId = $state<string | null>(null);
 	let dropTargetKey = $state<string | null>(null);
 	let accent = $state(untrack(() => data.hub.settings.accent));
+	let density = $state(untrack(() => data.hub.settings.density ?? 'comfortable'));
+	let fontSize = $state(untrack(() => data.hub.settings.fontSize ?? 14));
+	let highContrast = $state(untrack(() => Boolean(data.hub.settings.highContrast)));
 	let confirming = $state<{
 		kind: 'item' | 'source' | 'category' | 'group' | 'filter';
 		id: string;
@@ -454,6 +457,13 @@
 
 	async function saveAccent(): Promise<void> {
 		await mutate({ action: 'update-settings', settings: { accent } });
+	}
+
+	async function saveReading(): Promise<void> {
+		await mutate({
+			action: 'update-settings',
+			settings: { density, fontSize, highContrast }
+		});
 	}
 
 	// Exportar / importar
@@ -1627,6 +1637,35 @@
 			<input id="e-accent" type="color" bind:value={accent} />
 		</div>
 		<button class="btn btn-primary" type="button" onclick={saveAccent}>Salvar cor</button>
+	</div>
+
+	<div class="appearance-card">
+		<div class="appearance-main">
+			<strong>Leitura e densidade</strong>
+			<span class="muted small">Vale para todas as telas e fica salvo no hub.</span>
+			<div class="reading-grid">
+				<div class="field">
+					<label for="e-density">Densidade</label>
+					<select id="e-density" bind:value={density}>
+						<option value="comfortable">Confortável</option>
+						<option value="compact">Compacta</option>
+					</select>
+				</div>
+				<div class="field">
+					<label for="e-font-size">Tamanho do texto</label>
+					<select id="e-font-size" bind:value={fontSize}>
+						<option value={13}>13 px</option>
+						<option value={14}>14 px</option>
+						<option value={15}>15 px</option>
+					</select>
+				</div>
+				<label class="check">
+					<input type="checkbox" bind:checked={highContrast} />
+					Contraste alto
+				</label>
+			</div>
+		</div>
+		<button class="btn btn-primary" type="button" onclick={saveReading}> Salvar leitura </button>
 	</div>
 {/if}
 

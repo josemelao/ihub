@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { afterNavigate } from '$app/navigation';
 	import '../app.css';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
@@ -22,10 +23,22 @@
 		}
 	});
 
+	afterNavigate(() => ui.closeNav());
+
+	// Densidade, tamanho de fonte e contraste são atributos globais do <html>.
+	$effect(() => {
+		const root = document.documentElement;
+		root.dataset.density = data.hub.settings.density ?? 'comfortable';
+		root.dataset.contrast = data.hub.settings.highContrast ? 'high' : 'normal';
+		root.dataset.font = String(data.hub.settings.fontSize ?? 14);
+	});
+
 	function onKeydown(event: KeyboardEvent): void {
 		if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
 			event.preventDefault();
 			ui.openPalette();
+		} else if (event.key === 'Escape' && ui.navOpen) {
+			ui.closeNav();
 		} else if (event.key === 'Escape' && ui.paletteOpen) {
 			ui.closePalette();
 		}
@@ -47,7 +60,21 @@
 		data.hub.settings.accent
 	)}"
 >
-	<Sidebar hub={data.hub} {unread} {unreadByCategory} savedCount={data.state.saved.length} />
+	{#if ui.navOpen}
+		<button
+			class="nav-backdrop"
+			type="button"
+			aria-label="Fechar menu"
+			onclick={() => ui.closeNav()}
+		></button>
+	{/if}
+	<Sidebar
+		hub={data.hub}
+		open={ui.navOpen}
+		{unread}
+		{unreadByCategory}
+		savedCount={data.state.saved.length}
+	/>
 
 	<main class="main" id="conteudo">
 		{#if data.dataError}

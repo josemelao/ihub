@@ -173,6 +173,11 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - `Build`, `build ` e `BUILD` contam como a mesma tag; a primeira grafia é preservada.
 - Detalhes: [docs/tags.md](docs/tags.md).
 
+### Mobile e preferências de leitura
+
+- Abaixo de 900 px a navegação vira **drawer**: o menu abre pelo botão ☰, fecha ao navegar, no backdrop ou com Esc, e não ocupa a primeira tela.
+- Em **Gerenciar → Aparência** há densidade (confortável/compacta), tamanho do texto (13/14/15 px) e contraste alto; tudo fica salvo no `hub.json` e vale para todas as telas.
+
 ### Busca, comandos e notas
 
 - `Ctrl+K` abre a palette: pesquisa links, apps, categorias, fontes, posts, notas e comandos.

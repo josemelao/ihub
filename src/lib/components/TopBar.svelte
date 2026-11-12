@@ -18,6 +18,15 @@
 
 <header class="topbar">
 	<button
+		class="icon-btn nav-toggle"
+		type="button"
+		aria-label="Abrir menu de navegação"
+		aria-expanded={ui.navOpen}
+		onclick={() => ui.toggleNav()}
+	>
+		<span aria-hidden="true">☰</span>
+	</button>
+	<button
 		class="search search-button"
 		type="button"
 		onclick={() => ui.openPalette()}

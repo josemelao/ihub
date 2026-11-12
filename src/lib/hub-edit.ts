@@ -80,6 +80,9 @@ export interface SettingsInput {
 	accent?: string;
 	quickAccessOrder?: string[] | null;
 	quickAccessLimit?: number;
+	density?: 'comfortable' | 'compact';
+	fontSize?: 13 | 14 | 15;
+	highContrast?: boolean;
 }
 
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -497,6 +500,10 @@ export function updateSettings(hub: HubData, patch: SettingsInput): HubData {
 	else if (patch.quickAccessOrder) settings.quickAccessOrder = [...patch.quickAccessOrder];
 
 	if (patch.quickAccessLimit) settings.quickAccessLimit = patch.quickAccessLimit;
+
+	if (patch.density) settings.density = patch.density;
+	if (patch.fontSize) settings.fontSize = patch.fontSize;
+	if (patch.highContrast !== undefined) settings.highContrast = patch.highContrast;
 
 	return { ...hub, settings };
 }

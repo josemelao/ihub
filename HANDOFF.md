@@ -577,3 +577,12 @@ Executada em 11/11/2026 sobre `v0.20.0`.
 - Faltam no E2E: importar bookmarks/OPML e testar fonte pelo Gerenciar (cobertos por testes de rota, não por fluxo de navegador).
 - `npm run verify` segue verde (657 testes em 92 arquivos) e `npx playwright test` passa 8/8 localmente.
 - **CI validado no GitHub**: run [43132331993](https://github.com/josemelao/ihub/actions/runs/43132331993) — jobs `check · lint · test · build` e `e2e · axe` verdes.
+
+## 27. Fase 4 — mobile e preferências (v0.23.0)
+
+Executada em 12/11/2026 sobre `v0.22.0`.
+
+- **Navegação mobile**: abaixo de 900 px a sidebar vira drawer (botão ☰ no topbar, backdrop, Esc e fechamento automático após navegar). A primeira tela deixa de ser consumida pelo menu.
+- **Preferências**: `settings.density` (confortável/compacta), `fontSize` (13/14/15) e `highContrast` aplicados como atributos no `html` e salvos via `update-settings`; controles em **Gerenciar → Aparência**.
+- **CSS**: drawer, overlays e tokens de contraste; densidade compacta reduz paddings/gaps; `body` acompanha o tamanho escolhido (micro-badges decorativos continuam em 10–11 px).
+- **Testes**: unitário de `updateSettings`; E2E cobre overflow em 375 px, abrir/navegar/fechar o drawer, persistência das preferências após reload e axe com contraste alto. Suíte E2E agora com 14 testes.

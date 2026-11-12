@@ -3,6 +3,13 @@ import { expect, test } from './fixtures';
 
 const pages = ['/', '/feed', '/biblioteca', '/gerenciar'];
 
+async function setContrast(page: import('@playwright/test').Page, high: boolean): Promise<void> {
+	const response = await page.request.post('/api/hub', {
+		data: { action: 'update-settings', settings: { highContrast: high } }
+	});
+	expect(response.ok()).toBe(true);
+}
+
 for (const path of pages) {
 	test(`sem violações críticas ou sérias de acessibilidade em ${path}`, async ({ page }) => {
 		await page.goto(path);
@@ -24,3 +31,19 @@ for (const path of pages) {
 		).toEqual([]);
 	});
 }
+
+test('contraste alto passa no axe', async ({ page }) => {
+	await setContrast(page, true);
+	try {
+		await page.goto('/');
+		const results = await new AxeBuilder({ page })
+			.withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+			.analyze();
+		const blocking = results.violations.filter(
+			(violation) => violation.impact === 'critical' || violation.impact === 'serious'
+		);
+		expect(blocking.map((violation) => violation.id)).toEqual([]);
+	} finally {
+		await setContrast(page, false);
+	}
+});

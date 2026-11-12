@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`) e PLAT-09 (`v0.21.0`/`v0.22.0`: CI verde, 11 testes E2E e typecheck; faltam 2 fluxos E2E) (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
+> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`) e PLAT-08 (`v0.23.0`, mobile/preferências) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1821,10 +1821,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Em 375 px, o menu não ocupa a primeira tela inteira.
-- [ ] Nenhum texto essencial abaixo de 12 px.
-- [ ] Densidade e fonte persistem.
-- [ ] Contraste alto passa em axe.
+- [x] Em 375 px, o menu não ocupa a primeira tela inteira.
+- [x] Nenhum texto essencial abaixo de 12 px.
+- [x] Densidade e fonte persistem.
+- [x] Contraste alto passa em axe.
 
 ---
 

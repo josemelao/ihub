@@ -7,11 +7,13 @@
 	import Icon from './Icon.svelte';
 
 	let {
+		open = false,
 		hub,
 		unread = 0,
 		unreadByCategory = {},
 		savedCount = 0
 	}: {
+		open?: boolean;
 		hub: HubData;
 		unread?: number;
 		unreadByCategory?: Record<string, number>;
@@ -28,7 +30,7 @@
 	}
 </script>
 
-<nav class="sidebar" aria-label="Menu principal">
+<nav class="sidebar" class:open aria-label="Menu principal">
 	<div class="sidebar-scroll">
 		<div class="brand-row">
 			<a class="brand" href={resolve('/')}>
