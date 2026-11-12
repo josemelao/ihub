@@ -4,6 +4,7 @@ import { readJsonLimited, RequestBodyError, isRecord, isInternalError } from '#l
 import { HubValidationError } from '#lib/schema';
 import { applyStateAction, type StatePayload } from '#lib/state-actions';
 import { getStorage } from '#lib/storage';
+import { isRecoverableDataError, StorageError } from '#lib/storage/errors';
 import type { RequestHandler } from './$types';
 
 const MAX_BODY_BYTES = 2_000_000;
@@ -15,7 +16,7 @@ export const GET: RequestHandler = async () => {
 	try {
 		return json(await storage.loadState());
 	} catch (error) {
-		if (!(error instanceof HubValidationError)) throw error;
+		if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 		return json((await storage.loadStateFromBackup()) ?? structuredClone(EMPTY_STATE));
 	}
 };
@@ -52,6 +53,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		}
 		if (error instanceof HubValidationError) {
 			return json({ ok: false, error: error.message, issues: error.issues }, { status: 400 });
+		}
+		if (error instanceof StorageError) {
+			return json({ ok: false, error: error.message }, { status: 500 });
 		}
 		if (!isInternalError(error)) throw error;
 		return json({ ok: false, error: 'Falha inesperada ao atualizar o estado.' }, { status: 500 });

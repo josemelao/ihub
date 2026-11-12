@@ -86,7 +86,8 @@ describe('DELETE /api/hub de fonte', () => {
 		await writeFile(join(dir, 'feed-cache.json'), '{ quebrado', 'utf-8');
 
 		const response = await POST(event({ action: 'delete-source', id: 'fonte' }));
-		expect(response.status).toBe(400);
+		expect(response.status).toBe(500);
+		await expect(response.json()).resolves.toMatchObject({ ok: false });
 
 		const hub = await storage.loadHub();
 		expect(hub.feedSources.map((source) => source.id)).toEqual(['fonte']);

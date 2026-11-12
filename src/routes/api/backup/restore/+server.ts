@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import { readJsonLimited, RequestBodyError } from '#lib/net/body';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
+import { isNotFound } from '#lib/storage/errors';
 import type { RequestHandler } from './$types';
 
 const MAX_BODY_BYTES = 64_000;
@@ -25,6 +26,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		const result = await getStorage().restoreBackup(payload.id);
 		return json({ ok: true, ...result });
 	} catch (error) {
+		if (isNotFound(error)) {
+			return json({ ok: false, error: error.message }, { status: 404 });
+		}
 		if (error instanceof HubValidationError) {
 			return json({ ok: false, error: error.message, issues: error.issues }, { status: 400 });
 		}

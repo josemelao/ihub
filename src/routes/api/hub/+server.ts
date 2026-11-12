@@ -4,6 +4,7 @@ import { applyHubAction, type HubPayload } from '#lib/hub-actions';
 import { readJsonLimited, RequestBodyError, isRecord, isInternalError } from '#lib/net/body';
 import { HubValidationError, parseHub } from '#lib/schema';
 import { getStorage } from '#lib/storage';
+import { StorageError } from '#lib/storage/errors';
 import type { HubData } from '#lib/types';
 import type { RequestHandler } from './$types';
 
@@ -15,6 +16,9 @@ export const GET: RequestHandler = async () => {
 	} catch (error) {
 		if (error instanceof HubValidationError) {
 			return json({ error: error.message, issues: error.issues }, { status: 500 });
+		}
+		if (error instanceof StorageError) {
+			return json({ error: error.message, code: error.code }, { status: 500 });
 		}
 		throw error;
 	}

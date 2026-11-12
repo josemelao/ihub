@@ -16,6 +16,7 @@ import { EMPTY_FEED_CACHE, EMPTY_HUB, EMPTY_NOTES, EMPTY_STATE } from '../defaul
 import { migrateHub } from '../migrations/hub';
 import { migrateFeedCache, migrateNotes, migrateState } from '../migrations/state';
 import { HubValidationError, parseFeedCache, parseHub, parseHubState, parseNotes } from '../schema';
+import { isNotFound, isRecoverableDataError, StorageError } from './errors';
 import { recoverHubState } from '../state-recovery';
 import type {
 	BackupCreated,
@@ -50,10 +51,7 @@ const nodeFileDeps: AtomicFileDeps = {
 };
 
 function isMissingFile(error: unknown): boolean {
-	return (
-		error instanceof HubValidationError &&
-		error.issues.some((issue) => issue.message.startsWith('Arquivo não encontrado:'))
-	);
+	return isNotFound(error);
 }
 
 export class JsonFileStorage implements HubStorage {
@@ -78,14 +76,11 @@ export class JsonFileStorage implements HubStorage {
 			raw = await readFile(fullPath, 'utf-8');
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-				throw new HubValidationError(
-					[
-						{
-							path: [],
-							message: `Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.`
-						}
-					],
-					file
+				throw new StorageError(
+					'NOT_FOUND',
+					fullPath,
+					`Arquivo não encontrado: ${fullPath}. Crie o arquivo ou ajuste HUB_DATA_DIR.`,
+					error
 				);
 			}
 			throw error;
@@ -94,14 +89,11 @@ export class JsonFileStorage implements HubStorage {
 		try {
 			return JSON.parse(raw);
 		} catch (error) {
-			throw new HubValidationError(
-				[
-					{
-						path: [],
-						message: `JSON inválido em ${fullPath}: ${(error as Error).message}`
-					}
-				],
-				file
+			throw new StorageError(
+				'INVALID_JSON',
+				fullPath,
+				`JSON inválido em ${fullPath}: ${(error as Error).message}`,
+				error
 			);
 		}
 	}
@@ -114,7 +106,7 @@ export class JsonFileStorage implements HubStorage {
 			} catch (error) {
 				// Conteúdo inválido/ausente: tenta a geração seguinte. Erros de I/O
 				// (permissão, diretório no lugar do arquivo) devem aparecer.
-				if (!(error instanceof HubValidationError)) throw error;
+				if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 			}
 		}
 		return null;
@@ -203,7 +195,7 @@ export class JsonFileStorage implements HubStorage {
 			try {
 				current = await this.loadState();
 			} catch (error) {
-				if (!(error instanceof HubValidationError)) throw error;
+				if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 				current = (await this.loadStateFromBackup()) ?? structuredClone(EMPTY_STATE);
 			}
 
@@ -306,13 +298,16 @@ export class JsonFileStorage implements HubStorage {
 		try {
 			return { hub: await this.loadHub(), error: null };
 		} catch (error) {
-			if (!(error instanceof HubValidationError)) throw error;
+			if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 			const backup = await this.loadHubFromBackup();
 			return {
 				hub: backup ?? structuredClone(EMPTY_HUB),
 				error: {
 					message: error.message,
-					issues: error.issues,
+					issues:
+						error instanceof HubValidationError
+							? error.issues
+							: [{ path: [], message: error.message }],
 					usingBackup: backup !== null
 				}
 			};
@@ -435,12 +430,12 @@ export class JsonFileStorage implements HubStorage {
 			try {
 				previousHub = await this.loadHubLocked();
 			} catch (error) {
-				if (!(error instanceof HubValidationError)) throw error;
+				if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 				if (mode === 'merge') {
 					previousHub = await this.loadHubFromBackup();
 					if (!previousHub) {
 						throw new HubValidationError([
-							...error.issues,
+							...(error instanceof HubValidationError ? error.issues : []),
 							{
 								path: [],
 								message:
@@ -617,9 +612,11 @@ export class JsonFileStorage implements HubStorage {
 		const entries = await this.listManualBackups();
 		const found = entries.find((entry) => entry.id === id);
 		if (!found) {
-			throw new HubValidationError(
-				[{ path: ['id'], message: 'Ponto de restauração não encontrado.' }],
-				'backup'
+			throw new StorageError(
+				'NOT_FOUND',
+				this.path('backups'),
+				'Ponto de restauração não encontrado.',
+				undefined
 			);
 		}
 		return found;
@@ -747,7 +744,7 @@ export class JsonFileStorage implements HubStorage {
 					await this.readJsonAt(join(entry.path, 'feed-cache.json'), 'backup')
 				);
 			} catch (error) {
-				if (!(error instanceof HubValidationError)) throw error;
+				if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 				// cache é descartável: restaura hub/estado mesmo se ele estiver inválido
 			}
 		}

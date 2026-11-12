@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import { HubValidationError } from '#lib/schema';
 import { getStorage } from '#lib/storage';
+import { isNotFound } from '#lib/storage/errors';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params }) => {
@@ -17,6 +18,9 @@ export const GET: RequestHandler = async ({ params }) => {
 			}
 		});
 	} catch (error) {
+		if (isNotFound(error)) {
+			return json({ ok: false, error: error.message }, { status: 404 });
+		}
 		if (error instanceof HubValidationError) {
 			return json({ ok: false, error: error.message, issues: error.issues }, { status: 400 });
 		}

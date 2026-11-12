@@ -74,11 +74,11 @@ describe('erros de API', () => {
 		expect(body.error).not.toMatch(/Cannot read|TypeError/);
 	});
 
-	it('/api/backup/restore responde 400/404 sem detalhes internos para id inexistente', async () => {
+	it('/api/backup/restore responde 404 sem detalhes internos para id inexistente', async () => {
 		const response = await restorePost(restoreEvent({ id: 'manual-2020-01-01T00-00-00-000Z' }));
 		const body = (await response.json()) as { error: string };
 
-		expect([400, 404]).toContain(response.status);
+		expect(response.status).toBe(404);
 		expect(body.error).not.toMatch(/Cannot read|TypeError|C:\\\\/);
 	});
 });

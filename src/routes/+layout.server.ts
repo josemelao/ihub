@@ -5,6 +5,7 @@ import { backfillSavedSnapshots } from '#lib/feed/view';
 import { HubValidationError } from '#lib/schema';
 import { pruneState } from '#lib/state-prune';
 import { getStorage } from '#lib/storage';
+import { isRecoverableDataError } from '#lib/storage/errors';
 import type { FeedCache, HubData, HubState, ValidationIssue } from '#lib/types';
 import type { LayoutServerLoad } from './$types';
 
@@ -22,13 +23,16 @@ async function loadWithBackup<T>(
 	try {
 		return { value: await load(), error: null };
 	} catch (error) {
-		if (!(error instanceof HubValidationError)) throw error;
+		if (!(error instanceof HubValidationError) && !isRecoverableDataError(error)) throw error;
 		const backup = await loadBackup();
 		return {
 			value: backup ?? empty(),
 			error: {
 				message: error.message,
-				issues: error.issues,
+				issues:
+					error instanceof HubValidationError
+						? error.issues
+						: [{ path: [], message: error.message }],
 				usingBackup: backup !== null
 			}
 		};

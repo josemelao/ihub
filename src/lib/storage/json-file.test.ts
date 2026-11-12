@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { JsonFileStorage } from './json-file';
 import { HubValidationError } from '../schema';
+import { StorageError } from './errors';
 import type { HubData } from '../types';
 
 const hub = (name: string): HubData => ({
@@ -46,7 +47,7 @@ describe('JsonFileStorage', () => {
 
 	it('explica erro de JSON inválido no arquivo', async () => {
 		await writeFile(join(dir, 'hub.json'), '{ isso não é json }', 'utf-8');
-		await expect(storage.loadHub()).rejects.toThrow(HubValidationError);
+		await expect(storage.loadHub()).rejects.toThrow(StorageError);
 		await expect(storage.loadHub()).rejects.toThrow(/JSON inválido/i);
 	});
 
@@ -470,7 +471,7 @@ describe('JsonFileStorage', () => {
 				(current) => ({ ...current, feedSources: [] }),
 				(current) => current
 			)
-		).rejects.toThrow(HubValidationError);
+		).rejects.toThrow(StorageError);
 
 		const loaded = await storage.loadHub();
 		expect(loaded.feedSources.map((source) => source.id)).toEqual(['fonte']);
@@ -627,7 +628,7 @@ describe('JsonFileStorage', () => {
 				},
 				'merge'
 			)
-		).rejects.toThrow(HubValidationError);
+		).rejects.toThrow(StorageError);
 
 		const loaded = await storage.loadHub();
 		expect(loaded.categories.map((category) => category.id)).toEqual(['jogos']);
@@ -754,7 +755,7 @@ describe('JsonFileStorage', () => {
 	it('não exclui ponto inexistente ou com id inválido', async () => {
 		await expect(storage.deleteBackup('../hub.json')).rejects.toThrow(HubValidationError);
 		await expect(storage.deleteBackup('manual-2020-01-01T00-00-00-000Z')).rejects.toThrow(
-			HubValidationError
+			StorageError
 		);
 	});
 });

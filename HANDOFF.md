@@ -612,3 +612,13 @@ Executada em 12/11/2026 sobre `v0.25.0`.
 - **`POST /api/setup`**: `{ mode: "example" | "empty" }` cria o `hub.json` **apenas** quando ele não existe (409 caso contrário); exemplo vem de `data/hub.example.json`, já validado e migrado.
 - **UI**: painel de primeiro uso na home com “Começar com exemplo” e “Começar vazio”, explicando onde os dados ficam.
 - **Testes**: 4 de rota (exemplo, vazio, 409, mode inválido). Restante do fluxo (importar favoritos) continua no Gerenciar.
+
+## 31. Fase 4 — modelo de erro de storage (v0.27.0)
+
+Executada em 12/11/2026 sobre `v0.26.0`.
+
+- **`StorageError`** (`src/lib/storage/errors.ts`) com `code` (`NOT_FOUND`, `INVALID_JSON`, `IO`, `LOCK_TIMEOUT`, `VALIDATION`), `path` e `cause`. `HubValidationError` continua só para schema.
+- **Leitura**: arquivo ausente e JSON inválido deixam de ser “validação” e passam a `StorageError`; fallback de hub/estado/cache/notas e a recuperação de estado reconhecem os dois tipos.
+- **Rotas**: backup inexistente responde **404**; `/api/state` mantém fallback para backup; `/api/hub` e `/api/export` devolvem JSON 500 com `code` em erro de storage.
+- **Compatibilidade**: nomes de arquivo mantidos (`estado.json`, não `state.json`) — renomear exigiria migração de backups sem ganho funcional. Arquivos antigos continuam válidos.
+- **Testes**: 5 do `StorageError` + ajustes das expectativas de storage e rota (688 testes verdes).
