@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-11
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes.
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.28.0 entregues e a validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
 
 ## 1. O que é
 
@@ -633,3 +633,21 @@ Executada em 12/11/2026 sobre `v0.27.0`.
 - **PLAT-02 e 2 fluxos E2E**: validação de logon e os fluxos de importar bookmarks/testar fonte seguem **manuais** (checklist abaixo); nada de código pendente.
 - `npm run verify` e `npx playwright test` verdes.
 - Checklists do plano (seção 9) atualizados com o que foi verificado; validação manual restante em [`docs/validacao-v0.28.md`](docs/validacao-v0.28.md).
+
+## 33. Validação e fechamento da v0.28.0 (12/11/2026)
+
+Executada sobre `v0.28.0` (`125e32e`), fechando o gate de release.
+
+- **Automatizado em ambiente isolado**: servidores temporários com `HUB_DATA_DIR` em pasta temp (portas 5761–5764), sem tocar nos dados reais.
+  - Primeiro uso: painel aparece sem `hub.json`; `POST /api/setup` `example` → 200 (5 categorias/31 itens), `empty` → 200 (0/0/0), repetido → 409.
+  - Token opcional: POST sem Bearer → 401; Bearer correto → 200; Bearer errado → 401; GET `/api/health` livre.
+  - Backup: criar → 200, listar → 1 ponto, download → 200, restaurar → 200 com ponto de segurança.
+  - Export → import `replace`: 5 categorias, 31 itens e a nota rápida preservados.
+  - `/api/health`: `writable: true`, `errors: []`, sem segredo no JSON; `data/notes.json` ignorado pelo Git.
+- **Manual (dono)**: feed com r/Darktide, mobile 375 px (drawer, preferências, título/badge), desktop 1440, teclado, accent claro/escuro e autostart completo (instalar, logoff/logon, fechar terminal, desinstalar).
+- **Diagnóstico “Reddit atualizado mas vazio”**: o refresh estava correto (`count: 25`, `error: null`), mas a fonte tinha `include: ["patch"]` e nenhum post casava — a view descartava todos. Filtro removido; os cards voltaram a renderizar. Não era regressão da v0.28.
+- **Flakiness corrigida**: `src/lib/autostart.test.ts` (timeout 20 s → 60 s) — PowerShell + COM levam ~10 s isolados e ~22 s com a suíte em paralelo. Duas execuções completas verdes depois.
+- **Qualidade**: `npm run verify` verde, 691 testes em 99 arquivos, 15/15 E2E (Chromium 1254 reinstalado via `npx playwright install chromium`), `npm audit --omit=dev` limpo.
+- **Backup**: `data/backups/validacao-v0.28-20261112-112508` (ignorado pelo Git).
+- **Commits**: `4cd46e8` (test), `5aaa300` (docs) e o commit de fechamento deste handoff.
+- **Próximo bloco**: Fase 3 — READ-01 (reader mode + texto completo) e READ-02 (highlights, notas e cores por salvo).

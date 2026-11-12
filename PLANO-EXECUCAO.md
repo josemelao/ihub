@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`) e leva Reddit/fechamentos (`v0.28.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
+> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`) e leva Reddit/fechamentos (`v0.28.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1678,8 +1678,8 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Ao logar no Windows, o hub está acessível em `127.0.0.1:5757` (artefatos cobertos por teste; logon real pendente).
-- [ ] Fechar a janela do terminal não derruba o servidor (VBS oculto validado por script; logon real pendente).
+- [x] Ao logar no Windows, o hub está acessível em `127.0.0.1:5757` (validado pelo dono em 12/11/2026).
+- [x] Fechar a janela do terminal não derruba o servidor (VBS oculto; validado pelo dono em 12/11/2026).
 - [x] O usuário consegue desativar o autostart.
 - [x] Há instruções no README.
 
@@ -1990,12 +1990,18 @@ Diferenciação / depois        → AVALIAR
 - [x] Abrir com `hub.json` válido, inválido e ausente.
 - [x] Fonte quebrada não derruba as outras.
 - [ ] Refresh com 1, 4 e 10 fontes.
-- [ ] Editar categoria/grupo/fonte e recarregar.
+  - Parcial em 12/11/2026: refresh real de 2 fontes ativas (Reddit e YouTube) sem erro; cenário de 1 e 10 fontes não executado.
+- [x] Editar categoria/grupo/fonte e recarregar.
+  - Validado pelo dono em 12/11/2026 (edição do filtro da fonte r/Darktide refletiu no feed).
 - [ ] Importar/substituir/mesclar.
+  - Parcial em 12/11/2026: `replace` coberto por automação (export → import, notas preservadas); `merge`/preview na UI não executados nesta rodada.
 - [x] Exportar e reimportar.
-- [ ] Mobile 375 e desktop 1440.
-- [ ] Teclado em todas as telas.
-- [ ] Tema com accent claro/escuro.
+- [x] Mobile 375 e desktop 1440.
+  - Validado pelo dono em 12/11/2026.
+- [x] Teclado em todas as telas.
+  - Validado pelo dono em 12/11/2026.
+- [x] Tema com accent claro/escuro.
+  - Validado pelo dono em 12/11/2026.
 - [x] Reiniciar o servidor e conferir dados.
 
 ---
