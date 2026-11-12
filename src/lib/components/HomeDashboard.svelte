@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { relativeTime } from '#lib/display';
+	import { HOME_ACTIONS } from '#lib/home-actions';
 	import { refreshWithProgress } from '#lib/refresh-client';
 	import type { FeedCache, HubData, HubState } from '#lib/types';
 	import Icon from './Icon.svelte';
@@ -28,6 +29,8 @@
 	let busy = $state(false);
 	let message = $state('');
 	let progress = $state<{ done: number; total: number } | null>(null);
+	let backupBusy = $state(false);
+	let actionMessage = $state('');
 
 	async function updateHub(payload: unknown): Promise<void> {
 		const response = await fetch('/api/hub', {
@@ -75,6 +78,25 @@
 			progress = null;
 		}
 	}
+
+	async function backupNow(): Promise<void> {
+		backupBusy = true;
+		actionMessage = '';
+		try {
+			const response = await fetch('/api/backup', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: '{}'
+			});
+			const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+			actionMessage =
+				response.ok && body.ok ? 'Backup criado.' : (body.error ?? 'Falha ao criar backup.');
+		} catch {
+			actionMessage = 'Falha de rede ao criar backup.';
+		} finally {
+			backupBusy = false;
+		}
+	}
 </script>
 
 <section class="dashboard-grid" aria-label="Painel geral">
@@ -120,34 +142,35 @@
 
 	<section class="panel dashboard-card" aria-labelledby="d-acoes">
 		<h2 id="d-acoes" class="dashboard-title">Ações rápidas</h2>
-		<div class="action-list">
-			<button class="action-row" type="button" onclick={refreshNow} disabled={busy}>
-				<Icon name="rss" size={16} />
-				{busy
-					? progress && progress.total > 0
-						? `Atualizando ${progress.done}/${progress.total}...`
-						: 'Atualizando...'
-					: 'Atualizar agora'}
-			</button>
-			<a class="action-row" href={resolve('/feed')}>
-				<Icon name="rss" size={16} />
-				Ver feed completo
-			</a>
-			<a class="action-row" href={resolve('/favoritos')}>
-				<Icon name="star" size={16} />
-				Favoritos
-			</a>
-			<a class="action-row" href={resolve('/gerenciar')}>
-				<Icon name="settings" size={16} />
-				Gerenciar
-			</a>
-			<a class="action-row" href={resolve('/api/export')} download>
-				<Icon name="download" size={16} />
-				Exportar dados
-			</a>
+		<div class="action-grid">
+			{#each HOME_ACTIONS as action (action.id)}
+				{#if action.href}
+					<a class="action-row" href={action.href} download={action.download ? '' : undefined}>
+						<Icon name={action.icon} size={14} />
+						{action.label}
+					</a>
+				{:else if action.id === 'backup'}
+					<button class="action-row" type="button" onclick={backupNow} disabled={backupBusy}>
+						<Icon name={action.icon} size={14} />
+						{backupBusy ? 'Criando backup…' : action.label}
+					</button>
+				{:else}
+					<button class="action-row" type="button" onclick={refreshNow} disabled={busy}>
+						<Icon name={action.icon} size={14} />
+						{busy
+							? progress && progress.total > 0
+								? `Atualizando ${progress.done}/${progress.total}...`
+								: 'Atualizando...'
+							: action.label}
+					</button>
+				{/if}
+			{/each}
 		</div>
+		{#if actionMessage}
+			<span class="muted small" role="status">{actionMessage}</span>
+		{/if}
 		{#if message}
-			<span class="muted small">{message}</span>
+			<span class="muted small" role="status">{message}</span>
 		{/if}
 	</section>
 </section>

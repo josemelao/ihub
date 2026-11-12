@@ -6,6 +6,7 @@
 	import { fade } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
 	import { readLocal, writeLocal } from '#lib/browser-storage';
+	import { countActiveFeedFilters, shouldOpenFeedFilters } from '#lib/feed/filter-bar';
 	import { matchesFilter } from '#lib/feed/filter';
 	import { selectAll, updateSelection } from '#lib/feed/selection';
 	import { countUnread, cutoffDaysAgo, idsOlderThan, resolveScope } from '#lib/feed/triage';
@@ -71,6 +72,15 @@
 	let lastInitialSourceId = untrack(() => initialSourceId);
 	let savedQuery = $state('');
 	let savedSort = $state<'saved' | 'published'>('saved');
+	let filtersOpen = $state(
+		untrack(() =>
+			shouldOpenFeedFilters({
+				activeFilterId: initialFilterId,
+				sourceId: initialSourceId,
+				unreadOnly: initialUnreadOnly
+			})
+		)
+	);
 	let limit = $state(10);
 	let refreshing = $state(false);
 	let refreshMessage = $state('');
@@ -186,6 +196,15 @@
 				(scope.categoryId === 'all' || source.categoryId === scope.categoryId)
 		)
 	);
+	const activeFilterCount = $derived(
+		countActiveFeedFilters({
+			query,
+			activeFilterId,
+			categoryId: scope.categoryId,
+			sourceId: scope.sourceId,
+			unreadOnly: scope.unreadOnly
+		})
+	);
 
 	const base = $derived(
 		entries.filter(
@@ -237,6 +256,7 @@
 		if (initialFilterId !== lastInitialFilterId) {
 			lastInitialFilterId = initialFilterId;
 			activeFilterId = initialFilterId;
+			filtersOpen = true;
 			limit = 10;
 		}
 	});
@@ -245,6 +265,7 @@
 		if (initialSourceId !== lastInitialSourceId) {
 			lastInitialSourceId = initialSourceId;
 			sourceFilter = initialSourceId ?? 'all';
+			filtersOpen = true;
 			limit = 10;
 		}
 	});
@@ -253,6 +274,7 @@
 		if (initialUnreadOnly !== lastInitialUnreadOnly) {
 			lastInitialUnreadOnly = initialUnreadOnly;
 			unreadOnly = initialUnreadOnly;
+			filtersOpen = true;
 			limit = 10;
 		}
 	});
@@ -930,7 +952,7 @@
 	{/if}
 
 	{#if !overview && !saved}
-		<div class="filter-panel">
+		<div class="filter-panel feed-filters">
 			<div class="filter-row">
 				<div class="filter-input">
 					<Icon name="filter" size={16} />
@@ -949,229 +971,251 @@
 				<div class="chips">
 					<button
 						class="chip"
-						class:active={mode === 'any'}
 						type="button"
-						aria-pressed={mode === 'any'}
-						onclick={() => {
-							modeChoice = 'any';
-							activeFilterId = null;
-						}}
+						aria-expanded={filtersOpen}
+						aria-controls="feed-filters-extra"
+						onclick={() => (filtersOpen = !filtersOpen)}
 					>
-						Qualquer palavra
+						<Icon name="filter" size={14} />
+						Filtros{#if activeFilterCount > 0}
+							· {activeFilterCount}{/if}
+						<Icon name={filtersOpen ? 'chevron-up' : 'chevron-down'} size={14} />
 					</button>
-					<button
-						class="chip"
-						class:active={mode === 'all'}
-						type="button"
-						aria-pressed={mode === 'all'}
-						onclick={() => {
-							modeChoice = 'all';
-							activeFilterId = null;
-						}}
-					>
-						Todas
-					</button>
+					<span class="muted small filter-count">
+						Mostrando {Math.min(limit, filtered.length)} de {filtered.length} posts
+					</span>
 				</div>
 			</div>
 
-			<div class="chips">
-				{#if scope.sourceId !== 'all'}
-					<button
-						class="chip active"
-						type="button"
-						title="Remover filtro de fonte"
-						onclick={() => {
-							if (activeFilter?.sourceId) activeFilterId = null;
-							sourceFilter = 'all';
-							resetLimit();
-						}}
-					>
-						Fonte: {activeSource?.name ?? scope.sourceId} ×
-					</button>
-				{/if}
-				{#if savedFilters.length > 0}
-					<span class="muted small">Filtros salvos</span>
-					{#each savedFilters as filter (filter.id)}
+			{#if filtersOpen}
+				<div id="feed-filters-extra" class="filter-extra">
+					<div class="chips">
 						<button
 							class="chip"
-							class:active={activeFilterId === filter.id}
+							class:active={mode === 'any'}
 							type="button"
-							aria-pressed={activeFilterId === filter.id}
-							onclick={() => selectFilter(filter.id)}
-						>
-							{filter.label} · {countFor(filter)}
-						</button>
-					{/each}
-				{/if}
-				{#if activeFilter && (activeFilter.categoryId || activeFilter.sourceId || activeFilter.unreadOnly)}
-					<span class="muted small">
-						Escopo: {categoryName(activeFilter.categoryId)} · {sourceName(activeFilter.sourceId)}
-						{activeFilter.unreadOnly ? ' · não lidos' : ''}
-					</span>
-				{/if}
-				<button class="chip link" type="button" onclick={openFilterForm}>+ Salvar filtro</button>
-			</div>
-
-			{#if showFilterForm}
-				<div class="filter-save">
-					<div class="field filter-save-name">
-						<label for="filter-label">Nome</label>
-						<input
-							id="filter-label"
-							bind:value={filterLabel}
-							placeholder="ex.: patch notes"
-							maxlength="80"
-						/>
-					</div>
-					<div class="field">
-						<label for="filter-include">Incluir</label>
-						<input id="filter-include" bind:value={filterInclude} placeholder="patch, hotfix" />
-					</div>
-					<div class="field">
-						<label for="filter-exclude">Excluir</label>
-						<input id="filter-exclude" bind:value={filterExclude} placeholder="promoção" />
-					</div>
-					<div class="field filter-save-mode">
-						<label for="filter-mode">Modo</label>
-						<select id="filter-mode" bind:value={filterMode}>
-							<option value="any">Qualquer</option>
-							<option value="all">Todas</option>
-						</select>
-					</div>
-					<div class="field">
-						<label for="filter-category">Categoria</label>
-						<select
-							id="filter-category"
-							bind:value={filterCategory}
-							onchange={() => {
-								const valid =
-									filterSource === 'all' ||
-									sources.some(
-										(source) =>
-											source.id === filterSource &&
-											(filterCategory === 'all' || source.categoryId === filterCategory)
-									);
-								if (!valid) filterSource = 'all';
+							aria-pressed={mode === 'any'}
+							onclick={() => {
+								modeChoice = 'any';
+								activeFilterId = null;
 							}}
 						>
-							<option value="all">Todas</option>
-							{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
-								<option value={category.id}>{category.name}</option>
-							{/each}
-						</select>
-					</div>
-					<div class="field">
-						<label for="filter-source">Fonte</label>
-						<select id="filter-source" bind:value={filterSource}>
-							<option value="all">Todas</option>
-							{#each sources.filter((source) => filterCategory === 'all' || source.categoryId === filterCategory) as source (source.id)}
-								<option value={source.id}>{source.name}</option>
-							{/each}
-						</select>
-					</div>
-					<label class="check">
-						<input type="checkbox" bind:checked={filterUnreadOnly} />
-						Somente não lidos
-					</label>
-					<div class="chips filter-save-actions">
-						<button
-							class="btn btn-primary"
-							type="button"
-							onclick={saveFilter}
-							disabled={filterBusy}
-						>
-							{filterBusy ? 'Salvando...' : 'Salvar'}
+							Qualquer palavra
 						</button>
 						<button
-							class="btn"
+							class="chip"
+							class:active={mode === 'all'}
 							type="button"
-							onclick={() => (showFilterForm = false)}
-							disabled={filterBusy}
+							aria-pressed={mode === 'all'}
+							onclick={() => {
+								modeChoice = 'all';
+								activeFilterId = null;
+							}}
 						>
-							Cancelar
+							Todas
 						</button>
 					</div>
-					{#if filterError}
-						<span class="error-text" role="alert">{filterError}</span>
+
+					<div class="chips">
+						{#if scope.sourceId !== 'all'}
+							<button
+								class="chip active"
+								type="button"
+								title="Remover filtro de fonte"
+								onclick={() => {
+									if (activeFilter?.sourceId) activeFilterId = null;
+									sourceFilter = 'all';
+									resetLimit();
+								}}
+							>
+								Fonte: {activeSource?.name ?? scope.sourceId} ×
+							</button>
+						{/if}
+						{#if savedFilters.length > 0}
+							<span class="muted small">Filtros salvos</span>
+							{#each savedFilters as filter (filter.id)}
+								<button
+									class="chip"
+									class:active={activeFilterId === filter.id}
+									type="button"
+									aria-pressed={activeFilterId === filter.id}
+									onclick={() => selectFilter(filter.id)}
+								>
+									{filter.label} · {countFor(filter)}
+								</button>
+							{/each}
+						{/if}
+						{#if activeFilter && (activeFilter.categoryId || activeFilter.sourceId || activeFilter.unreadOnly)}
+							<span class="muted small">
+								Escopo: {categoryName(activeFilter.categoryId)} · {sourceName(
+									activeFilter.sourceId
+								)}
+								{activeFilter.unreadOnly ? ' · não lidos' : ''}
+							</span>
+						{/if}
+						<button class="chip link" type="button" onclick={openFilterForm}>+ Salvar filtro</button
+						>
+					</div>
+
+					{#if showFilterForm}
+						<div class="filter-save">
+							<div class="field filter-save-name">
+								<label for="filter-label">Nome</label>
+								<input
+									id="filter-label"
+									bind:value={filterLabel}
+									placeholder="ex.: patch notes"
+									maxlength="80"
+								/>
+							</div>
+							<div class="field">
+								<label for="filter-include">Incluir</label>
+								<input id="filter-include" bind:value={filterInclude} placeholder="patch, hotfix" />
+							</div>
+							<div class="field">
+								<label for="filter-exclude">Excluir</label>
+								<input id="filter-exclude" bind:value={filterExclude} placeholder="promoção" />
+							</div>
+							<div class="field filter-save-mode">
+								<label for="filter-mode">Modo</label>
+								<select id="filter-mode" bind:value={filterMode}>
+									<option value="any">Qualquer</option>
+									<option value="all">Todas</option>
+								</select>
+							</div>
+							<div class="field">
+								<label for="filter-category">Categoria</label>
+								<select
+									id="filter-category"
+									bind:value={filterCategory}
+									onchange={() => {
+										const valid =
+											filterSource === 'all' ||
+											sources.some(
+												(source) =>
+													source.id === filterSource &&
+													(filterCategory === 'all' || source.categoryId === filterCategory)
+											);
+										if (!valid) filterSource = 'all';
+									}}
+								>
+									<option value="all">Todas</option>
+									{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
+										<option value={category.id}>{category.name}</option>
+									{/each}
+								</select>
+							</div>
+							<div class="field">
+								<label for="filter-source">Fonte</label>
+								<select id="filter-source" bind:value={filterSource}>
+									<option value="all">Todas</option>
+									{#each sources.filter((source) => filterCategory === 'all' || source.categoryId === filterCategory) as source (source.id)}
+										<option value={source.id}>{source.name}</option>
+									{/each}
+								</select>
+							</div>
+							<label class="check">
+								<input type="checkbox" bind:checked={filterUnreadOnly} />
+								Somente não lidos
+							</label>
+							<div class="chips filter-save-actions">
+								<button
+									class="btn btn-primary"
+									type="button"
+									onclick={saveFilter}
+									disabled={filterBusy}
+								>
+									{filterBusy ? 'Salvando...' : 'Salvar'}
+								</button>
+								<button
+									class="btn"
+									type="button"
+									onclick={() => (showFilterForm = false)}
+									disabled={filterBusy}
+								>
+									Cancelar
+								</button>
+							</div>
+							{#if filterError}
+								<span class="error-text" role="alert">{filterError}</span>
+							{/if}
+						</div>
 					{/if}
-				</div>
-			{/if}
 
-			<div class="chips" style="padding-top: 10px; border-top: 1px solid var(--line)">
-				{#if showCategoryChips}
-					<button
-						class="chip"
-						class:solid={scope.categoryId === 'all'}
-						type="button"
-						aria-pressed={scope.categoryId === 'all'}
-						onclick={() => chooseCategory('all')}
-					>
-						Tudo
-					</button>
-					{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
+					<div class="chips" style="padding-top: 10px; border-top: 1px solid var(--line)">
+						{#if showCategoryChips}
+							<button
+								class="chip"
+								class:solid={scope.categoryId === 'all'}
+								type="button"
+								aria-pressed={scope.categoryId === 'all'}
+								onclick={() => chooseCategory('all')}
+							>
+								Tudo
+							</button>
+							{#each [...categories].sort((a, b) => a.order - b.order) as category (category.id)}
+								<button
+									class="chip"
+									class:active={scope.categoryId === category.id}
+									type="button"
+									aria-pressed={scope.categoryId === category.id}
+									onclick={() => chooseCategory(category.id)}
+								>
+									{category.name}
+									{#if unreadCounts.byCategory[category.id]}
+										· {unreadCounts.byCategory[category.id]}
+									{/if}
+								</button>
+							{/each}
+						{/if}
 						<button
 							class="chip"
-							class:active={scope.categoryId === category.id}
+							class:active={scope.unreadOnly}
 							type="button"
-							aria-pressed={scope.categoryId === category.id}
-							onclick={() => chooseCategory(category.id)}
+							aria-pressed={scope.unreadOnly}
+							onclick={toggleUnread}
 						>
-							{category.name}
-							{#if unreadCounts.byCategory[category.id]}
-								· {unreadCounts.byCategory[category.id]}
-							{/if}
+							Não lidos
 						</button>
-					{/each}
-				{/if}
-				<button
-					class="chip"
-					class:active={scope.unreadOnly}
-					type="button"
-					aria-pressed={scope.unreadOnly}
-					onclick={toggleUnread}
-				>
-					Não lidos
-				</button>
-				<span class="muted small" style="margin-left: auto">
-					Mostrando {Math.min(limit, filtered.length)} de {filtered.length} posts
-				</span>
-			</div>
+					</div>
 
-			{#if sources.length > 0}
-				<div class="chips" role="group" aria-label="Filtrar por fonte">
-					<span class="muted small">Fontes</span>
-					<button
-						class="chip"
-						class:solid={scope.sourceId === 'all'}
-						type="button"
-						aria-pressed={scope.sourceId === 'all'}
-						onclick={() => chooseSource('all')}
-					>
-						Todas
-					</button>
-					{#each scopedSources as source (source.id)}
-						<button
-							class="chip"
-							class:active={scope.sourceId === source.id}
-							type="button"
-							aria-pressed={scope.sourceId === source.id}
-							onclick={() => chooseSource(source.id)}
-						>
-							{source.name}
-							{#if unreadCounts.bySource[source.id]}
-								· {unreadCounts.bySource[source.id]}
-							{/if}
-						</button>
-					{/each}
+					{#if sources.length > 0}
+						<div class="chips" role="group" aria-label="Filtrar por fonte">
+							<span class="muted small">Fontes</span>
+							<button
+								class="chip"
+								class:solid={scope.sourceId === 'all'}
+								type="button"
+								aria-pressed={scope.sourceId === 'all'}
+								onclick={() => chooseSource('all')}
+							>
+								Todas
+							</button>
+							{#each scopedSources as source (source.id)}
+								<button
+									class="chip"
+									class:active={scope.sourceId === source.id}
+									type="button"
+									aria-pressed={scope.sourceId === source.id}
+									onclick={() => chooseSource(source.id)}
+								>
+									{source.name}
+									{#if unreadCounts.bySource[source.id]}
+										· {unreadCounts.bySource[source.id]}
+									{/if}
+								</button>
+							{/each}
+						</div>
+					{/if}
+
+					<div class="chips" role="group" aria-label="Marcar posts antigos como lidos">
+						<span class="muted small">Marcar antigos:</span>
+						<button class="chip" type="button" onclick={() => requestMarkOlder(1)}>1 dia</button>
+						<button class="chip" type="button" onclick={() => requestMarkOlder(3)}>3 dias</button>
+						<button class="chip" type="button" onclick={() => requestMarkOlder(7)}>7 dias</button>
+					</div>
 				</div>
 			{/if}
-
-			<div class="chips" role="group" aria-label="Marcar posts antigos como lidos">
-				<span class="muted small">Marcar antigos:</span>
-				<button class="chip" type="button" onclick={() => requestMarkOlder(1)}>1 dia</button>
-				<button class="chip" type="button" onclick={() => requestMarkOlder(3)}>3 dias</button>
-				<button class="chip" type="button" onclick={() => requestMarkOlder(7)}>7 dias</button>
-			</div>
 		</div>
 	{/if}
 

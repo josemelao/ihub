@@ -31,3 +31,19 @@ test('marca tudo como lido com confirmação e desfaz', async ({ page }) => {
 	await page.getByRole('status').getByRole('button', { name: 'Desfazer' }).click();
 	await expect(page.getByRole('button', { name: 'Marcar tudo como lido' })).toBeVisible();
 });
+
+test('filtros começam recolhidos e abrem ao clicar', async ({ page }) => {
+	await page.goto('/feed');
+	await expect(page.getByText('Post de teste E2E').first()).toBeVisible();
+
+	await expect(page.locator('#feed-filters-extra')).toHaveCount(0);
+
+	await page.getByRole('button', { name: /^Filtros/ }).click();
+	await expect(page.locator('#feed-filters-extra')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Não lidos' })).toBeVisible();
+});
+
+test('filtros abrem sozinhos quando já há escopo na URL', async ({ page }) => {
+	await page.goto('/feed?nao-lidos=1');
+	await expect(page.locator('#feed-filters-extra')).toBeVisible();
+});

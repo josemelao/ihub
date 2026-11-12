@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-11
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.28.0 entregues e a validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.31.1 entregues; validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
 
 ## 1. O que é
 
@@ -692,3 +692,15 @@ Executada em 12/11/2026 sobre `v0.30.0`, implementando READ-04 e fechando o acei
 - **Testes:** 791 unitários em 114 arquivos (builder com 6 casos + rota descompactando o ZIP) e 29 E2E (download real no Gerenciar, conferindo frontmatter e destaque); `npm run verify` e Playwright verdes.
 - **Adiado:** conversão do HTML arquivado para Markdown, imagens no ZIP e exportar itens da Biblioteca.
 - **Docs:** `docs/markdown-export.md`; plano em `C:\Users\Usuario\.opencode\plan\markdown-export.md` (ledger em `.superpowers/sdd/markdown-export`).
+
+## 37. Densidade da home/feed e 500 em Destaques (v0.31.1)
+
+Executada em 12/11/2026 sobre `v0.31.0`.
+
+- **500 em `/highlights` e `/ler/[id]` só em dev**: `src/lib/reader/highlights.ts` importava `node:crypto` no topo e era importado por componentes de cliente só para ler os rótulos de cor. No build o Rollup remove o import não usado; no Vite dev o módulo é externalizado e a preload falha com “Module node:crypto has been externalized for browser compatibility”, caindo na página 500. As constantes foram para `src/lib/reader/highlight-meta.ts` (client-safe) e os quatro componentes de cliente passaram a importar de lá. Teste novo garante que o módulo seguro não importa `node:` e que os componentes usam o caminho certo.
+- **Topo da home compacto**: `align-items: start` (fim da altura igualada ao card mais alto), painéis com padding 12, títulos 14, métricas 18 px, tiles de acesso rápido com ícone 30 e uma linha de texto. Altura do painel: **~378 → ~222 px** em 1920 (o conteúdo começa ~140 px mais alto); 250 px em 1440.
+- **Ações rápidas**: saíram “Ver feed completo”, “Favoritos” e “Gerenciar” (já estão na sidebar). Entraram **Backup agora** (`POST /api/backup`) e **Exportar Markdown** (`/api/export/markdown`), em grade 2×2. O contador de fixados ocultos foi para o tooltip do botão “Reordenar · +N”.
+- **Sidebar direita**: gap 16→10, painéis com padding 12, títulos 14 e nota com 3 linhas; altura total ~860 → ~684 px.
+- **Filtros do feed recolhíveis**: barra fechada de **58 px** com busca + “Filtros (N)” + “Mostrando X de Y”. Abre ao clicar (`aria-expanded`/`aria-controls`) e **abre sozinha** quando há escopo na URL (`?filtro=`, `?fonte=`, `?nao-lidos=1`) ou filtro salvo aplicado. Aberta ocupa ~203 px (antes ~260 px).
+- **Qualidade**: **802 testes** em 128 arquivos e **33 E2E** (3 novos: ações da home, backup, barra recolhida/autoaberta); `npm run verify` e Playwright verdes; axe segue sem violações em `/`, `/feed`, `/biblioteca`, `/gerenciar`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`; mobile 375 px sem overflow.
+- **Diagnóstico do ambiente**: em dev, `/highlights` agora renderiza normalmente sem erro de console (validado com Chromium em `127.0.0.1:5757`).

@@ -63,8 +63,16 @@
 		<h2 id="t-rapido">{title}</h2>
 		<div class="quick-actions">
 			{#if onreorder && quick.length > 1}
-				<button class="chip link" type="button" onclick={() => (editing = !editing)}>
-					{editing ? 'Concluir' : 'Reordenar'}
+				<button
+					class="chip link"
+					type="button"
+					title={hiddenCount > 0
+						? `+${hiddenCount} fixado(s) oculto(s) pelo limite; aumente em Reordenar`
+						: undefined}
+					onclick={() => (editing = !editing)}
+				>
+					{editing ? 'Concluir' : 'Reordenar'}{#if hiddenCount > 0 && !editing}
+						· +{hiddenCount}{/if}
 				</button>
 			{/if}
 			<a class="muted small" href={resolve('/gerenciar')}>Editar atalhos</a>
@@ -88,7 +96,7 @@
 						dropOn(item.id);
 					}}
 				>
-					<ItemIcon {item} {color} size={34} />
+					<ItemIcon {item} {color} size={30} />
 					<span class="quick-meta">
 						<span class="quick-name">{item.name}</span>
 						<span class="quick-kind">{itemKind(item)}</span>
@@ -144,10 +152,6 @@
 		{#if quick.length === 0}
 			<p class="muted">
 				Nenhum atalho fixado ainda. Fixe um item na Biblioteca ou no editor de itens.
-			</p>
-		{:else if hiddenCount > 0}
-			<p class="muted small">
-				+{hiddenCount} fixado(s) oculto(s) pelo limite — aumente em <em>Reordenar</em>.
 			</p>
 		{/if}
 	</div>

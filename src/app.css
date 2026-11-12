@@ -1226,6 +1226,55 @@ h3 {
 	max-width: none;
 }
 
+.dashboard-card .quick-grid.grid {
+	gap: 8px;
+}
+
+.dashboard-card .quick-tile {
+	padding: 6px 8px;
+	gap: 7px;
+}
+
+.dashboard-card .quick-avatar {
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+}
+
+.dashboard-card .quick-name {
+	font-size: 12.5px;
+}
+
+.dashboard-card .quick-kind {
+	font-size: 11px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dashboard-card h2 {
+	font-size: 14px;
+}
+
+.dashboard-card .section {
+	gap: 8px;
+}
+
+.dashboard-card .section-head {
+	align-items: center;
+	gap: 8px;
+}
+
+.dashboard-card .chip {
+	height: 28px;
+	padding: 0 9px;
+	font-size: 12px;
+}
+
+.dashboard-card .quick-actions {
+	gap: 8px;
+}
+
 .quick-tile {
 	flex: 1 1 128px;
 	max-width: 170px;
@@ -1309,6 +1358,37 @@ h3 {
 	border-radius: 14px;
 	background: var(--panel);
 	border: 1px solid var(--line);
+}
+
+.feed-filters {
+	gap: 8px;
+	padding: 10px 12px;
+}
+
+.feed-filters .filter-input input {
+	height: 36px;
+	padding-left: 32px;
+}
+
+.feed-filters .filter-input svg {
+	top: 10px;
+	left: 10px;
+}
+
+.feed-filters .chip {
+	height: 32px;
+	padding: 0 11px;
+	font-size: 12.5px;
+}
+
+.feed-filters .filter-count {
+	margin-left: auto;
+}
+
+.filter-extra {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .filter-save {
@@ -2234,33 +2314,34 @@ h3 {
 .dashboard-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 14px;
-	align-items: stretch;
+	gap: 10px;
+	align-items: start;
 }
 
 .dashboard-card {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 8px;
 	min-width: 0;
+	padding: 12px;
 }
 
 .dashboard-title {
-	font-size: 15px;
+	font-size: 14px;
 }
 
 .metric-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 10px;
+	gap: 8px;
 }
 
 .metric {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
-	padding: 10px;
-	border-radius: 10px;
+	gap: 1px;
+	padding: 6px 9px;
+	border-radius: 9px;
 	border: 1px solid var(--line);
 	background: var(--panel2);
 	transition: border-color var(--motion-fast) var(--ease-motion);
@@ -2272,34 +2353,34 @@ h3 {
 
 .metric-value {
 	font-family: 'Space Grotesk', Inter, sans-serif;
-	font-size: 22px;
+	font-size: 18px;
 	font-weight: 700;
 }
 
 .metric-label {
-	font-size: 12px;
+	font-size: 10.5px;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: var(--mut);
 }
 
-.action-list {
-	display: flex;
-	flex-direction: column;
+.action-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 6px;
 }
 
 .action-row {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	padding: 10px 12px;
+	gap: 7px;
+	padding: 5px 9px;
 	border: 1px solid var(--line);
-	border-radius: 10px;
+	border-radius: 9px;
 	background: var(--panel2);
 	color: var(--soft);
 	font: inherit;
-	font-size: 13px;
+	font-size: 12px;
 	text-align: left;
 	cursor: pointer;
 }
@@ -2340,11 +2421,31 @@ h3 {
 	min-width: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 10px;
 	position: sticky;
 	top: 20px;
 	max-height: calc(100vh - 40px);
 	overflow-y: auto;
+}
+
+.home-aside .panel {
+	padding: 12px;
+}
+
+.home-aside .section {
+	gap: 8px;
+}
+
+.home-aside .fs-15 {
+	font-size: 14px;
+}
+
+.home-aside .source-row {
+	gap: 8px;
+}
+
+.home-aside .note-area {
+	padding: 8px 10px;
 }
 
 .source-row {
