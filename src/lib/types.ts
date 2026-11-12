@@ -285,6 +285,13 @@ export interface HubStorage {
 	loadNotesFromBackup(): Promise<NotesData | null>;
 	updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData>;
 	saveNotes(data: NotesData): Promise<void>;
+	loadArticle(id: string): Promise<ReadingArticle | null>;
+	saveArticle(article: ReadingArticle): Promise<void>;
+	deleteArticle(id: string): Promise<void>;
+	loadHighlights(): Promise<HighlightsData>;
+	loadHighlightsFromBackup(): Promise<HighlightsData | null>;
+	updateHighlights(fn: (data: HighlightsData) => HighlightsData | Promise<HighlightsData>): Promise<HighlightsData>;
+	saveHighlights(data: HighlightsData): Promise<void>;
 	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */
 	updateHubAndCache(
 		hubFn: (hub: HubData) => HubData | Promise<HubData>,
