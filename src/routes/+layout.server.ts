@@ -82,8 +82,12 @@ export const load: LayoutServerLoad = async () => {
 		});
 	}
 
+	const hubMissing = !(await storage.hasHub());
+
 	return {
 		hub,
+		hubMissing,
+		dataDir: process.env.HUB_DATA_DIR ?? 'data',
 		dataError: hubResult.error,
 		stateError: stateResult.error,
 		stateRecovery: stateResult.value.recovery,

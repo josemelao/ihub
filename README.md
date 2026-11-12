@@ -43,6 +43,8 @@ npm ci
 
 ### 3. Primeira execução sem dados antigos
 
+Sem `hub.json`, o app mostra uma tela de primeiro uso com **Começar com exemplo** (copia o seed) e **Começar vazio**; também informa o diretório de dados (`data/` ou `HUB_DATA_DIR`).
+
 ```powershell
 Copy-Item data\hub.example.json data\hub.json
 npm run build

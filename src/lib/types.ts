@@ -227,6 +227,8 @@ export interface ValidationIssue {
 export interface HubStorage {
 	loadHub(): Promise<HubData>;
 	loadHubFromBackup(): Promise<HubData | null>;
+	/** `true` quando `hub.json` existe (primeiro uso). */
+	hasHub(): Promise<boolean>;
 	/** Hub + fallback para o backup mais novo válido, sem expor a implementação. */
 	loadHubWithFallback(): Promise<HubLoadResult>;
 	/** Atualização read-modify-write serializada por arquivo (lock por processo). */

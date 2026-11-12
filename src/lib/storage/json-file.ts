@@ -1,4 +1,5 @@
 import {
+	access,
 	copyFile,
 	mkdir,
 	readFile,
@@ -256,6 +257,15 @@ export class JsonFileStorage implements HubStorage {
 		// A migração grava; por isso a leitura roda sob o lock do hub e relê o
 		// arquivo, em vez de sobrescrever uma edição concorrente com dado velho.
 		return fileLocks.withLock(this.lockKey('hub.json'), () => this.loadHubLocked());
+	}
+
+	async hasHub(): Promise<boolean> {
+		try {
+			await access(this.path('hub.json'));
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	/** Use dentro de quem já segura o lock do `hub.json`. */

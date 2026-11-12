@@ -2813,6 +2813,15 @@ a.source-row:hover .soft {
 	color: var(--danger-text);
 }
 
+.first-run {
+	border-color: var(--line-strong);
+	background: var(--panel);
+	color: var(--tx);
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 .alert ul {
 	margin: 8px 0 0;
 	padding-left: 18px;

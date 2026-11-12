@@ -603,3 +603,12 @@ Executada em 12/11/2026 sobre `v0.24.0`.
 - **`/api/health`**: versão, uptime, diretório de dados, permissão de escrita, contagens (categorias, itens, fontes, salvos, notas, posts), `feedUpdatedAt` e lista de erros de leitura. Nunca devolve token nem conteúdo.
 - **Diagnóstico** em Gerenciar → Aparência: botão “Verificar saúde” mostra os mesmos dados.
 - **Testes**: 3 unitários do token (constante, formato, ausência) + 4 de rota/hook (`/api/health`, 401 sem Bearer, GET livre, sem token passa).
+
+## 30. Fase 2 — primeiro uso (v0.26.0)
+
+Executada em 12/11/2026 sobre `v0.25.0`.
+
+- **Detecção**: `hasHub()` no storage; o layout recebe `hubMissing` e `dataDir`.
+- **`POST /api/setup`**: `{ mode: "example" | "empty" }` cria o `hub.json` **apenas** quando ele não existe (409 caso contrário); exemplo vem de `data/hub.example.json`, já validado e migrado.
+- **UI**: painel de primeiro uso na home com “Começar com exemplo” e “Começar vazio”, explicando onde os dados ficam.
+- **Testes**: 4 de rota (exemplo, vazio, 409, mode inválido). Restante do fluxo (importar favoritos) continua no Gerenciar.

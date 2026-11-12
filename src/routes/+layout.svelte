@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, invalidateAll } from '$app/navigation';
 	import '../app.css';
 	import Sidebar from '#lib/components/Sidebar.svelte';
 	import CommandPalette from '#lib/components/CommandPalette.svelte';
@@ -13,6 +13,31 @@
 	import type { LayoutProps } from './$types';
 
 	let { data, children }: LayoutProps = $props();
+
+	let setupError = $state('');
+	let setupBusy = $state(false);
+
+	async function initialize(mode: 'example' | 'empty'): Promise<void> {
+		setupBusy = true;
+		setupError = '';
+		try {
+			const response = await fetch('/api/setup', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ mode })
+			});
+			if (!response.ok) {
+				const body = (await response.json()) as { error?: string };
+				setupError = body.error ?? 'Não foi possível criar o hub.json.';
+				return;
+			}
+			await invalidateAll();
+		} catch {
+			setupError = 'Falha de rede ao criar o hub.json.';
+		} finally {
+			setupBusy = false;
+		}
+	}
 
 	const feedEntries = $derived(buildFeedView(data.hub, data.feed, data.state));
 	const unread = $derived(feedEntries.filter((entry) => !entry.read).length);
@@ -121,6 +146,37 @@
 	/>
 
 	<main class="main" id="conteudo">
+		{#if data.hubMissing}
+			<div class="alert first-run" role="region" aria-label="Primeiro uso">
+				<strong>Primeiro uso</strong>
+				<div>
+					Não encontrei <code>hub.json</code> em <code>{data.dataDir}</code>. Escolha como começar;
+					depois você pode editar tudo em <strong>Gerenciar</strong> ou importar seus favoritos.
+				</div>
+				<div class="chips">
+					<button
+						class="btn btn-primary"
+						type="button"
+						disabled={setupBusy}
+						onclick={() => initialize('example')}
+					>
+						Começar com exemplo
+					</button>
+					<button
+						class="btn"
+						type="button"
+						disabled={setupBusy}
+						onclick={() => initialize('empty')}
+					>
+						Começar vazio
+					</button>
+				</div>
+				{#if setupError}
+					<span class="error-text">{setupError}</span>
+				{/if}
+			</div>
+		{/if}
+
 		{#if data.dataError}
 			<div class="alert" role="alert">
 				<strong>{data.dataError.message}</strong>
