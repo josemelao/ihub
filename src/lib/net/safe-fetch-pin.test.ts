@@ -108,7 +108,7 @@ describe('fetchPublicText pinando o IP validado', () => {
 		await promise.catch(() => undefined);
 	});
 
-		it('explica 429 com mensagem clara', async () => {
+	it('explica 429 com mensagem clara', async () => {
 		lookupMock.mockResolvedValue([{ address: '93.184.216.34', family: 4 }] as never);
 		httpsMock.mockImplementation(fakeRequest('', 429) as never);
 
