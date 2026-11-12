@@ -13,6 +13,8 @@ export interface HubSettings {
 	fontSize?: 13 | 14 | 15;
 	/** Contraste alto para leitura. */
 	highContrast?: boolean;
+	/** Notificar no sistema quando chegarem posts novos. */
+	notifyUnread?: boolean;
 }
 
 export interface Category {

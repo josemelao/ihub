@@ -50,7 +50,7 @@
 />
 
 <section class="panel section" aria-labelledby="t-todas-fontes">
-	<h2 id="t-todas-fontes" style="font-size: 15px">Fontes do feed</h2>
+	<h2 id="t-todas-fontes" class="fs-15">Fontes do feed</h2>
 	{#each sources as source (source.id)}
 		{@const status = data.feed.sources[source.id]}
 		<div class="source-row">

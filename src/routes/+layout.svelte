@@ -8,6 +8,7 @@
 	import { contrastText } from '#lib/display';
 	import { countUnread } from '#lib/feed/triage';
 	import { buildFeedView } from '#lib/feed/view';
+	import { faviconBadgeDataUrl, formatUnreadTitle, shouldNotify } from '#lib/notifications';
 	import { ui } from '#lib/ui.svelte';
 	import type { LayoutProps } from './$types';
 
@@ -31,6 +32,49 @@
 		root.dataset.density = data.hub.settings.density ?? 'comfortable';
 		root.dataset.contrast = data.hub.settings.highContrast ? 'high' : 'normal';
 		root.dataset.font = String(data.hub.settings.fontSize ?? 14);
+	});
+
+	let previousUnread: number | null = null;
+
+	// Título, badge no favicon e notificação opcional de posts novos.
+	$effect(() => {
+		const count = unread;
+		document.title = formatUnreadTitle(count);
+
+		const badge = faviconBadgeDataUrl(count);
+		if (badge) {
+			let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+			if (!link) {
+				link = document.createElement('link');
+				link.rel = 'icon';
+				document.head.append(link);
+			}
+			link.href = badge;
+		} else {
+			document
+				.querySelector<HTMLLinkElement>('link[rel="icon"]')
+				?.setAttribute('href', '/favicon.svg');
+		}
+
+		const permission = typeof Notification === 'undefined' ? 'denied' : Notification.permission;
+		if (
+			typeof Notification !== 'undefined' &&
+			shouldNotify({
+				previous: previousUnread,
+				current: count,
+				permission,
+				hidden: document.visibilityState === 'hidden',
+				enabled: Boolean(data.hub.settings.notifyUnread)
+			})
+		) {
+			try {
+				new Notification(`${count - (previousUnread ?? 0)} posts novos no Meu Hub`);
+			} catch {
+				// notificação indisponível: ignora
+			}
+		}
+
+		previousUnread = count;
 	});
 
 	function onKeydown(event: KeyboardEvent): void {

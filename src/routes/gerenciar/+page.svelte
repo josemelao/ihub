@@ -210,6 +210,7 @@
 	let density = $state(untrack(() => data.hub.settings.density ?? 'comfortable'));
 	let fontSize = $state(untrack(() => data.hub.settings.fontSize ?? 14));
 	let highContrast = $state(untrack(() => Boolean(data.hub.settings.highContrast)));
+	let notifyUnread = $state(untrack(() => Boolean(data.hub.settings.notifyUnread)));
 	let confirming = $state<{
 		kind: 'item' | 'source' | 'category' | 'group' | 'filter';
 		id: string;
@@ -462,8 +463,34 @@
 	async function saveReading(): Promise<void> {
 		await mutate({
 			action: 'update-settings',
-			settings: { density, fontSize, highContrast }
+			settings: { density, fontSize, highContrast, notifyUnread }
 		});
+	}
+
+	async function toggleNotify(): Promise<void> {
+		if (notifyUnread) {
+			notifyUnread = false;
+			await saveReading();
+			return;
+		}
+
+		if (typeof Notification === 'undefined') {
+			actionMessage = 'Este navegador não oferece notificações.';
+			return;
+		}
+
+		const permission =
+			Notification.permission === 'default'
+				? await Notification.requestPermission()
+				: Notification.permission;
+
+		if (permission !== 'granted') {
+			actionMessage = 'Permissão de notificação negada pelo navegador.';
+			return;
+		}
+
+		notifyUnread = true;
+		await saveReading();
 	}
 
 	// Exportar / importar
@@ -969,7 +996,7 @@
 {#if pending}
 	<div class="panel section">
 		<div class="section-head">
-			<h2 style="font-size: 16px">Revisar importação</h2>
+			<h2 class="fs-16">Revisar importação</h2>
 			<span class="muted small">{fileName}</span>
 		</div>
 		<div class="chips">
@@ -1329,7 +1356,7 @@
 {:else if tab === 'tags'}
 	<div class="panel section">
 		<div class="section-head">
-			<h2 style="font-size: 16px">Tags</h2>
+			<h2 class="fs-16">Tags</h2>
 			<span class="muted small">{tags.length} tags</span>
 		</div>
 		<p class="muted small">
@@ -1547,7 +1574,7 @@
 	</div>
 {:else if tab === 'backups'}
 	<div class="section-head">
-		<h2 style="font-size: 16px">Pontos de restauração</h2>
+		<h2 class="fs-16">Pontos de restauração</h2>
 		<div class="chips">
 			<button class="btn btn-primary" type="button" onclick={runBackup} disabled={backupBusy}>
 				<Icon name="download" size={16} />
@@ -1662,6 +1689,10 @@
 				<label class="check">
 					<input type="checkbox" bind:checked={highContrast} />
 					Contraste alto
+				</label>
+				<label class="check">
+					<input type="checkbox" checked={notifyUnread} onchange={toggleNotify} />
+					Notificar posts novos
 				</label>
 			</div>
 		</div>

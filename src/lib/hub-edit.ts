@@ -83,6 +83,7 @@ export interface SettingsInput {
 	density?: 'comfortable' | 'compact';
 	fontSize?: 13 | 14 | 15;
 	highContrast?: boolean;
+	notifyUnread?: boolean;
 }
 
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -504,6 +505,7 @@ export function updateSettings(hub: HubData, patch: SettingsInput): HubData {
 	if (patch.density) settings.density = patch.density;
 	if (patch.fontSize) settings.fontSize = patch.fontSize;
 	if (patch.highContrast !== undefined) settings.highContrast = patch.highContrast;
+	if (patch.notifyUnread !== undefined) settings.notifyUnread = patch.notifyUnread;
 
 	return { ...hub, settings };
 }

@@ -19,7 +19,7 @@
 
 <div class="panel section">
 	<div class="section-head">
-		<h2 style="font-size: 16px">Salvar a página atual</h2>
+		<h2 class="fs-16">Salvar a página atual</h2>
 	</div>
 	<p class="muted small">
 		Arraste o botão abaixo para a barra de favoritos. Depois, em qualquer site, clique nele para

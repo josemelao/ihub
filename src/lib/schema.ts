@@ -196,7 +196,8 @@ export const hubSchema = z
 				quickAccessLimit: z.number().int().min(3).max(12).optional(),
 				density: z.enum(['comfortable', 'compact']).optional(),
 				fontSize: z.union([z.literal(13), z.literal(14), z.literal(15)]).optional(),
-				highContrast: z.boolean().optional()
+				highContrast: z.boolean().optional(),
+				notifyUnread: z.boolean().optional()
 			})
 			.default({ accent: '#8AA4FF' }),
 		categories: z.array(categorySchema).default([]),

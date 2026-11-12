@@ -88,7 +88,7 @@
 
 	<aside class="home-aside" aria-label="Painel lateral">
 		<section class="panel section" aria-labelledby="t-fontes">
-			<h2 id="t-fontes" style="font-size: 15px">Fontes do feed</h2>
+			<h2 id="t-fontes" class="fs-15">Fontes do feed</h2>
 			{#each sources as source (source.id)}
 				<a class="source-row" href={`${resolve('/feed')}?fonte=${source.id}`}>
 					<span
@@ -107,7 +107,7 @@
 
 		<section class="panel section" aria-labelledby="t-filtros">
 			<div class="section-head">
-				<h2 id="t-filtros" style="font-size: 15px">Filtros salvos</h2>
+				<h2 id="t-filtros" class="fs-15">Filtros salvos</h2>
 				<a class="muted small" href={resolve('/feed')}>Ver feed</a>
 			</div>
 			<div class="chips">
@@ -124,7 +124,7 @@
 
 		<section class="panel section" aria-labelledby="t-salvos">
 			<div class="section-head">
-				<h2 id="t-salvos" style="font-size: 15px">Salvos recentemente</h2>
+				<h2 id="t-salvos" class="fs-15">Salvos recentemente</h2>
 				<a class="muted small" href={resolve('/favoritos')}>Ver todos</a>
 			</div>
 			{#each savedRecent as entry (entry.item.id)}
@@ -151,7 +151,7 @@
 		</section>
 
 		<section class="panel section" aria-labelledby="t-nota">
-			<h2 id="t-nota" style="font-size: 15px">Nota rápida</h2>
+			<h2 id="t-nota" class="fs-15">Nota rápida</h2>
 			<label class="sr-only" for="nota">Nota rápida</label>
 			<textarea
 				id="nota"

@@ -586,3 +586,11 @@ Executada em 12/11/2026 sobre `v0.22.0`.
 - **Preferências**: `settings.density` (confortável/compacta), `fontSize` (13/14/15) e `highContrast` aplicados como atributos no `html` e salvos via `update-settings`; controles em **Gerenciar → Aparência**.
 - **CSS**: drawer, overlays e tokens de contraste; densidade compacta reduz paddings/gaps; `body` acompanha o tamanho escolhido (micro-badges decorativos continuam em 10–11 px).
 - **Testes**: unitário de `updateSettings`; E2E cobre overflow em 375 px, abrir/navegar/fechar o drawer, persistência das preferências após reload e axe com contraste alto. Suíte E2E agora com 14 testes.
+
+## 28. Fase 4 — título, notificação e tokens (v0.24.0)
+
+Executada em 12/11/2026 sobre `v0.23.0`.
+
+- **PLAT-07**: título da aba com contagem de não lidos (`formatUnreadTitle`), badge desenhado no favicon e notificação **opt-in** (`settings.notifyUnread`), exibida só com a aba oculta, permissão concedida e quando a contagem **aumenta**. A decisão fica em `shouldNotify` com testes. O título passa a ser `(N) Meu Hub` e substitui o título específico da rota.
+- **PLAT-10**: tokens novos em `:root` (`--panel-hover`, `--line-strong`, `--ok*`, `--danger*`) substituindo as cores fixas; `fs-15`/`fs-16` para os títulos que usavam estilo inline. Único `font-size` inline restante é o ícone dimensionado por prop.
+- **Testes**: unitários de título/notificação e um teste que impede voltar a hardcodar cores ou tipografia inline; E2E novo valida o título com e sem não lidos (15 testes E2E).

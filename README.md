@@ -173,6 +173,12 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - `Build`, `build ` e `BUILD` contam como a mesma tag; a primeira grafia é preservada.
 - Detalhes: [docs/tags.md](docs/tags.md).
 
+### Título, notificações e tema
+
+- O título da aba mostra os não lidos (`(3) Meu Hub`) e o favicon ganha um badge com a contagem.
+- Notificações de posts novos são **opt-in** (Gerenciar → Aparência), só aparecem com a aba oculta, respeitam a permissão do navegador e nunca notificam posts já lidos.
+- Cores de estado (hover, sucesso, perigo) vêm de tokens em `:root`; componentes não usam mais `font-size` inline (exceto o ícone dimensionado por prop).
+
 ### Mobile e preferências de leitura
 
 - Abaixo de 900 px a navegação vira **drawer**: o menu abre pelo botão ☰, fecha ao navegar, no backdrop ou com Esc, e não ocupa a primeira tela.
