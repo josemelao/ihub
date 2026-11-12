@@ -5,7 +5,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { normalize } from '#lib/feed/filter';
-	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlights';
+	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlight-meta';
 	import { totalHighlights } from '#lib/reader/highlights-view';
 	import type { ReadingHighlight } from '#lib/types';
 	import type { PageProps } from './$types';

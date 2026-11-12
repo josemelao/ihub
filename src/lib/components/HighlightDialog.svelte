@@ -6,7 +6,7 @@
 		shouldCloseOnBackdropClick,
 		type BackdropPointerState
 	} from '#lib/dialog-backdrop';
-	import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlights';
+	import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlight-meta';
 	import type { HighlightColor } from '#lib/types';
 	import Icon from './Icon.svelte';
 

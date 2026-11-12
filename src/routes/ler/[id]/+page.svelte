@@ -8,7 +8,7 @@
 	import HighlightToolbar from '#lib/components/HighlightToolbar.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { relativeTime } from '#lib/display';
-	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlights';
+	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlight-meta';
 	import { buildSelectionInfo } from '#lib/reader/selection';
 	import type { ArchiveEntry, HighlightColor, ReadingArticle, ReadingHighlight } from '#lib/types';
 	import type { PageProps } from './$types';

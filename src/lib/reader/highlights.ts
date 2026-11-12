@@ -1,15 +1,20 @@
 import { createHash } from 'node:crypto';
 import type { HighlightColor, HighlightsData, ReadingHighlight } from '../types';
+import {
+	HIGHLIGHT_COLORS,
+	MAX_HIGHLIGHT_NOTE_LENGTH,
+	MAX_HIGHLIGHT_QUOTE_LENGTH
+} from './highlight-meta';
 
-export const HIGHLIGHT_COLORS: HighlightColor[] = ['yellow', 'green', 'blue', 'pink'];
-export const HIGHLIGHT_COLOR_LABELS: Record<HighlightColor, string> = {
-	yellow: 'amarelo',
-	green: 'verde',
-	blue: 'azul',
-	pink: 'rosa'
-};
-export const MAX_HIGHLIGHT_QUOTE_LENGTH = 2_000;
-export const MAX_HIGHLIGHT_NOTE_LENGTH = 2_000;
+// Este módulo usa `node:crypto` e é server-only. Constantes e rótulos usados por
+// componentes vivem em `highlight-meta.ts`; reexportamos por compatibilidade
+// com o código de servidor e os testes que já importavam daqui.
+export {
+	HIGHLIGHT_COLORS,
+	HIGHLIGHT_COLOR_LABELS,
+	MAX_HIGHLIGHT_NOTE_LENGTH,
+	MAX_HIGHLIGHT_QUOTE_LENGTH
+} from './highlight-meta';
 
 export type HighlightErrorCode =
 	'empty-quote' | 'quote-too-long' | 'note-too-long' | 'invalid-color' | 'not-found';
