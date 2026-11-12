@@ -121,8 +121,12 @@ export function sanitizeArticleHtml(html: string, baseUrl: string): string {
 	return sanitized;
 }
 
+const BLOCK_END =
+	/<\/(p|div|section|article|h[1-6]|li|blockquote|pre|figure|figcaption|table|tr|td|th)>/gi;
+
 function htmlToText(html: string): string {
-	const { document } = parseHTML(`<html><body>${html}</body></html>`);
+	const spaced = html.replace(BLOCK_END, (match) => `${match} `).replace(/<br\s*\/?>/gi, ' ');
+	const { document } = parseHTML(`<html><body>${spaced}</body></html>`);
 	return (document.body?.textContent ?? '').replace(/\s+/g, ' ').trim();
 }
 

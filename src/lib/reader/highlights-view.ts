@@ -27,8 +27,18 @@ export function groupHighlights(highlights: ReadingHighlight[]): HighlightGroup[
 			};
 		})
 		.sort((a, b) => {
-			const latestA = a.highlights[a.highlights.length - 1]?.updatedAt ?? '';
-			const latestB = b.highlights[b.highlights.length - 1]?.updatedAt ?? '';
+			const latestA = a.highlights.reduce(
+				(latest, highlight) => (highlight.updatedAt > latest ? highlight.updatedAt : latest),
+				''
+			);
+			const latestB = b.highlights.reduce(
+				(latest, highlight) => (highlight.updatedAt > latest ? highlight.updatedAt : latest),
+				''
+			);
 			return latestB.localeCompare(latestA);
 		});
+}
+
+export function totalHighlights(groups: HighlightGroup[]): number {
+	return groups.reduce((total, group) => total + group.highlights.length, 0);
 }

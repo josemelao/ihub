@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -75,5 +75,17 @@ describe('article-store', () => {
 		expect(await pruneArticleFiles(dir, 2)).toBe(1);
 		expect(await readArticleFile(dir, 'a')).toBeNull();
 		expect((await readArticleFile(dir, 'c'))?.id).toBe('c');
+	});
+
+	it('remove arquivos corrompidos quando passa do limite', async () => {
+		await writeArticleFile(dir, article('a', '2026-01-01T00:00:00.000Z'));
+		await writeArticleFile(dir, article('b', '2026-01-02T00:00:00.000Z'));
+		await writeArticleFile(dir, article('c', '2026-01-03T00:00:00.000Z'));
+		await writeFile(join(dir, 'corrupto.json'), '{not-json', 'utf-8');
+
+		expect(await pruneArticleFiles(dir, 2)).toBe(2);
+		expect(await readArticleFile(dir, 'a')).toBeNull();
+		expect((await readArticleFile(dir, 'c'))?.id).toBe('c');
+		await expect(readFile(join(dir, 'corrupto.json'))).rejects.toThrow();
 	});
 });

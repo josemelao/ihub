@@ -61,19 +61,20 @@ export async function pruneArticleFiles(dir: string, max = MAX_ARTICLES): Promis
 	}
 
 	const entries: { name: string; fetchedAt: string }[] = [];
+	const corrupt: string[] = [];
 	for (const name of names) {
 		try {
 			const parsed = parseReadingArticle(JSON.parse(await readFile(join(dir, name), 'utf-8')));
 			entries.push({ name, fetchedAt: parsed.fetchedAt });
 		} catch {
-			// Arquivo inválido não deve impedir a poda dos demais.
+			corrupt.push(name);
 		}
 	}
 
-	if (entries.length <= max) return 0;
+	if (names.length <= max) return 0;
 
 	entries.sort((a, b) => b.fetchedAt.localeCompare(a.fetchedAt));
-	const remove = entries.slice(max);
-	await Promise.all(remove.map((entry) => unlink(join(dir, entry.name)).catch(() => undefined)));
+	const remove = [...corrupt, ...entries.slice(max).map((entry) => entry.name)];
+	await Promise.all(remove.map((name) => unlink(join(dir, name)).catch(() => undefined)));
 	return remove.length;
 }

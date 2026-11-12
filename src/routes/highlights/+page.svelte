@@ -4,11 +4,14 @@
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { normalize } from '#lib/feed/filter';
 	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlights';
+	import { totalHighlights } from '#lib/reader/highlights-view';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	let query = $state('');
+
+	const total = $derived(totalHighlights(data.groups));
 
 	const terms = $derived(
 		query
@@ -41,8 +44,8 @@
 <div class="section-head">
 	<h1>Destaques</h1>
 	<span class="muted small">
-		{data.groups.length}
-		{data.groups.length === 1 ? 'trecho marcado' : 'trechos marcados'}
+		{total}
+		{total === 1 ? 'trecho marcado' : 'trechos marcados'}
 	</span>
 </div>
 

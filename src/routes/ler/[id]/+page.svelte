@@ -127,7 +127,9 @@
 		const before = document.createRange();
 		before.selectNodeContents(articleEl);
 		before.setEnd(range.startContainer, range.startOffset);
-		const info = buildSelectionInfo(selection.toString(), article.text, before.toString().length);
+		const domText = (articleEl.textContent ?? '').replace(/\s+/g, ' ');
+		const beforeText = before.toString().replace(/\s+/g, ' ');
+		const info = buildSelectionInfo(selection.toString(), domText, beforeText.length);
 		if (!info) {
 			toolbar = null;
 			return;

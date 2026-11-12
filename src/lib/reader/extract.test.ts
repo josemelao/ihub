@@ -27,6 +27,13 @@ describe('extração e sanitização', () => {
 		expect(html).toContain('src="https://exemplo.com/post/img/a.png"');
 	});
 
+	it('separa blocos com espaço no texto extraído', () => {
+		const html = `<html><body><article><p>${'Primeiro parágrafo. '.repeat(6)}</p><p>${'Segundo parágrafo. '.repeat(6)}</p></article></body></html>`;
+		const result = extractReadable(html, 'https://e.com/');
+
+		expect(result.text).toContain('parágrafo. Segundo parágrafo.');
+	});
+
 	it('sanitiza HTML diretamente no ponto de entrada', () => {
 		const html = sanitizeArticleHtml(
 			'<p onclick="x()">ok</p><script>alert(1)</script>',
