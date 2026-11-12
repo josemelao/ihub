@@ -327,7 +327,7 @@ npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chr
 npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
 
-O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`) e cobre 4 fluxos (adicionar link pela Biblioteca, nota rápida persistindo, palette com busca e comando) e axe nas telas principais. A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`) e cobre 7 fluxos (adicionar link, salvar/desfavoritar post, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, mobile 375 px) e axe nas telas principais. O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 

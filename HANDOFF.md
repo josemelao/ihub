@@ -572,7 +572,8 @@ Executada em 11/11/2026 sobre `v0.20.0`.
 
 - **CI**: `.github/workflows/ci.yml` roda em push/PR para `master`: `npm ci`, `check`, `lint`, `test`, `build`; em seguida o job `e2e` instala Chromium, builda e roda Playwright, com relatório como artefato em falha.
 - **Playwright**: `playwright.config.ts` sobe o build em `127.0.0.1:5760` com `HUB_DATA_DIR=.e2e-data` (recriado no global setup a partir de `data/hub.example.json`). `bypassCSP` apenas no teste, para o axe injetar o script.
-- **Cobertura**: 4 fluxos de produto (adicionar link pela Biblioteca; nota rápida salva/sobrevive/palette; palette busca e comando) + axe sem violações **críticas ou sérias** em `/`, `/feed`, `/biblioteca` e `/gerenciar`. A suíte é hermética: o fixture desliga as fontes e `e2e/fixtures.ts` bloqueia qualquer requisição fora de 127.0.0.1.
-- Scripts novos: `npm run test:e2e` e `npm run test:e2e:report`.
+- **Cobertura**: 7 fluxos de produto (adicionar link; salvar post em Salvos; marcar tudo como lido com desfazer; nota rápida; palette busca e comando; mobile 375 px sem overflow) + axe sem violações **críticas ou sérias** em `/`, `/feed`, `/biblioteca` e `/gerenciar`. Total de 11 testes, estáveis em execuções repetidas. A suíte é hermética: o fixture desliga as fontes e `e2e/fixtures.ts` bloqueia qualquer requisição fora de 127.0.0.1.
+- Scripts novos: `npm run test:e2e`, `npm run test:e2e:report` e `npm run check:e2e` (type-check de `e2e/` + config, incluído no `verify`).
+- Faltam no E2E: importar bookmarks/OPML e testar fonte pelo Gerenciar (cobertos por testes de rota, não por fluxo de navegador).
 - `npm run verify` segue verde (657 testes em 92 arquivos) e `npx playwright test` passa 8/8 localmente.
 - **CI validado no GitHub**: run [43132331993](https://github.com/josemelao/ihub/actions/runs/43132331993) — jobs `check · lint · test · build` e `e2e · axe` verdes.

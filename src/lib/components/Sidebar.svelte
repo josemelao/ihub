@@ -72,9 +72,6 @@
 					class="cat-link"
 					class:active={path === `/c/${cat.id}`}
 					href={resolve('/c/[slug]', { slug: cat.id })}
-					aria-label={`${cat.name}: ${counts[cat.id] ?? 0} itens, ${
-						sourceCounts[cat.id] ?? 0
-					} fontes de feed e ${unreadByCategory[cat.id] ?? 0} não lidos`}
 				>
 					<span class="dot" style="background: {cat.color}"></span>
 					<span>{cat.name}</span>
@@ -86,6 +83,10 @@
 						{#if sourceCounts[cat.id]}
 							<span class="cat-feed-count">· {sourceCounts[cat.id]}</span>
 						{/if}
+					</span>
+					<span class="sr-only">
+						{counts[cat.id] ?? 0} itens, {sourceCounts[cat.id] ?? 0} fontes de feed,
+						{unreadByCategory[cat.id] ?? 0} não lidos
 					</span>
 					{#if unreadByCategory[cat.id]}
 						<span class="cat-unread" title="{unreadByCategory[cat.id]} não lidos">

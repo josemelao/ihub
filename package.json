@@ -23,9 +23,10 @@
 		"format": "prettier --write .",
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run",
-		"verify": "npm run check && npm run lint && npm test && npm run build",
+		"verify": "npm run check && npm run lint && npm run check:e2e && npm test && npm run build",
 		"test:e2e": "playwright test",
-		"test:e2e:report": "playwright show-report"
+		"test:e2e:report": "playwright show-report",
+		"check:e2e": "tsc --noEmit -p tsconfig.e2e.json"
 	},
 	"devDependencies": {
 		"@axe-core/playwright": "^4.14.0",
