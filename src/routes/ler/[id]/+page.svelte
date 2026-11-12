@@ -1,14 +1,16 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { formatBytes } from '#lib/archive/format';
 	import Icon from '#lib/components/Icon.svelte';
 	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import HighlightDialog from '#lib/components/HighlightDialog.svelte';
 	import HighlightToolbar from '#lib/components/HighlightToolbar.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { relativeTime } from '#lib/display';
 	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlights';
 	import { buildSelectionInfo } from '#lib/reader/selection';
-	import type { HighlightColor, ReadingArticle, ReadingHighlight } from '#lib/types';
+	import type { ArchiveEntry, HighlightColor, ReadingArticle, ReadingHighlight } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -16,9 +18,14 @@
 	let article = $state<ReadingArticle | null>(untrack(() => data.article));
 	let fullText = $state(untrack(() => data.source?.fullText ?? false));
 	let highlights = $state(untrack(() => data.highlights));
+	let archive = $state<ArchiveEntry | null>(untrack(() => data.archive));
 	let busy = $state(false);
 	let errorMessage = $state('');
 	let highlightError = $state('');
+	let archiveError = $state('');
+	let archiveBusy = $state(false);
+	let confirmingRemoveArchive = $state(false);
+	let pollTimer: ReturnType<typeof setInterval> | null = null;
 	let articleEl = $state<HTMLElement | null>(null);
 	let removing = $state<ReadingHighlight | null>(null);
 	let toolbar = $state<{ quote: string; occurrence: number; x: number; y: number } | null>(null);
@@ -35,6 +42,8 @@
 
 	onMount(() => {
 		if (!article && data.source?.type === 'rss' && fullText) void extract();
+		if (archive?.status === 'pending') startPolling();
+		return stopPolling;
 	});
 
 	$effect(() => {
@@ -258,6 +267,90 @@
 		removing = null;
 		void deleteHighlight(id);
 	}
+
+	function startPolling(): void {
+		if (pollTimer) return;
+		let attempts = 0;
+
+		pollTimer = setInterval(async () => {
+			attempts += 1;
+			if (attempts > 30) {
+				stopPolling();
+				return;
+			}
+			try {
+				const response = await fetch('/api/archive');
+				const body = (await response.json()) as { entries?: ArchiveEntry[] };
+				const entry = body.entries?.find((item) => item.id === data.item.id) ?? null;
+				archive = entry;
+				if (!entry || entry.status !== 'pending') stopPolling();
+			} catch {
+				stopPolling();
+			}
+		}, 2_000);
+	}
+
+	function stopPolling(): void {
+		if (pollTimer) {
+			clearInterval(pollTimer);
+			pollTimer = null;
+		}
+	}
+
+	async function archiveNow(): Promise<void> {
+		archiveBusy = true;
+		archiveError = '';
+
+		try {
+			const response = await fetch('/api/archive', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ action: 'archive', itemId: data.item.id })
+			});
+			const body = (await response.json()) as {
+				ok?: boolean;
+				entry?: ArchiveEntry;
+				error?: string;
+			};
+
+			if (!response.ok || !body.ok) {
+				archiveError = body.error ?? 'Não foi possível arquivar esta página.';
+				return;
+			}
+			archive = body.entry ?? null;
+			startPolling();
+		} catch {
+			archiveError = 'Falha de rede ao arquivar esta página.';
+		} finally {
+			archiveBusy = false;
+		}
+	}
+
+	async function removeArchive(): Promise<void> {
+		confirmingRemoveArchive = false;
+		archiveBusy = true;
+		archiveError = '';
+
+		try {
+			const response = await fetch('/api/archive', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ action: 'delete', itemId: data.item.id })
+			});
+			const body = (await response.json()) as { ok?: boolean; error?: string };
+
+			if (!response.ok || !body.ok) {
+				archiveError = body.error ?? 'Não foi possível remover o arquivo.';
+				return;
+			}
+			stopPolling();
+			archive = null;
+		} catch {
+			archiveError = 'Falha de rede ao remover o arquivo.';
+		} finally {
+			archiveBusy = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -318,7 +411,12 @@
 	{:else if errorMessage}
 		<div class="reader-status">
 			<div class="alert" role="status">{errorMessage}</div>
-			<button type="button" class="chip" onclick={extract}>Tentar de novo</button>
+			<div class="reader-actions">
+				<button type="button" class="chip" onclick={extract}>Tentar de novo</button>
+				{#if archive?.status === 'ready'}
+					<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
+				{/if}
+			</div>
 		</div>
 	{:else if data.source && data.source.type !== 'rss'}
 		<p class="muted reader-status">Reader indisponível para esta fonte. Use “Abrir original”.</p>
@@ -328,6 +426,62 @@
 		</p>
 	{:else}
 		<p class="reader-status muted">{data.item.summary}</p>
+	{/if}
+
+	<section class="reader-archive panel" aria-labelledby="t-reader-archive">
+		<div class="hl-head">
+			<h2 id="t-reader-archive" class="fs-15">Arquivo offline</h2>
+			{#if archive?.status === 'ready'}
+				<span class="tag">arquivado</span>
+			{/if}
+		</div>
+
+		{#if archive?.status === 'ready'}
+			<p class="muted small">
+				{formatBytes(archive.bytes)} · {archive.assets}
+				{archive.assets === 1 ? 'imagem' : 'imagens'} · {relativeTime(archive.updatedAt)}
+			</p>
+			<div class="reader-actions">
+				<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
+				<button
+					type="button"
+					class="chip"
+					onclick={() => (confirmingRemoveArchive = true)}
+					disabled={archiveBusy}
+				>
+					Remover arquivo
+				</button>
+			</div>
+		{:else if archive?.status === 'pending'}
+			<p class="muted small" role="status">Arquivando…</p>
+		{:else if archive?.status === 'failed'}
+			<div class="alert" role="status">{archive.error ?? 'Falha ao arquivar.'}</div>
+			{#if data.saved}
+				<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
+					Tentar de novo
+				</button>
+			{/if}
+		{:else if data.saved}
+			<p class="muted small">Sem arquivo local para este post.</p>
+			<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
+				Arquivar agora
+			</button>
+		{:else}
+			<p class="muted small">Salve o post para guardar uma cópia local da página.</p>
+		{/if}
+
+		{#if archiveError}
+			<div class="alert" role="status">{archiveError}</div>
+		{/if}
+	</section>
+
+	{#if confirmingRemoveArchive}
+		<ConfirmDialog
+			title="Remover arquivo"
+			message="Apagar a cópia local desta página? O post continua salvo nos favoritos."
+			onconfirm={removeArchive}
+			oncancel={() => (confirmingRemoveArchive = false)}
+		/>
 	{/if}
 
 	{#if toolbar}
