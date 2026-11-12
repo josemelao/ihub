@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CONTENT_SECURITY_POLICY, SECURITY_HEADERS, withSecurityHeaders } from './headers';
+import {
+	ARCHIVE_CONTENT_SECURITY_POLICY,
+	CONTENT_SECURITY_POLICY,
+	SECURITY_HEADERS,
+	withSecurityHeaders
+} from './headers';
 import { handle } from '../../hooks.server';
 
 describe('security headers', () => {
@@ -40,6 +45,14 @@ describe('security headers', () => {
 		expect(response.status).toBe(201);
 		await expect(response.text()).resolves.toBe('corpo');
 	});
+
+	it('aplica CSP restrita ao arquivo', () => {
+		const response = withSecurityHeaders(new Response('ok'), { archive: true });
+
+		expect(response.headers.get('content-security-policy')).toBe(ARCHIVE_CONTENT_SECURITY_POLICY);
+		expect(ARCHIVE_CONTENT_SECURITY_POLICY).toContain("script-src 'none'");
+		expect(ARCHIVE_CONTENT_SECURITY_POLICY).toContain("img-src 'self'");
+	});
 });
 
 describe('hooks.server aplica headers', () => {
@@ -78,5 +91,15 @@ describe('hooks.server aplica headers', () => {
 		});
 
 		expect(response.status).toBe(403);
+	});
+
+	it('aplica CSP restrita em /arquivo', async () => {
+		const response = await handle({
+			event: event('http://127.0.0.1/arquivo/abc'),
+			resolve: async () =>
+				new Response('<html></html>', { headers: { 'content-type': 'text/html' } })
+		});
+
+		expect(response.headers.get('content-security-policy')).toBe(ARCHIVE_CONTENT_SECURITY_POLICY);
 	});
 });

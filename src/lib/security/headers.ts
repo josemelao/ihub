@@ -21,13 +21,31 @@ export const CONTENT_SECURITY_POLICY = [
 	"media-src 'self' https:"
 ].join('; ');
 
+export const ARCHIVE_CONTENT_SECURITY_POLICY = [
+	"default-src 'none'",
+	"img-src 'self'",
+	"style-src 'self'",
+	"font-src 'self'",
+	"script-src 'none'",
+	"connect-src 'none'",
+	"base-uri 'none'",
+	"form-action 'none'",
+	"frame-ancestors 'none'"
+].join('; ');
+
 /** Aplica todos os headers de segurança (CSP em modo enforce) numa resposta. */
-export function withSecurityHeaders(response: Response): Response {
+export function withSecurityHeaders(
+	response: Response,
+	options: { archive?: boolean } = {}
+): Response {
 	const headers = new Headers(response.headers);
 	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
 		headers.set(name, value);
 	}
-	headers.set('content-security-policy', CONTENT_SECURITY_POLICY);
+	headers.set(
+		'content-security-policy',
+		options.archive ? ARCHIVE_CONTENT_SECURITY_POLICY : CONTENT_SECURITY_POLICY
+	);
 
 	return new Response(response.body, {
 		status: response.status,

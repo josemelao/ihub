@@ -7,6 +7,13 @@
 	--accent: #8aa4ff;
 }
 
+@font-face {
+	font-family: 'Inter';
+	src: url('/fonts/inter.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
 * {
 	box-sizing: border-box;
 }

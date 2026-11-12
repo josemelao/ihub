@@ -43,5 +43,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	const response = await resolve(event);
-	return withSecurityHeaders(response);
+	return withSecurityHeaders(response, {
+		archive: event.url.pathname.startsWith('/arquivo/')
+	});
 };
