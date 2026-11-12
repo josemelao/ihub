@@ -86,10 +86,20 @@ const cache = {
 			url: 'https://example.invalid/post-erro',
 			publishedAt: now,
 			thumbnail: null
+		},
+		{
+			id: 'e2e-post-longo',
+			sourceId: 'e2e-fonte',
+			title:
+				'When the AI Director catches you having fun with an extremely long title that must never wrap',
+			summary: 'Título longo para conferir o corte em uma linha.',
+			url: 'https://example.com/post-e2e-longo',
+			publishedAt: new Date(Date.now() - 3_600_000).toISOString(),
+			thumbnail: null
 		}
 	],
 	sources: {
-		'e2e-fonte': { lastFetchedAt: now, error: null, count: 1 },
+		'e2e-fonte': { lastFetchedAt: now, error: null, count: 2 },
 		'e2e-fonte-off': { lastFetchedAt: now, error: null, count: 1 },
 		'e2e-fonte-erro': { lastFetchedAt: now, error: null, count: 1 }
 	}
@@ -98,7 +108,11 @@ const cache = {
 await writeFile(join(dataDir, 'feed-cache.json'), `${JSON.stringify(cache, null, 2)}\n`, 'utf8');
 await writeFile(
 	join(dataDir, 'estado.json'),
-	`${JSON.stringify({ version: 1, read: {}, saved: [], savedItems: {} }, null, 2)}\n`,
+	`${JSON.stringify(
+		{ version: 1, read: { 'e2e-post-longo': now }, saved: [], savedItems: {} },
+		null,
+		2
+	)}\n`,
 	'utf8'
 );
 
