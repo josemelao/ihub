@@ -594,3 +594,12 @@ Executada em 12/11/2026 sobre `v0.23.0`.
 - **PLAT-07**: título da aba com contagem de não lidos (`formatUnreadTitle`), badge desenhado no favicon e notificação **opt-in** (`settings.notifyUnread`), exibida só com a aba oculta, permissão concedida e quando a contagem **aumenta**. A decisão fica em `shouldNotify` com testes. O título passa a ser `(N) Meu Hub` e substitui o título específico da rota.
 - **PLAT-10**: tokens novos em `:root` (`--panel-hover`, `--line-strong`, `--ok*`, `--danger*`) substituindo as cores fixas; `fs-15`/`fs-16` para os títulos que usavam estilo inline. Único `font-size` inline restante é o ícone dimensionado por prop.
 - **Testes**: unitários de título/notificação e um teste que impede voltar a hardcodar cores ou tipografia inline; E2E novo valida o título com e sem não lidos (15 testes E2E).
+
+## 29. Fase 4 — token opcional e diagnóstico (v0.25.0)
+
+Executada em 12/11/2026 sobre `v0.24.0`.
+
+- **Token opcional**: com `HUB_API_TOKEN` definido, POST/DELETE em `/api/*` exigem `Authorization: Bearer <token>` (comparação em tempo constante). GETs e páginas continuam livres; sem a variável nada muda.
+- **`/api/health`**: versão, uptime, diretório de dados, permissão de escrita, contagens (categorias, itens, fontes, salvos, notas, posts), `feedUpdatedAt` e lista de erros de leitura. Nunca devolve token nem conteúdo.
+- **Diagnóstico** em Gerenciar → Aparência: botão “Verificar saúde” mostra os mesmos dados.
+- **Testes**: 3 unitários do token (constante, formato, ausência) + 4 de rota/hook (`/api/health`, 401 sem Bearer, GET livre, sem token passa).

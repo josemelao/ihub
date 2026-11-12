@@ -1,4 +1,5 @@
 import type { Handle } from '@sveltejs/kit/hooks';
+import { isAuthorized, requiresApiToken } from '#lib/security/api-token';
 import { withSecurityHeaders } from '#lib/security/headers';
 
 const ALLOWED_HOSTS = new Set(['127.0.0.1', 'localhost', '[::1]', '::1']);
@@ -26,6 +27,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 				return new Response('Origem não permitida.', { status: 403 });
 			}
 		}
+	}
+
+	const token = process.env.HUB_API_TOKEN ?? '';
+	if (
+		requiresApiToken(event.request.method, event.url.pathname) &&
+		!isAuthorized(event.request.headers.get('authorization'), token)
+	) {
+		return withSecurityHeaders(
+			new Response(JSON.stringify({ ok: false, error: 'Token ausente ou inválido.' }), {
+				status: 401,
+				headers: { 'content-type': 'application/json' }
+			})
+		);
 	}
 
 	const response = await resolve(event);

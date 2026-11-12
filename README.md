@@ -68,6 +68,8 @@ Alternativa sem copiar arquivos: no PC antigo use **Gerenciar → Exportar**, le
 
 ### 5. Configuração opcional
 
+- `HUB_API_TOKEN` (opcional): quando definido, todo POST/DELETE em `/api/*` exige `Authorization: Bearer <token>`. GETs continuam abertos para a própria máquina.
+
 ```powershell
 Copy-Item .env.example .env
 ```
@@ -299,6 +301,7 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 - Fontes (Inter/Space Grotesk) são servidas de `static/fonts`; não há requisição a Google Fonts.
 - Toda imagem externa usa `referrerpolicy="no-referrer"`.
 - URLs de feed/imagem só são aceitas em `http(s)`; o fetch valida o IP resolvido e bloqueia rede interna (SSRF).
+- `/api/health` mostra contagens, permissão de escrita e idade do feed sem expor token ou conteúdo.
 - Para ajustar a CSP (ex.: nova origem de iframe), edite `src/lib/security/headers.ts` e rode `npm run verify`; o teste `headers.test.ts` cobre as diretivas.
 - Arquivos em `data/*.json` e `.env` ficam fora do Git. O service worker nunca cacheia `/api/` nem `data/`.
 

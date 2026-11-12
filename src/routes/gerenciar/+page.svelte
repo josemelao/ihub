@@ -211,6 +211,15 @@
 	let fontSize = $state(untrack(() => data.hub.settings.fontSize ?? 14));
 	let highContrast = $state(untrack(() => Boolean(data.hub.settings.highContrast)));
 	let notifyUnread = $state(untrack(() => Boolean(data.hub.settings.notifyUnread)));
+	let health = $state<{
+		ok: boolean;
+		writable: boolean;
+		dataDir: string;
+		counts: Record<string, number>;
+		feedUpdatedAt: string;
+		errors: string[];
+	} | null>(null);
+	let healthBusy = $state(false);
 	let confirming = $state<{
 		kind: 'item' | 'source' | 'category' | 'group' | 'filter';
 		id: string;
@@ -465,6 +474,19 @@
 			action: 'update-settings',
 			settings: { density, fontSize, highContrast, notifyUnread }
 		});
+	}
+
+	async function checkHealth(): Promise<void> {
+		healthBusy = true;
+		try {
+			const response = await fetch('/api/health');
+			health = (await response.json()) as typeof health;
+		} catch {
+			health = null;
+			actionMessage = 'Falha ao consultar /api/health.';
+		} finally {
+			healthBusy = false;
+		}
 	}
 
 	async function toggleNotify(): Promise<void> {
@@ -1697,6 +1719,26 @@
 			</div>
 		</div>
 		<button class="btn btn-primary" type="button" onclick={saveReading}> Salvar leitura </button>
+	</div>
+
+	<div class="appearance-card">
+		<div class="appearance-main">
+			<strong>Diagnóstico</strong>
+			<span class="muted small">
+				Contagens dos dados, permissão de escrita e última atualização do feed.
+			</span>
+			{#if health}
+				<span class="muted small">
+					{health.counts.items} itens · {health.counts.sources} fontes · {health.counts.posts} posts ·
+					{health.counts.saved} salvos · {health.counts.notes} notas · gravação
+					{health.writable ? 'ok' : 'bloqueada'} · {health.dataDir}
+					{#if health.errors.length}· {health.errors.length} erro(s){/if}
+				</span>
+			{/if}
+		</div>
+		<button class="btn" type="button" onclick={checkHealth} disabled={healthBusy}>
+			{healthBusy ? 'Verificando...' : 'Verificar saúde'}
+		</button>
 	</div>
 {/if}
 
