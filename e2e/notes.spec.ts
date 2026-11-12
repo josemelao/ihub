@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, openPalette, test } from './fixtures';
 
 test('a nota rápida sobrevive ao reload e entra na palette', async ({ page }) => {
 	const text = `nota e2e ${Date.now()}`;
@@ -11,7 +11,7 @@ test('a nota rápida sobrevive ao reload e entra na palette', async ({ page }) =
 	await page.reload();
 	await expect(page.locator('#nota')).toHaveValue(text);
 
-	await page.keyboard.press('Control+k');
+	await openPalette(page);
 	await page.getByRole('combobox').fill(text);
 	await expect(page.getByRole('option', { name: new RegExp(text) })).toBeVisible();
 });

@@ -7,20 +7,19 @@ export default defineConfig({
 	fullyParallel: false,
 	workers: 1,
 	retries: process.env.CI ? 1 : 0,
-	reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : [['list']],
+	reporter: [['list'], ['html', { open: 'never' }]],
 	timeout: 30_000,
 	use: {
 		baseURL: `http://127.0.0.1:${PORT}`,
-		trace: 'on-first-retry',
-		// axe injeta script inline; a CSP do app bloquearia sem bypass.
-		bypassCSP: true
+		trace: 'on-first-retry'
 	},
 	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-	globalSetup: './e2e/global-setup.ts',
 	webServer: {
-		command: 'node scripts/start.mjs',
+		// Semeia o banco de teste antes de subir o build.
+		command: 'node e2e/seed.mjs && node scripts/start.mjs',
 		url: `http://127.0.0.1:${PORT}/`,
-		reuseExistingServer: !process.env.CI,
+		// Nunca reusa servidor: um `npm start` na mesma porta usaria data/ real.
+		reuseExistingServer: false,
 		timeout: 120_000,
 		env: {
 			HOST: '127.0.0.1',

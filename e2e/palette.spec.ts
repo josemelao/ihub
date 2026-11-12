@@ -1,9 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, openPalette, test } from './fixtures';
 
 test('a palette encontra um link do hub e executa um comando', async ({ page }) => {
 	await page.goto('/');
-	await page.waitForLoadState('networkidle');
-	await page.keyboard.press('Control+k');
+	await openPalette(page);
 
 	const input = page.getByRole('combobox');
 	await expect(input).toBeFocused();
@@ -17,8 +16,7 @@ test('a palette encontra um link do hub e executa um comando', async ({ page }) 
 
 test('paleta navega para o editor de link ao executar o comando', async ({ page }) => {
 	await page.goto('/');
-	await page.waitForLoadState('networkidle');
-	await page.keyboard.press('Control+k');
+	await openPalette(page);
 	await page.getByRole('combobox').fill('>adicionar');
 	await page.getByRole('option', { name: /Adicionar link/i }).click();
 

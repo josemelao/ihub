@@ -21,7 +21,7 @@
 		class="search search-button"
 		type="button"
 		onclick={() => ui.openPalette()}
-		aria-label={`Abrir busca rápida (Ctrl K): ${placeholder}`}
+		title="Abrir busca rápida (Ctrl K)"
 	>
 		<Icon name="search" />
 		<span class="search-text">{placeholder}</span>

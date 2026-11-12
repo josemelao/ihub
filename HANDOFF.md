@@ -572,6 +572,6 @@ Executada em 11/11/2026 sobre `v0.20.0`.
 
 - **CI**: `.github/workflows/ci.yml` roda em push/PR para `master`: `npm ci`, `check`, `lint`, `test`, `build`; em seguida o job `e2e` instala Chromium, builda e roda Playwright, com relatório como artefato em falha.
 - **Playwright**: `playwright.config.ts` sobe o build em `127.0.0.1:5760` com `HUB_DATA_DIR=.e2e-data` (recriado no global setup a partir de `data/hub.example.json`). `bypassCSP` apenas no teste, para o axe injetar o script.
-- **Fluxos cobertos (8)**: adicionar link pela Biblioteca → aparece na lista; nota rápida salva, sobrevive ao reload e entra na palette; palette encontra link e executa o comando “Adicionar link”; axe sem violações **críticas** em `/`, `/feed`, `/biblioteca` e `/gerenciar`.
+- **Cobertura**: 4 fluxos de produto (adicionar link pela Biblioteca; nota rápida salva/sobrevive/palette; palette busca e comando) + axe sem violações **críticas ou sérias** em `/`, `/feed`, `/biblioteca` e `/gerenciar`. A suíte é hermética: o fixture desliga as fontes e `e2e/fixtures.ts` bloqueia qualquer requisição fora de 127.0.0.1.
 - Scripts novos: `npm run test:e2e` e `npm run test:e2e:report`.
 - `npm run verify` segue verde (657 testes em 92 arquivos) e `npx playwright test` passa 8/8 localmente.

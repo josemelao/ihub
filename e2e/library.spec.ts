@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('adiciona um link pela Biblioteca e ele aparece na lista', async ({ page }) => {
 	const name = `E2E Link ${Date.now()}`;
