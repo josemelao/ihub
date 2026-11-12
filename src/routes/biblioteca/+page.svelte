@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { slide } from 'svelte/transition';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Icon from '#lib/components/Icon.svelte';
@@ -15,6 +15,15 @@
 	let { data }: PageProps = $props();
 
 	const hub = $derived(data.hub);
+
+	async function togglePin(id: string, pinned: boolean): Promise<void> {
+		const response = await fetch('/api/hub', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ action: 'update-item', id, patch: { pinned } })
+		});
+		if (response.ok) await invalidateAll();
+	}
 
 	type Tab = 'todos' | 'app' | 'link';
 	let tab = $state<Tab>('todos');
@@ -319,7 +328,7 @@
 						</div>
 						<div class="library-grid">
 							{#each group.items as item (item.id)}
-								<LibraryCard {item} color={section.category.color} />
+								<LibraryCard {item} color={section.category.color} onpin={togglePin} />
 							{/each}
 						</div>
 					</div>

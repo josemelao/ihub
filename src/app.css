@@ -1125,6 +1125,46 @@ h3 {
 	gap: 10px;
 }
 
+.quick-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.quick-slot {
+	position: relative;
+	display: flex;
+	flex: 1 1 128px;
+	max-width: 170px;
+}
+
+.quick-slot.editing {
+	flex-direction: column;
+	gap: 4px;
+}
+
+.quick-slot.editing .quick-tile {
+	width: 100%;
+}
+
+.quick-edit {
+	display: flex;
+	gap: 4px;
+	justify-content: flex-end;
+}
+
+.quick-edit .mini-btn {
+	height: 28px;
+	padding: 0 7px;
+}
+
+.quick-grid.grid .quick-slot,
+.quick-grid.stacked .quick-slot {
+	flex: none;
+	width: 100%;
+	max-width: none;
+}
+
 .quick-grid.stacked {
 	flex-direction: column;
 	flex-wrap: nowrap;
@@ -2642,6 +2682,48 @@ a.source-row:hover .soft {
 
 .library-card:hover {
 	border-color: var(--accent);
+}
+
+.library-card-wrap {
+	position: relative;
+	display: flex;
+}
+
+.library-card-wrap .library-card {
+	flex: 1 1 auto;
+}
+
+.library-pin {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 26px;
+	height: 26px;
+	padding: 0;
+	border-radius: 8px;
+	border: 1px solid var(--line);
+	background: var(--panel);
+	color: var(--mut);
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity var(--motion) var(--ease-motion);
+}
+
+.library-card-wrap:hover .library-pin,
+.library-pin:focus-visible,
+.library-pin.pinned {
+	opacity: 1;
+}
+
+.library-pin.pinned {
+	color: var(--accent);
+	border-color: var(--accent);
+}
+
+.library-pin:hover {
+	color: var(--tx);
 }
 
 .library-card-main {

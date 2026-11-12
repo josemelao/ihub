@@ -3,6 +3,10 @@ export type FeedSourceType = 'rss' | 'youtube' | 'reddit';
 
 export interface HubSettings {
 	accent: string;
+	/** Ordem manual dos itens fixados no Acesso rápido. */
+	quickAccessOrder?: string[];
+	/** Quantos atalhos mostrar (3–12). */
+	quickAccessLimit?: number;
 }
 
 export interface Category {

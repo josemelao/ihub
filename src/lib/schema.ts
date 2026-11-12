@@ -189,7 +189,13 @@ function checkDuplicateIds(
 export const hubSchema = z
 	.object({
 		version: z.number().int().positive().default(1),
-		settings: z.object({ accent: colorSchema }).default({ accent: '#8AA4FF' }),
+		settings: z
+			.object({
+				accent: colorSchema,
+				quickAccessOrder: z.array(z.string().min(1)).optional(),
+				quickAccessLimit: z.number().int().min(3).max(12).optional()
+			})
+			.default({ accent: '#8AA4FF' }),
 		categories: z.array(categorySchema).default([]),
 		groups: z.array(groupSchema).default([]),
 		items: z.array(itemSchema).default([]),

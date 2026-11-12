@@ -78,6 +78,8 @@ export interface GroupInput {
 
 export interface SettingsInput {
 	accent?: string;
+	quickAccessOrder?: string[] | null;
+	quickAccessLimit?: number;
 }
 
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -487,13 +489,16 @@ export function toggleSource(hub: HubData, id: string): HubData {
 }
 
 export function updateSettings(hub: HubData, patch: SettingsInput): HubData {
-	return {
-		...hub,
-		settings: {
-			...hub.settings,
-			...(patch.accent ? { accent: patch.accent } : {})
-		}
-	};
+	const settings = { ...hub.settings };
+
+	if (patch.accent) settings.accent = patch.accent;
+
+	if (patch.quickAccessOrder === null) delete settings.quickAccessOrder;
+	else if (patch.quickAccessOrder) settings.quickAccessOrder = [...patch.quickAccessOrder];
+
+	if (patch.quickAccessLimit) settings.quickAccessLimit = patch.quickAccessLimit;
+
+	return { ...hub, settings };
 }
 
 export function addCategory(hub: HubData, input: CategoryInput): HubData {

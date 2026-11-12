@@ -29,6 +29,27 @@
 	let message = $state('');
 	let progress = $state<{ done: number; total: number } | null>(null);
 
+	async function updateHub(payload: unknown): Promise<void> {
+		const response = await fetch('/api/hub', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+		if (!response.ok) {
+			message = 'Falha ao salvar o Acesso rápido.';
+			return;
+		}
+		await invalidateAll();
+	}
+
+	function reorderQuickAccess(ids: string[]): void {
+		void updateHub({ action: 'update-settings', settings: { quickAccessOrder: ids } });
+	}
+
+	function togglePin(id: string, pinned: boolean): void {
+		void updateHub({ action: 'update-item', id, patch: { pinned } });
+	}
+
 	async function refreshNow(): Promise<void> {
 		busy = true;
 		message = '';
@@ -54,7 +75,14 @@
 
 <section class="dashboard-grid" aria-label="Painel geral">
 	<section class="panel dashboard-card" aria-labelledby="d-rapido">
-		<QuickAccess {hub} title="Acesso rápido" grid limit={6} />
+		<QuickAccess
+			{hub}
+			title="Acesso rápido"
+			grid
+			limit={hub.settings.quickAccessLimit ?? 6}
+			onreorder={reorderQuickAccess}
+			onpin={togglePin}
+		/>
 		<span class="sr-only" id="d-rapido">Acesso rápido</span>
 	</section>
 
