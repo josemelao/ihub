@@ -71,6 +71,43 @@ export interface NotesData {
 	notes: HubNote[];
 }
 
+export type HighlightColor = 'yellow' | 'green' | 'blue' | 'pink';
+
+export interface ReadingArticle {
+	id: string;
+	url: string;
+	finalUrl: string;
+	title: string;
+	byline: string;
+	siteName: string;
+	excerpt: string;
+	publishedAt: string;
+	fetchedAt: string;
+	length: number;
+	/** HTML sanitizado; nunca vem direto da rede. */
+	html: string;
+	text: string;
+}
+
+export interface ReadingHighlight {
+	id: string;
+	itemId: string;
+	itemTitle: string;
+	itemUrl: string;
+	quote: string;
+	note?: string;
+	color: HighlightColor;
+	/** Ordinal da enésima ocorrência idêntica da quote no texto (0-based). */
+	occurrence: number;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface HighlightsData {
+	version: number;
+	highlights: ReadingHighlight[];
+}
+
 export interface FeedSource {
 	id: string;
 	type: FeedSourceType;
@@ -156,6 +193,7 @@ export interface ExportBundle {
 	hub: HubData;
 	state?: HubState;
 	notes?: NotesData;
+	highlights?: HighlightsData;
 }
 
 export interface ImportOptions {

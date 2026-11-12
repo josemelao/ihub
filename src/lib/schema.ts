@@ -1,7 +1,15 @@
 import { z } from 'zod';
 import { withSourceOrders } from './feed/order';
 import { withNormalizedTags } from './tags';
-import type { FeedCache, HubData, HubState, NotesData, ValidationIssue } from './types';
+import type {
+	FeedCache,
+	HighlightsData,
+	HubData,
+	HubState,
+	NotesData,
+	ReadingArticle,
+	ValidationIssue
+} from './types';
 
 export class HubValidationError extends Error {
 	readonly issues: ValidationIssue[];
@@ -349,6 +357,63 @@ export function parseNotes(input: unknown): NotesData {
 		throw new HubValidationError(issuesFrom(result.error), 'notes.json');
 	}
 	return result.data as NotesData;
+}
+
+const readingIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, 'Id de leitura inválido');
+
+const readingArticleSchema = z.object({
+	id: readingIdSchema,
+	url: urlSchema,
+	finalUrl: urlSchema,
+	title: z.string().default(''),
+	byline: z.string().default(''),
+	siteName: z.string().default(''),
+	excerpt: z.string().default(''),
+	publishedAt: z.string().default(''),
+	fetchedAt: z.string().default(''),
+	length: z.number().int().nonnegative().default(0),
+	html: z.string().max(2_100_000),
+	text: z.string().max(200_000)
+});
+
+const highlightColorSchema = z.enum(['yellow', 'green', 'blue', 'pink']);
+
+const readingHighlightSchema = z.object({
+	id: z.string().min(1),
+	itemId: readingIdSchema,
+	itemTitle: z.string().min(1).max(500),
+	itemUrl: urlSchema,
+	quote: z.string().trim().min(1).max(2_000),
+	note: z.string().trim().max(2_000).optional(),
+	color: highlightColorSchema,
+	occurrence: z.number().int().nonnegative().default(0),
+	createdAt: z.string().default(''),
+	updatedAt: z.string().default('')
+});
+
+export const highlightsSchema = z
+	.object({
+		version: z.number().int().positive().default(1),
+		highlights: z.array(readingHighlightSchema).default([])
+	})
+	.superRefine((data, ctx) => {
+		checkDuplicateIds(ctx, data.highlights, 'highlights');
+	});
+
+export function parseHighlights(input: unknown): HighlightsData {
+	const result = highlightsSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'highlights.json');
+	}
+	return result.data as HighlightsData;
+}
+
+export function parseReadingArticle(input: unknown): ReadingArticle {
+	const result = readingArticleSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'reading');
+	}
+	return result.data as ReadingArticle;
 }
 
 export function parseFeedCache(input: unknown): FeedCache {
