@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
 	import { redditPostInfo } from '#lib/feed/reddit';
@@ -236,6 +237,16 @@
 			</h3>
 
 			<div class="feed-actions">
+				{#if entry.source.type === 'rss'}
+					<a
+						class="icon-action"
+						href={resolve('/ler/[id]', { id: entry.item.id })}
+						aria-label="Ler aqui"
+						title="Ler aqui"
+					>
+						<Icon name="book" size={18} />
+					</a>
+				{/if}
 				<a
 					class="icon-action"
 					href={entry.item.url}
@@ -404,6 +415,16 @@
 			{/if}
 
 			<div class="feed-actions">
+				{#if entry.source.type === 'rss'}
+					<a
+						class="icon-action"
+						href={resolve('/ler/[id]', { id: entry.item.id })}
+						aria-label="Ler aqui"
+						title="Ler aqui"
+					>
+						<Icon name="book" size={18} />
+					</a>
+				{/if}
 				<a
 					class="icon-action"
 					href={entry.item.url}

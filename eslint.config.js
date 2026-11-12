@@ -63,6 +63,15 @@ export default defineConfig(
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	},
 	{
+		// Reader: link externo para o original e HTML renderizado que já passou
+		// por sanitizeArticleHtml (allowlist de tags/atributos).
+		files: ['src/routes/ler/**/+page.svelte'],
+		rules: {
+			'svelte/no-navigation-without-resolve': 'off',
+			'svelte/no-at-html-tags': 'off'
+		}
+	},
+	{
 		// Override or add rule settings here, such as:
 		// 'svelte/button-has-type': 'error'
 		rules: {}

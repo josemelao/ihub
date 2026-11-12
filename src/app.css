@@ -3015,3 +3015,127 @@ html[data-contrast='high'] .feed-card.read {
 .fs-16 {
 	font-size: 16px;
 }
+
+/* Reader (READ-01) */
+.reader-page {
+	max-width: 72ch;
+	margin: 0 auto;
+	padding: 24px 20px 64px;
+}
+
+.reader-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 16px;
+}
+
+.reader-head h1 {
+	margin: 0 0 6px;
+	font-size: 28px;
+	line-height: 1.25;
+}
+
+.reader-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 14px 0 20px;
+}
+
+.reader-status {
+	margin-top: 16px;
+}
+
+.reader-body {
+	font-size: 17px;
+	line-height: 1.7;
+	color: var(--tx);
+}
+
+.reader-body h1,
+.reader-body h2,
+.reader-body h3 {
+	margin: 1.6em 0 0.6em;
+	line-height: 1.3;
+}
+
+.reader-body p {
+	margin: 0 0 1em;
+}
+
+.reader-body a {
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.reader-body blockquote {
+	margin: 1.2em 0;
+	padding: 8px 16px;
+	border-left: 3px solid var(--accent);
+	background: var(--panel);
+	color: var(--mut);
+}
+
+.reader-body pre {
+	overflow-x: auto;
+	padding: 12px;
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+}
+
+.reader-body code {
+	font-size: 0.92em;
+}
+
+.reader-body img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 1.2em auto;
+	border-radius: 8px;
+}
+
+.reader-body figure {
+	margin: 1.2em 0;
+}
+
+.reader-body figcaption {
+	color: var(--mut);
+	font-size: 0.9em;
+	text-align: center;
+}
+
+.reader-body table {
+	width: 100%;
+	margin: 1.2em 0;
+	border-collapse: collapse;
+}
+
+.reader-body th,
+.reader-body td {
+	padding: 6px 10px;
+	border: 1px solid var(--line);
+	text-align: left;
+}
+
+.reader-highlights {
+	margin-top: 32px;
+	padding: 16px 20px;
+}
+
+.reader-highlights ul {
+	display: grid;
+	gap: 12px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.reader-highlights blockquote {
+	margin: 0 0 4px;
+	padding-left: 12px;
+	border-left: 3px solid var(--accent);
+}

@@ -67,6 +67,9 @@
 	{:else if name === 'check-circle'}
 		<circle cx="12" cy="12" r="9" />
 		<path d="M8 12l3 3 5-6" />
+	{:else if name === 'book'}
+		<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+		<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
 	{:else if name === 'play'}
 		<path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none" />
 	{:else if name === 'expand'}
