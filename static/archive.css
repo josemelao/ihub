@@ -1,0 +1,114 @@
+:root {
+	--tx: #e8eaf0;
+	--mut: #9aa3b2;
+	--bg: #0f1115;
+	--panel: #161a21;
+	--line: #262c37;
+	--accent: #8aa4ff;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--tx);
+	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+	line-height: 1.6;
+}
+
+.archive-bar {
+	position: sticky;
+	top: 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 12px 20px;
+	background: var(--panel);
+	border-bottom: 1px solid var(--line);
+}
+
+.archive-title {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.archive-title strong {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.archive-title span {
+	color: var(--mut);
+	font-size: 12px;
+}
+
+.archive-bar nav {
+	display: flex;
+	gap: 12px;
+}
+
+.archive-bar a {
+	color: var(--accent);
+	font-size: 14px;
+	text-decoration: none;
+}
+
+.archive-bar a:hover {
+	text-decoration: underline;
+}
+
+.archive-body {
+	max-width: 72ch;
+	margin: 0 auto;
+	padding: 24px 20px 64px;
+	font-size: 17px;
+}
+
+.archive-body a {
+	color: var(--accent);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.archive-body img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 1.2em auto;
+	border-radius: 8px;
+}
+
+.archive-body blockquote {
+	margin: 1.2em 0;
+	padding: 8px 16px;
+	border-left: 3px solid var(--accent);
+	background: var(--panel);
+	color: var(--mut);
+}
+
+.archive-body pre {
+	overflow-x: auto;
+	padding: 12px;
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+}
+
+.archive-body table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.archive-body th,
+.archive-body td {
+	padding: 6px 10px;
+	border: 1px solid var(--line);
+}
