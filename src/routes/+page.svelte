@@ -139,7 +139,7 @@
 						class="dot"
 						style="background: {entry.category?.color ?? '#8AA4FF'}; border-radius: 50%"
 					></span>
-					<span class="soft" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
+					<span class="soft row-title">
 						{entry.item.title}
 					</span>
 					<span class="count">{relativeTime(entry.item.publishedAt)}</span>

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { HOME_ACTIONS } from './home-actions';
 
 describe('ações rápidas da home', () => {
-	it('oferece quatro ações', () => {
-		expect(HOME_ACTIONS).toHaveLength(4);
+	it('oferece cinco ações', () => {
+		expect(HOME_ACTIONS).toHaveLength(5);
 	});
 
 	it('não repete os atalhos que já existem na sidebar', () => {
@@ -19,6 +19,12 @@ describe('ações rápidas da home', () => {
 		expect(ids).toContain('export-markdown');
 		expect(HOME_ACTIONS.find((action) => action.id === 'export-markdown')?.href).toBe(
 			'/api/export/markdown'
+		);
+	});
+
+	it('exporta os links da Biblioteca em HTML', () => {
+		expect(HOME_ACTIONS.find((action) => action.id === 'export-links')?.href).toBe(
+			'/api/export/bookmarks'
 		);
 	});
 });

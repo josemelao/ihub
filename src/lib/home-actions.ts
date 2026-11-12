@@ -1,4 +1,5 @@
-export type HomeActionId = 'refresh' | 'backup' | 'export-data' | 'export-markdown';
+export type HomeActionId =
+	'refresh' | 'backup' | 'export-data' | 'export-markdown' | 'export-links';
 
 export interface HomeAction {
 	id: HomeActionId;
@@ -25,6 +26,13 @@ export const HOME_ACTIONS: HomeAction[] = [
 		label: 'Exportar Markdown',
 		icon: 'book',
 		href: '/api/export/markdown',
+		download: true
+	},
+	{
+		id: 'export-links',
+		label: 'Exportar links (HTML)',
+		icon: 'bookmark',
+		href: '/api/export/bookmarks',
 		download: true
 	}
 ];
