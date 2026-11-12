@@ -11,13 +11,15 @@
 		hub,
 		unread = 0,
 		unreadByCategory = {},
-		savedCount = 0
+		savedCount = 0,
+		highlightsCount = 0
 	}: {
 		open?: boolean;
 		hub: HubData;
 		unread?: number;
 		unreadByCategory?: Record<string, number>;
 		savedCount?: number;
+		highlightsCount?: number;
 	} = $props();
 
 	const path = $derived(page.url.pathname);
@@ -64,6 +66,13 @@
 			<a class="nav-link" class:active={active('/biblioteca')} href={resolve('/biblioteca')}>
 				<Icon name="monitor" />
 				Biblioteca
+			</a>
+			<a class="nav-link" class:active={active('/highlights')} href={resolve('/highlights')}>
+				<Icon name="book" />
+				Destaques
+				{#if highlightsCount > 0}
+					<span class="badge">{highlightsCount}</span>
+				{/if}
 			</a>
 		</div>
 

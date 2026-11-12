@@ -47,7 +47,8 @@ export default defineConfig(
 			'src/lib/components/VideoPlayerDialog.svelte',
 			'src/lib/components/LibraryCard.svelte',
 			'src/lib/components/BookmarkletCard.svelte',
-			'src/routes/+page.svelte'
+			'src/routes/+page.svelte',
+			'src/routes/highlights/+page.svelte'
 		],
 		rules: { 'svelte/no-navigation-without-resolve': 'off' }
 	},

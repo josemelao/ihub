@@ -3257,3 +3257,17 @@ html[data-contrast='high'] .feed-card.read {
 	padding-left: 12px;
 	border-left: 3px solid var(--accent);
 }
+
+.highlight-list {
+	display: grid;
+	gap: 12px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.highlight-list blockquote {
+	margin: 6px 0 4px;
+	padding-left: 12px;
+	border-left: 3px solid var(--accent);
+}

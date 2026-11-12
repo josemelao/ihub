@@ -143,6 +143,7 @@
 		{unread}
 		{unreadByCategory}
 		savedCount={data.state.saved.length}
+		highlightsCount={data.highlights.highlights.length}
 	/>
 
 	<main class="main" id="conteudo">
