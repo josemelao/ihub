@@ -62,3 +62,17 @@ test('tela de destaques lista e busca', async ({ page }) => {
 	await page.getByRole('searchbox').fill('texto que não existe');
 	await expect(page.getByText(/Nenhum destaque/i)).toBeVisible();
 });
+
+test('tela de destaques permite remover com confirmação', async ({ page }) => {
+	await page.request.post('/api/highlights', {
+		data: { action: 'save', itemId: 'e2e-post', quote: 'trecho para remover', color: 'blue' }
+	});
+	await page.goto('/highlights');
+
+	const remove = page.getByRole('button', { name: /Remover destaque/ }).first();
+	await remove.click();
+	await expect(page.getByRole('dialog')).toBeVisible();
+	await page.getByRole('dialog').getByRole('button', { name: 'Remover' }).click();
+
+	await expect(page.getByText(/Nenhum destaque/i)).toBeVisible();
+});
