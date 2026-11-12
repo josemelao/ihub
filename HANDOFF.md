@@ -555,3 +555,13 @@ Executada em 11/11/2026 sobre `v0.18.0`, fechando os itens pendentes da Fase 1 d
 - **PLAT-03a — fontes locais**: Inter e Space Grotesk variáveis em `static/fonts` (`@font-face` em `app.css`), sem `fonts.googleapis.com`/`gstatic.com`; imagens externas com `referrerpolicy="no-referrer"`.
 - **SEC-02 — CSP enforced**: `withSecurityHeaders` aplica `Content-Security-Policy` (não Report-Only) em HTML e API (assets estáticos saem antes do hook do adapter-node; limitação no README); política sem origens do Google, com `frame-ancestors 'none'` e players permitidos. README ganhou a seção “Segurança e privacidade”.
 - `npm run verify` verde com **600 testes** em 85 arquivos.
+
+## 25. Fase 2 — produtividade (v0.20.0)
+
+Executada em 11/11/2026 sobre `v0.19.0`.
+
+- **ORG-18 — notas no hub**: `data/notes.json` (`{ version, notes[] }`) com Zod, escrita atômica, `.bak` e lock; API `/api/notes` (`save`/`delete`) e `GET`; a Nota rápida da home salva com debounce de 500 ms e mostra “Salvo no hub”; notas entram no export/import (replace e merge por id).
+- **ORG-12 — testar fonte**: `POST /api/test-source` busca com `safe-fetch`, faz parse, aplica include/exclude e devolve total, quantos passam nas regras e os 3 primeiros títulos; botão **Testar** no editor de fonte, sem gravar no cache.
+- **ORG-17 — Acesso rápido**: `settings.quickAccessOrder` e `quickAccessLimit` (3–12); a home respeita a ordem manual, permite arrastar e reordenar (com botões ↑/↓ para teclado), desafixar no modo de edição e fixar/desafixar direto nos cards da Biblioteca.
+- **ORG-06 — palette de comandos**: índice único com links, apps, categorias, fontes, posts, notas e comandos; operadores `>`, `tag:`, `source:`, `is:unread`, `is:saved`; comandos “Adicionar link/fonte/categoria”, “Abrir Gerenciar”, “Biblioteca”, “Feed”, “Salvos”, “Exportar” e “Atualizar feed” (executa o job com progresso).
+- `npm run verify` verde com **650 testes** em 91 arquivos.

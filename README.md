@@ -173,6 +173,15 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - `Build`, `build ` e `BUILD` contam como a mesma tag; a primeira grafia é preservada.
 - Detalhes: [docs/tags.md](docs/tags.md).
 
+### Busca, comandos e notas
+
+- `Ctrl+K` abre a palette: pesquisa links, apps, categorias, fontes, posts, notas e comandos.
+- Operadores: `>texto` só comandos, `tag:build`, `source:rss`, `is:unread` e `is:saved`.
+- Comandos prontos: adicionar link/fonte/categoria, abrir Gerenciar/Biblioteca/Salvos, exportar os dados e atualizar o feed (com progresso).
+- A **Nota rápida** da home fica em `data/notes.json` (não no navegador), entra no export/import e sobrevive a limpar o navegador.
+- O **Acesso rápido** respeita `settings.quickAccessOrder`; arraste para reordenar ou use ↑/↓ no modo _Reordenar_, e fixe/desafixe itens direto na Biblioteca.
+- No editor de fonte, **Testar** mostra quantos posts chegam, quantos passam nas regras e os primeiros títulos, sem gravar no cache.
+
 ### Feed (M3)
 
 - Busca automática a cada ~60 s apenas nas fontes cujo intervalo venceu, e também pelo botão **Atualizar agora** (home, categoria, feed e Gerenciar).

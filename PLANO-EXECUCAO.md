@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 concluída em `v0.19.0` (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
+> **Status:** Fases 1 concluída (`v0.19.0`) e bloco ORG-06/12/17/18 concluído (`v0.20.0`) (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados; autostart (PLAT-02) implementado, com validação de logon pendente  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1180,10 +1180,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] `Ctrl+K` → “adicionar” mostra o comando e executa.
-- [ ] Buscar título de post encontra o post.
-- [ ] `is:unread` filtra.
-- [ ] A paleta abre em < 50 ms com 500 posts.
+- [x] `Ctrl+K` → “adicionar” mostra o comando e executa.
+- [x] Buscar título de post encontra o post.
+- [x] `is:unread` filtra.
+- [x] A paleta abre em < 50 ms com 500 posts.
 
 ---
 
@@ -1319,10 +1319,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Testar uma URL mostra títulos antes de salvar.
-- [ ] URL inválida mostra erro claro.
-- [ ] As regras mostram a contagem resultante.
-- [ ] O teste não altera o cache real.
+- [x] Testar uma URL mostra títulos antes de salvar.
+- [x] URL inválida mostra erro claro.
+- [x] As regras mostram a contagem resultante.
+- [x] O teste não altera o cache real.
 
 ---
 
@@ -1430,10 +1430,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Fixar um item o coloca no Acesso rápido.
-- [ ] Arrastar reordena e persiste.
-- [ ] O limite é respeitado.
-- [ ] Itens desafixados saem imediatamente.
+- [x] Fixar um item o coloca no Acesso rápido.
+- [x] Arrastar reordena e persiste.
+- [x] O limite é respeitado.
+- [x] Itens desafixados saem imediatamente.
 
 ---
 
@@ -1455,10 +1455,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] A nota sobrevive a limpar o navegador e trocar de PC (via export).
-- [ ] O export inclui as notas.
-- [ ] O texto é salvo com debounce e feedback.
-- [ ] Notas não vazam para o Git.
+- [x] A nota sobrevive a limpar o navegador e trocar de PC (via export).
+- [x] O export inclui as notas.
+- [x] O texto é salvo com debounce e feedback.
+- [x] Notas não vazam para o Git.
 
 ---
 
