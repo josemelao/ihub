@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode e destaques.
-- **Versão atual:** `v0.29.0` · **736 testes** em 110 arquivos · **21 E2E**.
-- **Próximos blocos planejados:** exportar destaques em Markdown (READ-04), arquivo/offline do salvo (READ-03) e busca full-text (READ-05).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques e arquivo/offline do salvo.
+- **Versão atual:** `v0.30.0` · **780 testes** em 112 arquivos · **28 E2E**.
+- **Próximos blocos planejados:** exportar destaques em Markdown (READ-04) e busca full-text (READ-05).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -151,6 +151,7 @@ Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrit
 - `data/notes.json` — notas do hub e da nota rápida (não entra no Git).
 - `data/highlights.json` — destaques e notas por item salvo (não entra no Git).
 - `data/reading/<id>.json` — texto completo extraído pelo reader, já sanitizado (não entra no Git).
+- `data/archive.json` e `data/archive/<id>/` — cópia local da página inteira (HTML + imagens) dos posts salvos (não entra no Git).
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
 
@@ -235,6 +236,13 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Se a extração falhar, o reader mostra o motivo e mantém **Abrir original**. YouTube e Reddit não têm reader.
 - **Destaques**: selecione um trecho no reader e escolha uma cor ou **Anotar**. O trecho e a nota ficam em `data/highlights.json` e aparecem no fim do artigo e em **Destaques** (`/highlights`), com busca por trecho, nota ou título.
 - Limites: HTML sanitizado de até 2 MB, texto de até 200 mil caracteres (truncado, com tamanho original preservado), 300 artigos e trechos/notas de até 2.000 caracteres. Destaques entram no export/import; os artigos extraídos ficam só na máquina.
+
+### Arquivo/offline do salvo
+
+- Ao **salvar** um post de fonte RSS, o hub arquiva automaticamente a página inteira (HTML sanitizado + imagens) em `data/archive/<id>/`; o status aparece em **Favoritos/reader** e em **Gerenciar → Backups → Leitura arquivada**.
+- O arquivo abre em `/arquivo/<id>` como página de topo, com CSP restrita (`script-src 'none'`, imagens só locais) e CSS próprio. Funciona offline e depois de a URL original sair do ar.
+- “Arquivar agora” cria a cópia de um post já salvo; “Remover arquivo” apaga a cópia e mantém o post/snapshot. Dessalvar também apaga o arquivo. Importar/restaurar não apaga arquivos automaticamente.
+- SEO/privacidade: a cópia é local, sem scripts e sem requisições externas ao abrir. Limites: 5 MB de HTML por página, 3 MB sanitizado, 20 imagens de até 2 MB (20 MB no total), 200 arquivos e 500 MB no total; ao atingir o teto, novos arquivamentos falham com aviso para remover em Gerenciar.
 
 ### Exportar e importar
 

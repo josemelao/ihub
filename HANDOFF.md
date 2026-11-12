@@ -666,3 +666,16 @@ Executada em 12/11/2026 sobre `v0.28.0`, implementando READ-01 e READ-02.
 - **Qualidade**: 736 testes em 110 arquivos; 21 E2E (reader, persistência de destaque, offline sem requisição externa, fonte sem full text, `/highlights` e axe em `/ler/e2e-post` e `/highlights`); `npm run verify` verde.
 - **Adiado**: export Markdown dos destaques (READ-04), arquivo/offline do item salvo (READ-03), busca full-text (READ-05), renderização inline dos destaques. Backups manuais continuam cobrindo só hub/estado/cache (mesma limitação de `notes.json`).
 - **Docs**: `docs/leitura-highlights.md` (design) e plano em `C:\Users\Usuario\.opencode\plan\leitura-highlights.md`.
+
+## 35. Fase 3 — arquivo/offline do item salvo (v0.30.0)
+
+Executada em 12/11/2026 sobre `v0.29.0`, implementando READ-03.
+
+- **Arquivamento automático:** ao salvar (single ou `save-many`), o `/api/state` dispara um job em segundo plano; salvar nunca espera o download. Status `pending` → `ready`/`failed` em `data/archive.json`. Dessalvar apaga o arquivo; import/restauração não apagam (órfãos aparecem em Gerenciar como “não salvo”).
+- **Página inteira local:** busca com `safe-fetch` (5 MB/10 s), sanitiza o `<body>` completo (allowlist ampliada, sem script/iframe/style/on*), baixa até 20 imagens (2 MB cada, 20 MB total) para `data/archive/<id>/assets/` e grava `index.html` + `assets.json`. SVG e `data:` ficam de fora; `data-src` é promovido; `srcset` é descartado.
+- **Servição:** `/arquivo/[id]` entrega o documento como página de topo, com CSP restrita (`script-src 'none'`, `img-src 'self'`, CSS local). Assets em `/api/archive/[id]/assets/[name]` com content-type guardado e validação de path.
+- **UI:** reader mostra status/tamanho, “Abrir versão arquivada”, “Arquivar agora”, “Tentar de novo” e “Remover arquivo” (com confirmação); Gerenciar → Backups → “Leitura arquivada” mostra total, lista, retry e apagar. Polling de 2 s enquanto houver `pending`.
+- **Limites:** 3 MB de HTML sanitizado, 200 arquivos (`ready`+`pending`) e 500 MB; ao atingir, o job falha com mensagem para remover em Gerenciar. Nada é apagado sozinho.
+- **Testes:** 780 unitários em 112 arquivos e 28 E2E (arquivo sem rede externa, link no reader, Gerenciar, axe em `/arquivo/e2e-post`); `npm run verify` e Playwright verdes.
+- **Adiado:** export/backup dos arquivos (ficam locais), mídia pesada (vídeo/áudio), SVG e retry automático em loop.
+- **Docs:** `docs/archive.md` e plano em `C:\Users\Usuario\.opencode\plan\archive-reader.md`.

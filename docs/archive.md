@@ -2,7 +2,7 @@
 
 Data: 2026-11-12
 Base: `v0.29.0`
-Status: decisões de produto aprovadas; pronto para builder-check e plano
+Status: implementado na v0.30.0 em 12/11/2026; decisões do builder-check abaixo refletem o que foi entregue.
 
 ## Por quê
 

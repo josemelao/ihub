@@ -138,4 +138,52 @@ await writeFile(
 	'utf8'
 );
 
-console.log('[e2e] hub, estado, feed e artigo de leitura criados em .e2e-data');
+// Página inteira já arquivada (HTML + 1 imagem local).
+const archiveAsset = 'a1b2c3d4e5f60718.png';
+const archiveHtml = `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Post de teste E2E</title><link rel="stylesheet" href="/archive.css"></head>
+<body>
+<header class="archive-bar"><div class="archive-title"><strong>Post de teste E2E</strong><span>Arquivado em 12/11/2026</span></div><nav><a href="https://example.com/post-e2e" target="_blank" rel="noopener noreferrer">Abrir original</a><a href="/ler/e2e-post">Voltar ao hub</a></nav></header>
+<main class="archive-body"><h2>Seção arquivada</h2><p>Conteúdo da página inteira guardado localmente.</p><img src="/api/archive/e2e-post/assets/${archiveAsset}" alt="imagem de teste"></main>
+</body></html>
+`;
+
+await mkdir(join(dataDir, 'archive', 'e2e-post', 'assets'), { recursive: true });
+await writeFile(join(dataDir, 'archive', 'e2e-post', 'index.html'), archiveHtml, 'utf8');
+await writeFile(
+	join(dataDir, 'archive', 'e2e-post', 'assets', archiveAsset),
+	Buffer.from(
+		'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+		'base64'
+	)
+);
+await writeFile(
+	join(dataDir, 'archive', 'e2e-post', 'assets.json'),
+	`${JSON.stringify({ version: 1, assets: { [archiveAsset]: 'image/png' } }, null, 2)}\n`,
+	'utf8'
+);
+await writeFile(
+	join(dataDir, 'archive.json'),
+	`${JSON.stringify(
+		{
+			version: 1,
+			entries: {
+				'e2e-post': {
+					id: 'e2e-post',
+					status: 'ready',
+					title: 'Post de teste E2E',
+					url: 'https://example.com/post-e2e',
+					bytes: 500,
+					assets: 1,
+					createdAt: now,
+					updatedAt: now
+				}
+			}
+		},
+		null,
+		2
+	)}\n`,
+	'utf8'
+);
+
+console.log('[e2e] hub, estado, feed, artigo e arquivo criados em .e2e-data');
