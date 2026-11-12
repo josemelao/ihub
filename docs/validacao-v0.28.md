@@ -3,17 +3,17 @@
 Base: `master` em `v0.28.0` (691 testes, 99 arquivos; 15 testes E2E; CI verde).
 Servidor local: `http://127.0.0.1:5757` (`npm start`).
 
-> Marque os itens ao validar. O que já está coberto por teste automatizado aparece indicado.
+> **Validação concluída.** Automatizada em 12/11/2026 (este documento) e manual pelo dono em 12/11/2026. O que já é coberto por teste automatizado aparece indicado.
 
 ## Reddit e feed
 
-- [ ] `/feed` → **Atualizar agora**: r/Darktide verde, com posts.
+- [x] `/feed` → **Atualizar agora**: r/Darktide verde, com posts.
   - Automatizado: `sources.test.ts` (URL canônica e reescrita de `/new.rss`), `safe-fetch-pin.test.ts` (UA e mensagem 429).
   - Verificado ao vivo em 12/11/2026: `count: 25`, `error: null`.
-  - ⚠️ 12/11/2026: o refresh grava os 25 posts, mas a fonte tem `include: ["patch"]` e **nenhum** post contém "patch" — o `/feed` não exibe nenhum. Não é regressão do refresh; é o filtro da fonte. Limpar o termo em Gerenciar → Fontes → r/Darktide para validar visualmente.
-- [ ] Gerenciar → Fontes: status de r/Darktide recente, sem erro.
-- [ ] Editar fonte Reddit com URL `.../new.rss` colada → salvar → atualizar (deve normalizar).
-- [ ] Forçar limite (várias atualizações) → mensagem “limitou temporariamente as requisições (429)”.
+  - Causa de “atualizado mas vazio” investigada em 12/11/2026: o refresh funcionava, mas a fonte tinha `include: ["patch"]` e nenhum dos 25 posts continha "patch" — o `/feed` descartava todos na view. Filtro removido pelo dono; os cards do r/Darktide voltaram a renderizar (3 títulos conferidos no HTML SSR).
+- [x] Gerenciar → Fontes: status de r/Darktide recente, sem erro.
+- [x] Editar fonte Reddit com URL `.../new.rss` colada → salvar → atualizar (deve normalizar).
+- [x] Forçar limite (várias atualizações) → mensagem “limitou temporariamente as requisições (429)”.
 
 ## Primeiro uso
 
@@ -29,19 +29,21 @@ Servidor local: `http://127.0.0.1:5757` (`npm start`).
 
 ## Mobile e preferências
 
-- [ ] 375 px: ☰ abre o drawer; navegar fecha; Esc e backdrop também fecham.
-- [ ] Gerenciar → Aparência: densidade compacta, fonte 15, contraste alto → recarregar → persiste.
-- [ ] Título `(N) Meu Hub` + badge no favicon; some ao marcar tudo como lido.
-- [ ] Desktop 1440 sem regressão visual.
+- [x] 375 px: ☰ abre o drawer; navegar fecha; Esc e backdrop também fecham.
+- [x] Gerenciar → Aparência: densidade compacta, fonte 15, contraste alto → recarregar → persiste.
+- [x] Título `(N) Meu Hub` + badge no favicon; some ao marcar tudo como lido.
+- [x] Desktop 1440 sem regressão visual.
   - Automatizado: E2E `mobile.spec.ts` e `title.spec.ts`; axe em 4 telas.
+  - Manual: validado pelo dono em 12/11/2026.
 
 ## Autostart (Windows)
 
-- [ ] `powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1` cria “Meu Hub” em `shell:startup`.
-- [ ] Logoff/logon: `127.0.0.1:5757` responde sem abrir terminal.
-- [ ] Fechar o terminal não derruba o servidor.
-- [ ] `scripts\uninstall-autostart.ps1` remove o atalho.
+- [x] `powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1` cria “Meu Hub” em `shell:startup`.
+- [x] Logoff/logon: `127.0.0.1:5757` responde sem abrir terminal.
+- [x] Fechar o terminal não derruba o servidor.
+- [x] `scripts\uninstall-autostart.ps1` remove o atalho.
   - Automatizado: `src/lib/autostart.test.ts` (atalho, VBS, log de falha, versão do Node).
+  - Manual: validado pelo dono em 12/11/2026; ao fim do fluxo o atalho não existe mais em `shell:startup` (desinstalado).
 
 ## Dados e segurança
 
