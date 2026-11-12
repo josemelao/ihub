@@ -156,7 +156,7 @@
 			<textarea
 				id="nota"
 				class="note-area"
-				rows="3"
+				rows="6"
 				maxlength={4000}
 				placeholder="Anote algo e siga o dia..."
 				bind:value={note}

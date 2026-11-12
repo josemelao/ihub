@@ -2450,6 +2450,7 @@ h3 {
 }
 
 .home-aside .note-area {
+	min-height: 150px;
 	padding: 8px 10px;
 }
 
@@ -2486,6 +2487,46 @@ a.source-row:hover .soft {
 	color: var(--tx);
 	padding: 10px 12px;
 	resize: none;
+	scrollbar-width: thin;
+	scrollbar-color: var(--line-strong) transparent;
+}
+
+.note-area:focus-visible {
+	outline: 1px solid var(--accent);
+	outline-offset: 1px;
+}
+
+.note-area::-webkit-scrollbar,
+.home-aside::-webkit-scrollbar {
+	width: 8px;
+}
+
+.note-area::-webkit-scrollbar-track,
+.home-aside::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.note-area::-webkit-scrollbar-thumb,
+.home-aside::-webkit-scrollbar-thumb {
+	background: var(--line-strong);
+	border-radius: 99px;
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+
+.note-area::-webkit-scrollbar-thumb:hover,
+.home-aside::-webkit-scrollbar-thumb:hover {
+	background-color: var(--mut);
+}
+
+.note-area::-webkit-scrollbar-button,
+.home-aside::-webkit-scrollbar-button {
+	display: none;
+}
+
+.home-aside {
+	scrollbar-width: thin;
+	scrollbar-color: var(--line-strong) transparent;
 }
 
 /* Category page */
