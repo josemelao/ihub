@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`) e leva Reddit/fechamentos (`v0.28.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
+> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`), leva Reddit/fechamentos (`v0.28.0`) e READ-01/READ-02 (`v0.29.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1510,11 +1510,11 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Salvar um post e abrir o reader mostra o texto principal.
-- [ ] Extração falha → fallback claro para o site.
-- [ ] HTML perigoso é sanitizado (teste com `<script>`).
-- [ ] Cache local evita refetch.
-- [ ] Funciona offline para itens já extraídos.
+- [x] Salvar um post e abrir o reader mostra o texto principal.
+- [x] Extração falha → fallback claro para o site.
+- [x] HTML perigoso é sanitizado (teste com `<script>`).
+- [x] Cache local evita refetch.
+- [x] Funciona offline para itens já extraídos.
 
 ---
 
@@ -1536,10 +1536,10 @@ Diferenciação / depois        → AVALIAR
 
 **Aceite:**
 
-- [ ] Selecionar e destacar persiste após reload.
-- [ ] Nota é editável e pesquisável.
-- [ ] Cores são acessíveis (não dependem só de cor).
-- [ ] Exportar gera Markdown legível.
+- [x] Selecionar e destacar persiste após reload.
+- [x] Nota é editável e pesquisável.
+- [x] Cores são acessíveis (não dependem só de cor).
+- [ ] Exportar gera Markdown legível (adiado para READ-04; destaques entram no export JSON do hub).
 
 ---
 

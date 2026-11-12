@@ -20,7 +20,21 @@ fixture.feedSources = [
 		target: 'https://example.invalid/feed.xml',
 		categoryId,
 		intervalMinutes: 1440,
+		fullText: true,
 		enabled: true,
+		include: [],
+		exclude: [],
+		matchMode: 'any'
+	},
+	{
+		id: 'e2e-fonte-off',
+		type: 'rss',
+		name: 'Fonte E2E sem reader',
+		target: 'https://example.invalid/feed-off.xml',
+		categoryId,
+		intervalMinutes: 1440,
+		fullText: false,
+		enabled: false,
 		include: [],
 		exclude: [],
 		matchMode: 'any'
@@ -41,10 +55,20 @@ const cache = {
 			url: 'https://example.com/post-e2e',
 			publishedAt: now,
 			thumbnail: null
+		},
+		{
+			id: 'e2e-post-off',
+			sourceId: 'e2e-fonte-off',
+			title: 'Post sem texto completo',
+			summary: 'Este post está em uma fonte com o reader desligado.',
+			url: 'https://example.com/post-e2e-off',
+			publishedAt: now,
+			thumbnail: null
 		}
 	],
 	sources: {
-		'e2e-fonte': { lastFetchedAt: now, error: null, count: 1 }
+		'e2e-fonte': { lastFetchedAt: now, error: null, count: 1 },
+		'e2e-fonte-off': { lastFetchedAt: now, error: null, count: 1 }
 	}
 };
 
@@ -55,4 +79,40 @@ await writeFile(
 	'utf8'
 );
 
-console.log('[e2e] hub, estado e feed de teste criados em .e2e-data');
+// Artigo já extraído para o reader do E2E (sem imagens externas).
+const readerHtml = [
+	'<h2>Seção de teste</h2>',
+	'<p>Este é o primeiro parágrafo do artigo de teste do reader.</p>',
+	'<p>O segundo parágrafo existe para dar corpo ao texto e permitir selecionar uma frase.</p>',
+	'<blockquote>Uma citação para conferir a tipografia de leitura.</blockquote>'
+].join('');
+const readerText =
+	'Seção de teste Este é o primeiro parágrafo do artigo de teste do reader. ' +
+	'O segundo parágrafo existe para dar corpo ao texto e permitir selecionar uma frase. ' +
+	'Uma citação para conferir a tipografia de leitura.';
+
+await mkdir(join(dataDir, 'reading'), { recursive: true });
+await writeFile(
+	join(dataDir, 'reading', 'e2e-post.json'),
+	`${JSON.stringify(
+		{
+			id: 'e2e-post',
+			url: 'https://example.com/post-e2e',
+			finalUrl: 'https://example.com/post-e2e',
+			title: 'Post de teste E2E',
+			byline: 'Equipe E2E',
+			siteName: 'Exemplo',
+			excerpt: 'Resumo do post de teste.',
+			publishedAt: now,
+			fetchedAt: now,
+			length: readerText.length,
+			html: readerHtml,
+			text: readerText
+		},
+		null,
+		2
+	)}\n`,
+	'utf8'
+);
+
+console.log('[e2e] hub, estado, feed e artigo de leitura criados em .e2e-data');

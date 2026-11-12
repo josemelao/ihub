@@ -1,7 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures';
 
-const pages = ['/', '/feed', '/biblioteca', '/gerenciar'];
+const pages = ['/', '/feed', '/biblioteca', '/gerenciar', '/ler/e2e-post', '/highlights'];
 
 async function setContrast(page: import('@playwright/test').Page, high: boolean): Promise<void> {
 	const response = await page.request.post('/api/hub', {

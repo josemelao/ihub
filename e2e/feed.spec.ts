@@ -26,7 +26,7 @@ test('marca tudo como lido com confirmação e desfaz', async ({ page }) => {
 		.getByRole('button', { name: 'Marcar como lido', exact: true })
 		.click();
 
-	await expect(page.getByText(/post marcado como lidos/i)).toBeVisible({ timeout: 10_000 });
+	await expect(page.getByText(/posts? marcados? como lidos/i)).toBeVisible({ timeout: 10_000 });
 
 	await page.getByRole('status').getByRole('button', { name: 'Desfazer' }).click();
 	await expect(page.getByRole('button', { name: 'Marcar tudo como lido' })).toBeVisible();

@@ -2,7 +2,19 @@
 
 Data: 2026-11-12
 Base: `v0.28.0` + commits de fechamento da validação
-Status: decisões aprovadas em conversa; pronto para virar plano de implementação
+Status: implementado na v0.29.0 em 12/11/2026; decisões abaixo refletem o que foi entregue.
+
+## Desvios na implementação
+
+- **Persistência:** em vez de um `reading.json` único, o texto fica em `data/reading/<itemId>.json`
+  (um por artigo) e os destaques em `data/highlights.json`. Motivo: o HTML extraído pode ter
+  centenas de KB por artigo; um arquivo único faria cada leitura carregar o acervo inteiro.
+- **Destaques inline:** a v1 mostra os destaques em lista (fim do artigo e `/highlights`); o
+  campo `occurrence` já é gravado para permitir renderização inline numa próxima versão.
+- **Export Markdown:** o aceite “Exportar gera Markdown legível” foi adiado para READ-04; os
+  destaques entram no export/import JSON do hub.
+- **Backups manuais:** continuam cobrindo só hub/estado/cache, como já acontecia com
+  `notes.json`; artigos e destaques entram apenas no export/import.
 
 ## Por quê
 

@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows e tags como filtro.
-- **Versão atual:** `v0.17.0` · **440 testes** em 58 arquivos.
-- **Próximos blocos planejados:** leitura (reader/highlights).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode e destaques.
+- **Versão atual:** `v0.29.0` · **736 testes** em 110 arquivos · **21 E2E**.
+- **Próximos blocos planejados:** exportar destaques em Markdown (READ-04), arquivo/offline do salvo (READ-03) e busca full-text (READ-05).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -148,6 +148,9 @@ Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrit
 - `data/hub.json` — seus dados reais: categorias, grupos, itens (links/apps), fontes do feed e filtros salvos. **Não entra no Git.**
 - `data/estado.json` — lidos/salvos, incluindo um snapshot dos posts salvos (criado quando necessário; não entra no Git).
 - `data/feed-cache.json` — posts já buscados e status por fonte (regenerável; não entra no Git).
+- `data/notes.json` — notas do hub e da nota rápida (não entra no Git).
+- `data/highlights.json` — destaques e notas por item salvo (não entra no Git).
+- `data/reading/<id>.json` — texto completo extraído pelo reader, já sanitizado (não entra no Git).
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
 
@@ -224,6 +227,14 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Cache: até 30 posts por fonte, retenção de 30 dias, deduplicação por URL/guid. Requisições com timeout de 10 s, User-Agent identificado e limite de 5 MB por resposta.
 
 > Observações: o feed RSS do Reddit pode sofrer rate limit (429) — o erro fica visível e a fonte tenta de novo no próximo intervalo. Para YouTube, o hub aceita `@handle`, URL do canal ou ID `UC...` e resolve o ID automaticamente.
+
+### Reader e destaques
+
+- Em **Gerenciar → Fontes**, fontes RSS têm **Buscar texto completo (reader)** (padrão desligado). O botão **Ler aqui** no card abre `/ler/<id>`.
+- O reader busca a página com as mesmas proteções do feed (SSRF, timeout e limite de 5 MB), extrai o conteúdo principal com Readability, sanitiza o HTML e guarda em `data/reading/<id>.json`. A próxima abertura é servida do cache, inclusive offline.
+- Se a extração falhar, o reader mostra o motivo e mantém **Abrir original**. YouTube e Reddit não têm reader.
+- **Destaques**: selecione um trecho no reader e escolha uma cor ou **Anotar**. O trecho e a nota ficam em `data/highlights.json` e aparecem no fim do artigo e em **Destaques** (`/highlights`), com busca por trecho, nota ou título.
+- Limites: HTML sanitizado de até 2 MB, texto de até 200 mil caracteres (truncado, com tamanho original preservado), 300 artigos e trechos/notas de até 2.000 caracteres. Destaques entram no export/import; os artigos extraídos ficam só na máquina.
 
 ### Exportar e importar
 

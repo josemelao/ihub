@@ -32,6 +32,8 @@ data/*.bak.*
 data/estado.json
 data/feed-cache.json
 data/notes.json
+data/highlights.json
+data/reading/
 data/hub.json
 data/autostart.log
 data/*.tmp-*

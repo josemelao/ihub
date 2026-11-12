@@ -651,3 +651,18 @@ Executada sobre `v0.28.0` (`125e32e`), fechando o gate de release.
 - **Backup**: `data/backups/validacao-v0.28-20261112-112508` (ignorado pelo Git).
 - **Commits**: `4cd46e8` (test), `5aaa300` (docs) e o commit de fechamento deste handoff.
 - **Próximo bloco**: Fase 3 — READ-01 (reader mode + texto completo) e READ-02 (highlights, notas e cores por salvo).
+  - Implementado na v0.29.0 (seção 34).
+
+## 34. Fase 3 — reader mode e destaques (v0.29.0)
+
+Executada em 12/11/2026 sobre `v0.28.0`, implementando READ-01 e READ-02.
+
+- **Extração e sanitização**: `@mozilla/readability` sobre `linkedom`, `sanitize-html` com allowlist (links absolutos `http(s)`, `rel="noopener noreferrer"`, imagens com `referrerpolicy="no-referrer"`; `script`/`on*`/`style` removidos). HTML sanitizado ≤ 2 MB; texto ≤ 200k chars (truncado, com `length` original).
+- **Storage**: `data/reading/<itemId>.json` por artigo (fora do layout; poda em 300 por `fetchedAt`) e `data/highlights.json` (leve, carregado no layout). Ambos versionados, ignorados pelo Git e com escrita atômica; `highlights.json` tem `.bak` e entra no export/import. **Desvio do design**: em vez de um `reading.json` único, os artigos ficam em arquivos separados porque 100–500 KB de HTML por artigo fariam cada leitura carregar o acervo inteiro.
+- **Toggle por fonte**: `feedSources[].fullText` (padrão `false`), editável em Gerenciar → Fontes. O toggle controla novas extrações; artigo já cacheado continua legível. “Ativar texto completo” grava o toggle e extrai na hora.
+- **Reader** em `/ler/[id]`: SSR entrega o artigo cacheado (offline); sem cache, o cliente chama `POST /api/reader`. Fallback com “Abrir original”; YouTube/Reddit não têm reader. Resolução do post: feed → snapshot salvo → artigo → 404.
+- **Destaques**: seleção de texto abre a toolbar com quatro cores (rótulo textual, não só cor) e “Anotar”. Lista no fim do artigo e em `/highlights`, com busca e link para o original. `POST /api/highlights` cobre save/update/delete; destaque não exige salvar o post. v1 não renderiza inline; `occurrence` fica guardado para permitir isso depois.
+- **APIs novas**: `POST /api/reader`, `POST /api/highlights`.
+- **Qualidade**: 736 testes em 110 arquivos; 21 E2E (reader, persistência de destaque, offline sem requisição externa, fonte sem full text, `/highlights` e axe em `/ler/e2e-post` e `/highlights`); `npm run verify` verde.
+- **Adiado**: export Markdown dos destaques (READ-04), arquivo/offline do item salvo (READ-03), busca full-text (READ-05), renderização inline dos destaques. Backups manuais continuam cobrindo só hub/estado/cache (mesma limitação de `notes.json`).
+- **Docs**: `docs/leitura-highlights.md` (design) e plano em `C:\Users\Usuario\.opencode\plan\leitura-highlights.md`.
