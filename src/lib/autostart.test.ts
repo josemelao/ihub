@@ -82,7 +82,10 @@ describe.skipIf(!isWindows)('autostart no Windows', () => {
 		);
 		expect(removed).toContain('Atalho removido');
 		expect(existsSync(shortcut)).toBe(false);
-	}, 20_000);
+		// Três processos PowerShell ("cold start" + COM WScript.Shell) levam ~10s
+		// isolados e passam de 20s com a suíte rodando em paralelo. A folga evita
+		// flakiness sem reduzir a cobertura do teste.
+	}, 60_000);
 
 	it('logs a clear failure when the build is missing', () => {
 		const cwd = mkdtempSync(join(tmpdir(), 'ihub-nobuild-'));
