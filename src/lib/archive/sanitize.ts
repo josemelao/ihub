@@ -75,7 +75,7 @@ function absoluteHttpUrl(value: string | undefined, baseUrl: string): string | n
 export function sanitizeArchiveBody(
 	bodyHtml: string,
 	baseUrl: string
-): { html: string; imageUrls: string[] } {
+): { html: string; imageUrls: string[]; textLength: number } {
 	const imageUrls: string[] = [];
 	const seen = new Set<string>();
 
@@ -137,7 +137,12 @@ export function sanitizeArchiveBody(
 		}
 	});
 
-	return { html, imageUrls };
+	return { html, imageUrls, textLength: textLengthOf(html) };
+}
+
+function textLengthOf(html: string): number {
+	const { document } = parseHTML(`<html><body>${html}</body></html>`);
+	return (document.body?.textContent ?? '').replace(/\s+/g, ' ').trim().length;
 }
 
 export function archiveAssetPath(itemId: string, name: string): string {
