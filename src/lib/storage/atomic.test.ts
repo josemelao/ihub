@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+﻿import { describe, expect, it, vi } from 'vitest';
 import { writeFileAtomically, type AtomicFileDeps } from './atomic';
 
 function errno(code: string): NodeJS.ErrnoException {
@@ -18,6 +18,7 @@ function setup(options: { renameErrors?: string[]; copyError?: string } = {}) {
 
 	const deps: AtomicFileDeps = {
 		async writeFile(path, data) {
+			if (typeof data !== 'string') throw new Error('text only');
 			tempPaths.push(path);
 			files.set(path, data);
 		},
@@ -57,7 +58,7 @@ function setup(options: { renameErrors?: string[]; copyError?: string } = {}) {
 }
 
 describe('writeFileAtomically', () => {
-	it('grava via temporário e renomeia', async () => {
+	it('grava via temporÃ¡rio e renomeia', async () => {
 		const { deps, files, tempPaths, renames } = setup();
 		files.set('dados/hub.json', '{"antigo":true}');
 
@@ -69,7 +70,7 @@ describe('writeFileAtomically', () => {
 		expect(files.has('dados/hub.json.tmp-sufixo-1')).toBe(false);
 	});
 
-	it('faz backup quando o conteúdo atual é válido', async () => {
+	it('faz backup quando o conteÃºdo atual Ã© vÃ¡lido', async () => {
 		const { deps, files } = setup();
 		files.set('dados/hub.json', '{"antigo":true}');
 
@@ -81,7 +82,7 @@ describe('writeFileAtomically', () => {
 		expect(files.get('dados/hub.json.bak')).toBe('{"antigo":true}');
 	});
 
-	it('não faz backup quando o conteúdo atual é inválido', async () => {
+	it('nÃ£o faz backup quando o conteÃºdo atual Ã© invÃ¡lido', async () => {
 		const { deps, files } = setup();
 		files.set('dados/hub.json', '{quebrado');
 
@@ -122,7 +123,7 @@ describe('writeFileAtomically', () => {
 		expect(files.has('dados/hub.json.tmp-sufixo-1')).toBe(false);
 	});
 
-	it('remove o temporário e falha com mensagem clara', async () => {
+	it('remove o temporÃ¡rio e falha com mensagem clara', async () => {
 		const { deps, files } = setup({
 			renameErrors: ['EPERM', 'EPERM', 'EPERM', 'EPERM', 'EPERM', 'EPERM'],
 			copyError: 'EACCES'
@@ -134,7 +135,7 @@ describe('writeFileAtomically', () => {
 		expect([...files.keys()].some((path) => path.includes('.tmp-'))).toBe(false);
 	});
 
-	it('não tenta fallback em erro não transitório', async () => {
+	it('nÃ£o tenta fallback em erro nÃ£o transitÃ³rio', async () => {
 		const { deps, files, sleeps } = setup({ renameErrors: ['EIO'] });
 
 		await expect(writeFileAtomically('dados/hub.json', '{}', deps)).rejects.toThrow(/EIO/);
@@ -154,7 +155,7 @@ describe('writeFileAtomically', () => {
 		expect(files.has('dados/hub.json.bak')).toBe(false);
 	});
 
-	it('propaga erro de leitura que não seja ENOENT', async () => {
+	it('propaga erro de leitura que nÃ£o seja ENOENT', async () => {
 		const { deps } = setup();
 		const readFile = vi.spyOn(deps, 'readFile').mockRejectedValue(errno('EACCES'));
 
@@ -168,8 +169,8 @@ describe('writeFileAtomically', () => {
 	});
 });
 
-describe('rotação de backups', () => {
-	it('desloca as gerações antes de gravar o novo backup', async () => {
+describe('rotaÃ§Ã£o de backups', () => {
+	it('desloca as geraÃ§Ãµes antes de gravar o novo backup', async () => {
 		const { deps, files } = setup();
 		files.set('dados/hub.json', '{"v":1}');
 		files.set('dados/hub.json.bak', '{"v":0}');
@@ -185,7 +186,7 @@ describe('rotação de backups', () => {
 		expect(files.get('dados/hub.json.bak.2')).toBe('{"v":-1}');
 	});
 
-	it('mantém no máximo 7 gerações', async () => {
+	it('mantÃ©m no mÃ¡ximo 7 geraÃ§Ãµes', async () => {
 		const { deps, files } = setup();
 
 		for (let index = 0; index < 8; index += 1) {
@@ -201,7 +202,7 @@ describe('rotação de backups', () => {
 		expect(files.has('dados/hub.json.bak.7')).toBe(false);
 	});
 
-	it('ignora gerações ausentes na rotação', async () => {
+	it('ignora geraÃ§Ãµes ausentes na rotaÃ§Ã£o', async () => {
 		const { deps, files } = setup();
 		files.set('dados/hub.json', '{"v":1}');
 
@@ -214,7 +215,7 @@ describe('rotação de backups', () => {
 		expect(files.has('dados/hub.json.bak.1')).toBe(false);
 	});
 
-	it('grava mesmo quando o backup está bloqueado', async () => {
+	it('grava mesmo quando o backup estÃ¡ bloqueado', async () => {
 		const { deps, files } = setup({ copyError: 'EPERM' });
 		files.set('dados/hub.json', '{"antigo":true}');
 
@@ -228,7 +229,7 @@ describe('rotação de backups', () => {
 		expect(files.has('dados/hub.json.bak')).toBe(false);
 	});
 
-	it('preserva o backup mais novo quando a rotação falha', async () => {
+	it('preserva o backup mais novo quando a rotaÃ§Ã£o falha', async () => {
 		const { deps, files } = setup({ copyError: 'EPERM' });
 		files.set('dados/hub.json', '{"atual":true}');
 		files.set('dados/hub.json.bak', '{"mais-novo":true}');

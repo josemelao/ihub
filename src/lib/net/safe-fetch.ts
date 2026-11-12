@@ -179,6 +179,14 @@ export function isAllowedContentType(contentType: string | null): boolean {
 	);
 }
 
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'];
+
+export function isAllowedImageType(contentType: string | null): boolean {
+	if (!contentType) return false;
+	const type = contentType.split(';')[0].trim().toLowerCase();
+	return IMAGE_TYPES.includes(type);
+}
+
 export async function readTextLimited(response: Response, maxBytes: number): Promise<string> {
 	if (!response.body) return '';
 
@@ -222,7 +230,7 @@ export interface FetchTextOptions {
 interface RawResponse {
 	status: number;
 	headers: IncomingHttpHeaders;
-	body: string;
+	body: Buffer;
 }
 
 function pinnedLookup(pinned: PinnedAddress) {
@@ -286,7 +294,7 @@ function requestPinned(
 						resolve({
 							status: response.statusCode ?? 0,
 							headers: response.headers,
-							body: Buffer.concat(chunks).toString('utf8')
+							body: Buffer.concat(chunks)
 						})
 					)
 				);
@@ -341,7 +349,7 @@ function fetchTextPinned(
 				throw new Error(`Tipo de conteúdo não suportado: ${contentType}`);
 			}
 
-			return { text: response.body, finalUrl: current.toString() };
+			return { text: response.body.toString('utf8'), finalUrl: current.toString() };
 		}
 
 		throw new Error('Muitos redirecionamentos.');
@@ -400,4 +408,127 @@ export async function fetchPublicText(
 	// a conexão usa o IP já validado.
 	if (options.fetcher) return fetchTextWithFetcher(target, limits, options.fetcher);
 	return fetchTextPinned(target, limits);
+}
+
+async function readBytesLimited(response: Response, maxBytes: number): Promise<Uint8Array> {
+	if (!response.body) return new Uint8Array();
+
+	const reader = response.body.getReader();
+	const collected = new Uint8Array(maxBytes);
+	let size = 0;
+
+	try {
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			if (!value) continue;
+			if (size + value.byteLength > maxBytes) {
+				await reader.cancel().catch(() => undefined);
+				throw new Error('Resposta muito grande.');
+			}
+			collected.set(value, size);
+			size += value.byteLength;
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	return collected.slice(0, size);
+}
+
+export interface FetchBytesOptions {
+	maxBytes?: number;
+	timeoutMs?: number;
+	fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
+}
+
+export interface FetchedBytes {
+	bytes: Uint8Array;
+	contentType: string | null;
+	finalUrl: string;
+}
+
+async function fetchBytesWithFetcher(
+	target: string,
+	options: { timeoutMs: number; maxBytes: number },
+	fetcher: (input: string, init?: RequestInit) => Promise<Response>
+): Promise<FetchedBytes> {
+	let current = new URL(target);
+
+	for (let redirects = 0; redirects < 4; redirects += 1) {
+		await assertSafeUrl(current);
+
+		const response = await fetcher(current.toString(), {
+			redirect: 'manual',
+			headers: { 'user-agent': USER_AGENT, accept: 'image/*' },
+			signal: AbortSignal.timeout(options.timeoutMs)
+		});
+
+		if (response.status >= 300 && response.status < 400) {
+			const location = response.headers.get('location');
+			if (!location) throw new Error('Redirecionamento sem destino.');
+			current = new URL(location, current);
+			continue;
+		}
+
+		if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+		const contentType = response.headers.get('content-type');
+		if (!isAllowedImageType(contentType)) {
+			throw new Error(`Tipo de conteúdo não suportado: ${contentType}`);
+		}
+
+		const bytes = await readBytesLimited(response, options.maxBytes);
+		return { bytes, contentType, finalUrl: current.toString() };
+	}
+
+	throw new Error('Muitos redirecionamentos.');
+}
+
+async function fetchBytesPinned(
+	target: string,
+	options: { timeoutMs: number; maxBytes: number }
+): Promise<FetchedBytes> {
+	let current = new URL(target);
+
+	for (let redirects = 0; redirects < 4; redirects += 1) {
+		const pinned = await resolvePublicAddress(current);
+		const response = await requestPinned(current, pinned, options);
+
+		if (response.status >= 300 && response.status < 400) {
+			const location = headerOf(response.headers, 'location');
+			if (!location) throw new Error('Redirecionamento sem destino.');
+			current = new URL(location, current);
+			continue;
+		}
+
+		if (response.status < 200 || response.status >= 300) {
+			throw httpError(response.status);
+		}
+
+		const contentType = headerOf(response.headers, 'content-type');
+		if (!isAllowedImageType(contentType)) {
+			throw new Error(`Tipo de conteúdo não suportado: ${contentType}`);
+		}
+
+		return {
+			bytes: new Uint8Array(response.body),
+			contentType,
+			finalUrl: current.toString()
+		};
+	}
+
+	throw new Error('Muitos redirecionamentos.');
+}
+
+export async function fetchPublicBytes(
+	target: string,
+	options: FetchBytesOptions = {}
+): Promise<FetchedBytes> {
+	const maxBytes = options.maxBytes ?? 2_000_000;
+	const timeoutMs = options.timeoutMs ?? 10_000;
+	const limits = { maxBytes, timeoutMs };
+
+	if (options.fetcher) return fetchBytesWithFetcher(target, limits, options.fetcher);
+	return fetchBytesPinned(target, limits);
 }

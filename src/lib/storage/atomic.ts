@@ -1,5 +1,5 @@
 export interface AtomicFileDeps {
-	writeFile(path: string, data: string): Promise<void>;
+	writeFile(path: string, data: string | Uint8Array): Promise<void>;
 	readFile(path: string): Promise<string>;
 	copyFile(from: string, to: string): Promise<void>;
 	rename(from: string, to: string): Promise<void>;
@@ -99,6 +99,25 @@ export async function writeFileAtomically(
 	contents: string,
 	deps: AtomicFileDeps,
 	options: AtomicWriteOptions = {}
+): Promise<void> {
+	return writeAtomically(finalPath, contents, deps, options);
+}
+
+/** Mesma escrita atômica, para conteúdo binário (assets do arquivo). */
+export async function writeBytesAtomically(
+	finalPath: string,
+	contents: Uint8Array,
+	deps: AtomicFileDeps,
+	options: AtomicWriteOptions = {}
+): Promise<void> {
+	return writeAtomically(finalPath, contents, deps, options);
+}
+
+async function writeAtomically(
+	finalPath: string,
+	contents: string | Uint8Array,
+	deps: AtomicFileDeps,
+	options: AtomicWriteOptions
 ): Promise<void> {
 	// O rename é atômico; o fallback copyFile do Windows sobrescreve in-place e
 	// não protege contra queda de energia no meio da cópia — o .bak cobre isso.
