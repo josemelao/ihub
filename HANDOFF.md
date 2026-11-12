@@ -564,4 +564,4 @@ Executada em 11/11/2026 sobre `v0.19.0`.
 - **ORG-12 — testar fonte**: `POST /api/test-source` busca com `safe-fetch`, faz parse, aplica include/exclude e devolve total, quantos passam nas regras e os 3 primeiros títulos; botão **Testar** no editor de fonte, sem gravar no cache.
 - **ORG-17 — Acesso rápido**: `settings.quickAccessOrder` e `quickAccessLimit` (3–12); a home respeita a ordem manual, permite arrastar e reordenar (com botões ↑/↓ para teclado), desafixar no modo de edição e fixar/desafixar direto nos cards da Biblioteca.
 - **ORG-06 — palette de comandos**: índice único com links, apps, categorias, fontes, posts, notas e comandos; operadores `>`, `tag:`, `source:`, `is:unread`, `is:saved`; comandos “Adicionar link/fonte/categoria”, “Abrir Gerenciar”, “Biblioteca”, “Feed”, “Salvos”, “Exportar” e “Atualizar feed” (executa o job com progresso).
-- `npm run verify` verde com **650 testes** em 91 arquivos.
+- `npm run verify` verde com **657 testes** em 92 arquivos.
