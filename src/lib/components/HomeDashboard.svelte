@@ -50,6 +50,10 @@
 		void updateHub({ action: 'update-item', id, patch: { pinned } });
 	}
 
+	function setQuickLimit(limit: number): void {
+		void updateHub({ action: 'update-settings', settings: { quickAccessLimit: limit } });
+	}
+
 	async function refreshNow(): Promise<void> {
 		busy = true;
 		message = '';
@@ -82,6 +86,7 @@
 			limit={hub.settings.quickAccessLimit ?? 6}
 			onreorder={reorderQuickAccess}
 			onpin={togglePin}
+			onlimit={setQuickLimit}
 		/>
 		<span class="sr-only" id="d-rapido">Acesso rápido</span>
 	</section>

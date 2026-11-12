@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JsonFileStorage } from './json-file';
@@ -101,5 +101,15 @@ describe('notes no storage', () => {
 		).rejects.toThrow(HubValidationError);
 
 		expect((await storage.loadHub()).categories).toEqual([]);
+	});
+
+	it('lê o backup quando o notes.json está corrompido', async () => {
+		await storage.saveNotes(notes());
+		await storage.saveNotes({ version: 1, notes: [] });
+		await writeFile(join(dir, 'notes.json'), '{ quebrado', 'utf8');
+
+		const backup = await storage.loadNotesFromBackup();
+
+		expect(backup?.notes[0]?.text).toBe('lembrar');
 	});
 });

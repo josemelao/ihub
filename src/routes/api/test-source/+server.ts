@@ -79,6 +79,12 @@ export const POST: RequestHandler = async ({ request }) => {
 		if (error instanceof FeedFormatError) {
 			return json({ ok: false, error: error.message }, { status: 422 });
 		}
+		if (error instanceof TypeError) {
+			return json(
+				{ ok: false, error: 'URL inválida: use um endereço http(s) completo.' },
+				{ status: 422 }
+			);
+		}
 		if (!isInternalError(error) && error instanceof Error) {
 			return json({ ok: false, error: error.message }, { status: 422 });
 		}

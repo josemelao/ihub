@@ -87,4 +87,14 @@ describe('POST /api/test-source', () => {
 
 		expect(fetchTextMock).toHaveBeenCalledTimes(1);
 	});
+
+	it('explica URL inválida sem virar 500', async () => {
+		fetchTextMock.mockRejectedValue(new TypeError('Failed to parse URL from abc'));
+
+		const response = await POST(event({ type: 'rss', target: 'abc' }));
+		const body = (await response.json()) as { ok: boolean; error: string };
+
+		expect(response.status).toBe(422);
+		expect(body.error).toMatch(/URL inválida/i);
+	});
 });

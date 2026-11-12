@@ -56,7 +56,7 @@ export const load: LayoutServerLoad = async () => {
 		),
 		loadWithBackup(
 			() => storage.loadNotes(),
-			async () => null,
+			() => storage.loadNotesFromBackup(),
 			() => structuredClone(EMPTY_NOTES)
 		)
 	]);

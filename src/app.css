@@ -1158,6 +1158,23 @@ h3 {
 	padding: 0 7px;
 }
 
+.quick-limit {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 11px;
+	color: var(--mut);
+}
+
+.quick-limit select {
+	height: 28px;
+	padding: 0 4px;
+	border-radius: 8px;
+	border: 1px solid var(--line);
+	background: var(--panel2);
+	color: var(--soft);
+}
+
 .quick-grid.grid .quick-slot,
 .quick-grid.stacked .quick-slot {
 	flex: none;

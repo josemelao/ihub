@@ -157,6 +157,7 @@
 				id="nota"
 				class="note-area"
 				rows="4"
+				maxlength={4000}
 				placeholder="Anote algo e siga o dia..."
 				bind:value={note}
 				oninput={onNoteInput}></textarea>
@@ -168,6 +169,9 @@
 						: noteStatus === 'error'
 							? 'Falha ao salvar a nota.'
 							: 'Salva no hub, entra no export.'}
+				{#if note.length > 3600}
+					· {note.length}/4000
+				{/if}
 			</span>
 		</section>
 	</aside>

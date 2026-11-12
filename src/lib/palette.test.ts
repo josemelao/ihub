@@ -175,4 +175,38 @@ describe('searchPalette', () => {
 	it('respeita o limite', () => {
 		expect(searchPalette(items(), '', 3)).toHaveLength(3);
 	});
+
+	it('começa pelos comandos quando a busca está vazia', () => {
+		const results = searchPalette(items(), '', 3);
+
+		expect(results.every((item) => item.type === 'command')).toBe(true);
+	});
+
+	it('dá destino para fontes e notas', () => {
+		const results = searchPalette(items(), 'noticias');
+		const source = results.find((item) => item.type === 'source');
+		const note = searchPalette(items(), 'lembrar').find((item) => item.type === 'note');
+
+		expect(source?.href).toContain('/feed?fonte=');
+		expect(note?.href).toBe('/#t-nota');
+	});
+
+	it('encontra salvo fora dos 20 posts recentes', () => {
+		const many = feed();
+		many.items = Array.from({ length: 25 }, (_, index) => ({
+			id: `post-${index}`,
+			sourceId: 'fonte-rss',
+			title: `Post ${index}`,
+			summary: '',
+			url: `https://exemplo.test/${index}`,
+			publishedAt: '',
+			thumbnail: null
+		}));
+		const savedState = state({ saved: ['post-0'] });
+		const index = buildPaletteItems({ hub: hub(), feed: many, state: savedState, notes: notes() });
+
+		const results = searchPalette(index, 'is:saved');
+
+		expect(results.map((item) => item.title)).toEqual(['Post 0']);
+	});
 });

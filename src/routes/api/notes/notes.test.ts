@@ -67,6 +67,13 @@ describe('/api/notes', () => {
 		await expect(response.json()).resolves.toMatchObject({ ok: false });
 	});
 
+	it('recusa nota acima de 4.000 caracteres', async () => {
+		const response = await notesPost(event({ action: 'save', text: 'x'.repeat(4001) }));
+
+		expect(response.status).toBe(400);
+		await expect(response.json()).resolves.toMatchObject({ ok: false });
+	});
+
 	it('apaga a nota', async () => {
 		const response = await notesPost(event({ action: 'delete', id: QUICK_NOTE_ID }));
 		const body = (await response.json()) as { notes: { notes: unknown[] } };

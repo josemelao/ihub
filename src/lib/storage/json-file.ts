@@ -385,6 +385,10 @@ export class JsonFileStorage implements HubStorage {
 		}
 	}
 
+	async loadNotesFromBackup(): Promise<NotesData | null> {
+		return this.loadFromBackup('notes.json', (raw) => parseNotes(migrateNotes(raw).data));
+	}
+
 	async updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData> {
 		return fileLocks.withLock(this.lockKey('notes.json'), async () => {
 			const next = parseNotes(await fn(await this.loadNotes()));

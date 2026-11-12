@@ -33,6 +33,12 @@ export const POST: RequestHandler = async ({ request }) => {
 			if (typeof parsed.text !== 'string') {
 				return json({ ok: false, error: 'Informe o texto da nota.' }, { status: 400 });
 			}
+			if (parsed.text.length > 4000) {
+				return json(
+					{ ok: false, error: 'A nota passa do limite de 4.000 caracteres.' },
+					{ status: 400 }
+				);
+			}
 			const id = typeof parsed.id === 'string' ? parsed.id : undefined;
 			const notes = await storage.updateNotes((current) =>
 				upsertNote(current, { id, text: parsed.text as string })

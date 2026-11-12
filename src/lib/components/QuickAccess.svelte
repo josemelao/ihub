@@ -12,7 +12,8 @@
 		grid = false,
 		limit,
 		onreorder,
-		onpin
+		onpin,
+		onlimit
 	}: {
 		hub: HubData;
 		title?: string;
@@ -21,10 +22,13 @@
 		limit?: number;
 		onreorder?: (ids: string[]) => void;
 		onpin?: (id: string, pinned: boolean) => void;
+		onlimit?: (limit: number) => void;
 	} = $props();
 
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const quick = $derived(quickAccessItems(hub, limit));
+	const pinnedCount = $derived(hub.items.filter((item) => item.pinned).length);
+	const hiddenCount = $derived(Math.max(0, pinnedCount - quick.length));
 
 	let editing = $state(false);
 	let draggingId = $state<string | null>(null);
@@ -92,6 +96,19 @@
 				</a>
 				{#if editing}
 					<div class="quick-edit">
+						{#if onlimit}
+							<label class="quick-limit">
+								Mostrar
+								<select
+									value={limit ?? hub.settings.quickAccessLimit ?? 6}
+									onchange={(event) => onlimit(Number(event.currentTarget.value))}
+								>
+									<option value={6}>6</option>
+									<option value={8}>8</option>
+									<option value={10}>10</option>
+								</select>
+							</label>
+						{/if}
 						<button
 							class="mini-btn"
 							type="button"
@@ -127,6 +144,10 @@
 		{#if quick.length === 0}
 			<p class="muted">
 				Nenhum atalho fixado ainda. Fixe um item na Biblioteca ou no editor de itens.
+			</p>
+		{:else if hiddenCount > 0}
+			<p class="muted small">
+				+{hiddenCount} fixado(s) oculto(s) pelo limite — aumente em <em>Reordenar</em>.
 			</p>
 		{/if}
 	</div>

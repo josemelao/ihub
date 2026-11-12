@@ -23,6 +23,8 @@
 
 	let query = $state('');
 	let active = $state(0);
+	let busy = $state(false);
+	let statusMessage = $state('');
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let paletteEl = $state<HTMLElement | null>(null);
 
@@ -46,19 +48,31 @@
 	});
 
 	async function choose(entry: PaletteItem): Promise<void> {
-		onclose();
-
 		if (entry.commandId === 'refresh') {
+			busy = true;
+			statusMessage = 'Atualizando…';
 			try {
-				await refreshWithProgress();
+				await refreshWithProgress((progress) => {
+					statusMessage = `${progress.done}/${progress.total} fontes`;
+				});
 				await invalidateAll();
-			} catch {
-				// sem UI de erro aqui; o feed mostra o estado na próxima ação
+				onclose();
+			} catch (error) {
+				statusMessage = error instanceof Error ? error.message : 'Falha ao atualizar o feed.';
+			} finally {
+				busy = false;
 			}
 			return;
 		}
 
+		onclose();
+
 		if (!entry.href) return;
+
+		if (entry.type === 'app') {
+			window.location.href = entry.href;
+			return;
+		}
 
 		if (entry.href.startsWith('/api/')) {
 			window.location.href = entry.href;
@@ -200,6 +214,14 @@
 			{/if}
 		</ul>
 
-		<div class="palette-hint">↑ ↓ navegar · Enter abrir · &gt; comandos · Esc fechar</div>
+		<div class="palette-hint">
+			{#if busy}
+				{statusMessage}
+			{:else if statusMessage}
+				{statusMessage} · Esc fechar
+			{:else}
+				↑ ↓ navegar · Enter abrir · &gt; comandos · Esc fechar
+			{/if}
+		</div>
 	</div>
 </div>

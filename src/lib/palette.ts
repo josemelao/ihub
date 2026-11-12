@@ -170,6 +170,7 @@ export function buildPaletteItems(input: PaletteIndexInput): PaletteItem[] {
 			type: 'source',
 			title: source.name,
 			description: source.target,
+			href: `/feed?fonte=${encodeURIComponent(source.id)}`,
 			color: '#8AA4FF',
 			keywords: [source.type, source.target]
 		});
@@ -181,8 +182,32 @@ export function buildPaletteItems(input: PaletteIndexInput): PaletteItem[] {
 			type: 'note',
 			title: note.text.slice(0, 80),
 			description: 'Nota',
+			href: '/#t-nota',
 			color: '#8AA4FF',
 			keywords: [note.text]
+		});
+	}
+
+	// Salvos que não estão entre os posts recentes (ou só existem no snapshot).
+	const postIds = new Set(items.filter((item) => item.type === 'post').map((item) => item.id));
+	for (const id of state?.saved ?? []) {
+		const key = `entry:post:${id}`;
+		if (postIds.has(key)) continue;
+		const snapshot = state?.savedItems?.[id];
+		const live = feed?.items.find((candidate) => candidate.id === id);
+		const title = live?.title ?? snapshot?.item.title;
+		const url = live?.url ?? snapshot?.item.url;
+		if (!title || !url) continue;
+		items.push({
+			id: key,
+			type: 'post',
+			title,
+			description: [snapshot?.sourceName, 'salvo'].filter(Boolean).join(' · '),
+			href: url,
+			color: snapshot?.color ?? '#8AA4FF',
+			saved: true,
+			unread: false,
+			sourceName: snapshot?.sourceName ?? ''
 		});
 	}
 
@@ -262,16 +287,27 @@ export function searchPalette(index: PaletteItem[], raw: string, limit = 10): Pa
 		const title = normalize(item.title);
 		const description = normalize(item.description);
 		const keywords = normalize(`${(item.keywords ?? []).join(' ')} ${item.sourceName ?? ''}`);
+		const haystack = `${title} ${description} ${keywords}`;
+		const terms = text.split(/\s+/).filter(Boolean);
+
+		// Todos os termos precisam aparecer em algum campo (busca multi-palavra).
+		if (!terms.every((term) => haystack.includes(term))) continue;
 
 		let score = 0;
-		if (title.startsWith(text)) score = 5;
-		else if (title.includes(text)) score = 4;
-		else if (keywords.includes(text)) score = 3;
-		else if (description.includes(text)) score = 2;
+		for (const term of terms) {
+			if (title.startsWith(term)) score += 5;
+			else if (title.includes(term)) score += 4;
+			else if (keywords.includes(term)) score += 3;
+			else score += 2;
+		}
 
-		if (score > 0) results.push({ item, score });
+		results.push({ item, score });
 	}
 
-	results.sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title, 'pt-BR'));
+	results.sort((a, b) =>
+		text
+			? b.score - a.score || a.item.title.localeCompare(b.item.title, 'pt-BR')
+			: a.score - b.score || a.item.title.localeCompare(b.item.title, 'pt-BR')
+	);
 	return results.slice(0, limit).map((entry) => entry.item);
 }

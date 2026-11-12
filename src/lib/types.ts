@@ -234,6 +234,7 @@ export interface HubStorage {
 	loadFeedCacheFromBackup(): Promise<FeedCache | null>;
 	updateFeedCache(fn: (cache: FeedCache) => FeedCache | Promise<FeedCache>): Promise<FeedCache>;
 	loadNotes(): Promise<NotesData>;
+	loadNotesFromBackup(): Promise<NotesData | null>;
 	updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData>;
 	saveNotes(data: NotesData): Promise<void>;
 	/** Mantém hub e cache sob o mesmo lock (ordem estável para evitar deadlock). */

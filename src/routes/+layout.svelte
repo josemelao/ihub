@@ -68,7 +68,7 @@
 			</div>
 		{/if}
 
-		{#if data.stateError || data.cacheError}
+		{#if data.stateError || data.cacheError || data.notesError}
 			<div class="alert" role="alert">
 				<strong>Dados auxiliares inválidos</strong>
 				{#if data.stateError}
@@ -81,6 +81,12 @@
 					<div>
 						feed-cache.json: {data.cacheError.message}
 						{data.cacheError.usingBackup ? 'Usando o backup.' : 'Usando cache vazio.'}
+					</div>
+				{/if}
+				{#if data.notesError}
+					<div>
+						notes.json: {data.notesError.message}
+						{data.notesError.usingBackup ? 'Usando o backup.' : 'Usando notas vazias.'}
 					</div>
 				{/if}
 			</div>
