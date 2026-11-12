@@ -575,3 +575,4 @@ Executada em 11/11/2026 sobre `v0.20.0`.
 - **Cobertura**: 4 fluxos de produto (adicionar link pela Biblioteca; nota rápida salva/sobrevive/palette; palette busca e comando) + axe sem violações **críticas ou sérias** em `/`, `/feed`, `/biblioteca` e `/gerenciar`. A suíte é hermética: o fixture desliga as fontes e `e2e/fixtures.ts` bloqueia qualquer requisição fora de 127.0.0.1.
 - Scripts novos: `npm run test:e2e` e `npm run test:e2e:report`.
 - `npm run verify` segue verde (657 testes em 92 arquivos) e `npx playwright test` passa 8/8 localmente.
+- **CI validado no GitHub**: run [43132331993](https://github.com/josemelao/ihub/actions/runs/43132331993) — jobs `check · lint · test · build` e `e2e · axe` verdes.
