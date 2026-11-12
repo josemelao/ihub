@@ -106,7 +106,13 @@
 </div>
 
 {#if ui.paletteOpen}
-	<CommandPalette hub={data.hub} feed={data.feed} onclose={() => ui.closePalette()} />
+	<CommandPalette
+		hub={data.hub}
+		feed={data.feed}
+		hubState={data.state}
+		notes={data.notes}
+		onclose={() => ui.closePalette()}
+	/>
 {/if}
 
 {#if ui.quickAddOpen}

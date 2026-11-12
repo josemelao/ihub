@@ -1,19 +1,33 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { initials, tint } from '#lib/display';
-	import { searchHub, type SearchEntry } from '#lib/search';
-	import type { FeedCache, HubData } from '#lib/types';
+	import { buildPaletteItems, searchPalette, type PaletteItem } from '#lib/palette';
+	import { refreshWithProgress } from '#lib/refresh-client';
+	import type { FeedCache, HubData, HubState, NotesData } from '#lib/types';
 	import Icon from './Icon.svelte';
 
-	let { hub, feed, onclose }: { hub: HubData; feed?: FeedCache; onclose: () => void } = $props();
+	let {
+		hub,
+		feed,
+		hubState,
+		notes,
+		onclose
+	}: {
+		hub: HubData;
+		feed?: FeedCache;
+		hubState?: HubState;
+		notes?: NotesData;
+		onclose: () => void;
+	} = $props();
 
 	let query = $state('');
 	let active = $state(0);
 	let inputEl = $state<HTMLInputElement | null>(null);
 	let paletteEl = $state<HTMLElement | null>(null);
 
-	const results = $derived(searchHub(hub, query, 8, feed));
+	const index = $derived(buildPaletteItems({ hub, feed, state: hubState, notes }));
+	const results = $derived(searchPalette(index, query, 10));
 
 	onMount(() => {
 		const previousFocus = document.activeElement as HTMLElement | null;
@@ -31,19 +45,33 @@
 		}
 	});
 
-	function choose(entry: SearchEntry): void {
+	async function choose(entry: PaletteItem): Promise<void> {
 		onclose();
-		if (entry.type === 'category') {
-			// entry.href já é um caminho interno resolvido em buildSearchEntries
-			// eslint-disable-next-line svelte/no-navigation-without-resolve
-			void goto(entry.href);
+
+		if (entry.commandId === 'refresh') {
+			try {
+				await refreshWithProgress();
+				await invalidateAll();
+			} catch {
+				// sem UI de erro aqui; o feed mostra o estado na próxima ação
+			}
 			return;
 		}
+
+		if (!entry.href) return;
+
+		if (entry.href.startsWith('/api/')) {
+			window.location.href = entry.href;
+			return;
+		}
+
 		if (entry.type === 'link' || entry.type === 'post') {
 			window.open(entry.href, '_blank', 'noopener,noreferrer');
 			return;
 		}
-		window.location.href = entry.href;
+
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
+		await goto(entry.href);
 	}
 
 	function onKeydown(event: KeyboardEvent): void {
@@ -80,7 +108,7 @@
 			active = Math.max(active - 1, 0);
 		} else if (event.key === 'Enter' && results[active]) {
 			event.preventDefault();
-			choose(results[active]);
+			void choose(results[active]);
 		}
 	}
 
@@ -88,14 +116,23 @@
 		if (event.target === event.currentTarget) onclose();
 	}
 
-	function typeLabel(entry: SearchEntry): string {
-		return entry.type === 'category'
-			? 'Categoria'
-			: entry.type === 'app'
-				? 'App do PC'
-				: entry.type === 'post'
-					? 'Post'
-					: 'Link';
+	function typeLabel(entry: PaletteItem): string {
+		switch (entry.type) {
+			case 'category':
+				return 'Categoria';
+			case 'app':
+				return 'App do PC';
+			case 'post':
+				return 'Post';
+			case 'note':
+				return 'Nota';
+			case 'source':
+				return 'Fonte';
+			case 'command':
+				return 'Comando';
+			default:
+				return 'Link';
+		}
 	}
 </script>
 
@@ -105,7 +142,7 @@
 		class="palette"
 		role="dialog"
 		aria-modal="true"
-		aria-label="Busca rápida"
+		aria-label="Busca e comandos"
 		tabindex="-1"
 		onkeydown={onKeydown}
 	>
@@ -115,13 +152,13 @@
 				bind:this={inputEl}
 				bind:value={query}
 				oninput={() => (active = 0)}
-				placeholder="Buscar links, apps, posts e categorias"
+				placeholder="Buscar ou > comando · tag: source: is:unread is:saved"
 				role="combobox"
 				aria-expanded="true"
 				aria-controls="palette-list"
 				aria-autocomplete="list"
 				aria-activedescendant={results[active] ? `palette-option-${results[active].id}` : undefined}
-				aria-label="Buscar links, apps, posts e categorias"
+				aria-label="Buscar links, apps, posts, notas e comandos"
 				autocomplete="off"
 			/>
 			<button type="button" class="palette-close" aria-label="Fechar busca" onclick={onclose}>
@@ -139,7 +176,7 @@
 					aria-selected={index === active}
 					onmousedown={(event) => {
 						event.preventDefault();
-						choose(entry);
+						void choose(entry);
 					}}
 					onmouseenter={() => (active = index)}
 				>
@@ -148,11 +185,11 @@
 						style="background: {tint(entry.color, 0.16)}; color: {entry.color}"
 					>
 						{entry.type === 'category'
-							? entry.name.slice(0, 1).toUpperCase()
-							: initials(entry.name)}
+							? entry.title.slice(0, 1).toUpperCase()
+							: initials(entry.title)}
 					</span>
 					<span class="palette-meta">
-						<span class="palette-name">{entry.name}</span>
+						<span class="palette-name">{entry.title}</span>
 						<span class="palette-desc">{entry.description}</span>
 					</span>
 					<span class="palette-kind">{typeLabel(entry)}</span>
@@ -163,6 +200,6 @@
 			{/if}
 		</ul>
 
-		<div class="palette-hint">↑ ↓ navegar · Enter abrir · Esc fechar</div>
+		<div class="palette-hint">↑ ↓ navegar · Enter abrir · &gt; comandos · Esc fechar</div>
 	</div>
 </div>
