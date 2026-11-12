@@ -108,6 +108,25 @@ export interface HighlightsData {
 	highlights: ReadingHighlight[];
 }
 
+export type ArchiveStatus = 'pending' | 'ready' | 'failed';
+
+export interface ArchiveEntry {
+	id: string;
+	status: ArchiveStatus;
+	title: string;
+	url: string;
+	bytes: number;
+	assets: number;
+	error?: string;
+	createdAt: string;
+	updatedAt: string;
+}
+
+export interface ArchiveIndex {
+	version: number;
+	entries: Record<string, ArchiveEntry>;
+}
+
 export interface FeedSource {
 	id: string;
 	type: FeedSourceType;

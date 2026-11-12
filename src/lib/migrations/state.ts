@@ -5,6 +5,7 @@ export const STATE_SCHEMA_VERSION = 1;
 export const CACHE_SCHEMA_VERSION = 1;
 export const NOTES_SCHEMA_VERSION = 1;
 export const HIGHLIGHTS_SCHEMA_VERSION = 1;
+export const ARCHIVE_SCHEMA_VERSION = 1;
 
 export function migrateState(input: unknown): MigrationResult<Record<string, unknown>> {
 	return migratePassthrough(input, { label: 'estado.json', current: STATE_SCHEMA_VERSION });
@@ -25,5 +26,12 @@ export function migrateHighlights(input: unknown): MigrationResult<Record<string
 	return migratePassthrough(input, {
 		label: 'highlights.json',
 		current: HIGHLIGHTS_SCHEMA_VERSION
+	});
+}
+
+export function migrateArchiveIndex(input: unknown): MigrationResult<Record<string, unknown>> {
+	return migratePassthrough(input, {
+		label: 'archive.json',
+		current: ARCHIVE_SCHEMA_VERSION
 	});
 }

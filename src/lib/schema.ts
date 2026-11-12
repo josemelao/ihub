@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { withSourceOrders } from './feed/order';
 import { withNormalizedTags } from './tags';
 import type {
+	ArchiveIndex,
 	FeedCache,
 	HighlightsData,
 	HubData,
@@ -415,6 +416,39 @@ export function parseReadingArticle(input: unknown): ReadingArticle {
 		throw new HubValidationError(issuesFrom(result.error), 'reading');
 	}
 	return result.data as ReadingArticle;
+}
+
+const archiveEntrySchema = z.object({
+	id: readingIdSchema,
+	status: z.enum(['pending', 'ready', 'failed']),
+	title: z.string().default(''),
+	url: urlSchema,
+	bytes: z.number().int().nonnegative().default(0),
+	assets: z.number().int().nonnegative().default(0),
+	error: z.string().optional(),
+	createdAt: z.string().default(''),
+	updatedAt: z.string().default('')
+});
+
+export const archiveIndexSchema = z
+	.object({
+		version: z.number().int().positive().default(1),
+		entries: z.record(readingIdSchema, archiveEntrySchema).default({})
+	})
+	.superRefine((data, ctx) => {
+		for (const [key, entry] of Object.entries(data.entries)) {
+			if (entry.id !== key) {
+				addIssue(ctx, ['entries', key, 'id'], 'Id da entrada difere da chave do índice.');
+			}
+		}
+	});
+
+export function parseArchiveIndex(input: unknown): ArchiveIndex {
+	const result = archiveIndexSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'archive.json');
+	}
+	return result.data as ArchiveIndex;
 }
 
 export function parseFeedCache(input: unknown): FeedCache {
