@@ -867,3 +867,44 @@ Executada depois do item 42, a partir do uso real.
   `showEdit={false}`.
 - **Testes**: 849 unitários (novos: integração da rota de grupo) e 41 E2E
   ajustados para Ferramentas dentro do `.home-split`.
+
+## 44. Feeds comprimidos (GE/G1/UOL) e ritmo do Reddit
+
+Executada depois do item 43, a partir de um feed do GE que “não era encontrado”.
+
+- **Causa raiz do GE/G1**: o caminho pinado de `safe-fetch` fazia
+  `response.body.toString('utf8')` sem olhar `content-encoding`. O CDN da Globo
+  comprime mesmo sem `accept-encoding` no pedido, então o texto começava com
+  `1f 8b` e o `discoverFeedUrl` não achava `<rss`. Não era o feed: 100 `<item>`
+  depois do `gunzip`.
+- **Correção**: `decodeBody` descomprime `gzip`/`x-gzip`, `deflate` e `br`, aceita
+  camadas múltiplas (`deflate, gzip`) e **devolve o corpo cru quando o header
+  mente** (aconteceu de verdade durante a investigação). `maxOutputLength`
+  limita o tamanho descomprimido — proteção contra zip bomb — e o erro sai como
+  “Resposta muito grande.”.
+- **Charset**: `decodeText` usa o header, depois a declaração `<?xml encoding>`,
+  depois UTF-8; label desconhecido cai para UTF-8 em vez de estourar. Isso
+  conserta os acentos do UOL (`text/xml;charset=ISO-8859-1`).
+- **Alcance**: a mesma função serve Detectar, Testar, refresh, metadados de link,
+  reader e arquivo — todos passaram a aceitar resposta comprimida de uma vez.
+- **Reddit 429**: não era path nem UA. O IP residencial recebe ~1 resposta por
+  janela de RSS não autenticado; 4 subreddits com `intervalMinutes: 30` saíam
+  juntos (`concurrency: 4`) e 3 tomavam 429, mantendo posts antigos na tela.
+  - `host-gate.ts`: um 429 bloqueia o host por 5 min, dobrando até 1 h; um 2xx
+    zera. Respeita `Retry-After` quando existe (o Reddit não manda).
+  - `refresh.ts`: hosts ritmados (`reddit.com`) recebem **no máximo uma fonte por
+    janela de 5 min** (`pacedHosts`/`paceMinutes`), começando pela mais atrasada;
+    as demais voltam `skipped` **sem** gravar `lastFetchedAt`.
+  - 429 vira `RateLimitError` e também não grava `lastFetchedAt`, então a fonte
+    volta na próxima janela em vez de esperar 30 min.
+  - Resultado real: ciclo de 4 subreddits em ~15 min, zero 429, cada um dentro
+    do intervalo de 30 min.
+- **UI**: 429 deixa de pintar selo de erro. `HomeStatus` mostra “N fontes
+  aguardando limite do site” e reserva o vermelho para falha de verdade.
+- **Testes**: 870 em 134 arquivos. Novos: `safe-fetch-decode.test.ts` (13 —
+  gzip/deflate/br, camadas, header mentindo, zip bomb, ISO-8859-1, declaração
+  XML, charset inválido, backoff) e `refresh-pace.test.ts` (7 — rotação, janela,
+  host não ritmado, 429 preservando `lastFetchedAt`).
+- **Verificação real**: `POST /api/discover-feed` passou a responder `ok:true`
+  para GE Corinthians, G1 Política, UOL e Meu Timão; refresh ao vivo marcou
+  `r/Darktide` e depois `Legends of Runeterra` sem 429.
