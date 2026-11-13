@@ -6,26 +6,22 @@
 		shouldCloseOnBackdropClick,
 		type BackdropPointerState
 	} from '#lib/dialog-backdrop';
-	import { redditEmbedUrlWithLocale } from '#lib/feed/reddit';
 	import Icon from './Icon.svelte';
 
 	let {
 		embedUrl,
 		postUrl,
 		title,
-		locale,
 		onclose
 	}: {
 		embedUrl: string;
 		postUrl: string;
 		title: string;
-		locale?: string;
 		onclose: () => void;
 	} = $props();
 
 	let dialogEl = $state<HTMLDialogElement | null>(null);
 	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
-	const frameUrl = $derived(redditEmbedUrlWithLocale(embedUrl, locale));
 
 	onMount(() => {
 		dialogEl?.showModal();
@@ -73,7 +69,7 @@
 
 		<div class="reddit-frame">
 			<iframe
-				src={frameUrl}
+				src={embedUrl}
 				title={`Mídia do Reddit: ${title}`}
 				allow="autoplay; encrypted-media; picture-in-picture"
 				referrerpolicy="strict-origin-when-cross-origin"
@@ -82,6 +78,7 @@
 		</div>
 
 		<div class="reddit-actions">
+			<span class="muted small">Se o player não carregar, abra no Reddit.</span>
 			<a class="chip link" href={postUrl} target="_blank" rel="noopener noreferrer">
 				<Icon name="external" size={16} />
 				Abrir no Reddit

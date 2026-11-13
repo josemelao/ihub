@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { relativeTime, tint } from '#lib/display';
 	import { splitHighlights } from '#lib/feed/filter';
-	import { redditPostInfo } from '#lib/feed/reddit';
+	import { redditFullImage, redditLikelyVideo, redditPostInfo } from '#lib/feed/reddit';
 	import { youtubeVideoId } from '#lib/feed/youtube';
 	import type { FeedViewItem } from '#lib/feed/view';
 	import Icon from './Icon.svelte';
@@ -27,17 +27,20 @@
 	const color = $derived(entry.category?.color ?? '#8AA4FF');
 	const videoId = $derived(youtubeVideoId(entry.item.url, entry.item.thumbnail));
 	const reddit = $derived(redditPostInfo(entry.item.url));
+	const thumbnail = $derived(entry.item.thumbnail ?? '');
+	const fullThumbnail = $derived(redditFullImage(thumbnail));
+	const redditVideoHint = $derived(redditLikelyVideo(thumbnail));
+	let previewFailed = $state(false);
 	let imageFailed = $state(false);
 	let naturalAspect = $state<number | null>(null);
 	let expanded = $state(false);
 	let playerOpen = $state(false);
 	let imageOpen = $state(false);
-	let redditLoading = $state(false);
 	let redditOpen = $state(false);
-	let redditVideo = $state<string | null | undefined>(undefined);
 	let summaryEl = $state<HTMLElement | null>(null);
 	let overflowing = $state(false);
-	const hasImage = $derived(Boolean(entry.item.thumbnail) && !imageFailed);
+	const displayImage = $derived(!previewFailed && fullThumbnail ? fullThumbnail : thumbnail);
+	const hasImage = $derived(Boolean(thumbnail) && !imageFailed);
 	const canExpand = $derived(variant === 'completo' && (overflowing || expanded));
 
 	$effect(() => {
@@ -81,41 +84,12 @@
 		}
 	}
 
-	async function openRedditMedia(): Promise<void> {
-		if (!reddit) return;
-
-		if (redditVideo !== undefined) {
-			if (redditVideo) redditOpen = true;
-			else imageOpen = true;
+	function onImageError(): void {
+		if (!previewFailed && fullThumbnail) {
+			previewFailed = true;
 			return;
 		}
-
-		redditLoading = true;
-		try {
-			const response = await fetch('/api/reddit-media', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ url: entry.item.url })
-			});
-			const result = (await response.json()) as {
-				ok?: boolean;
-				isVideo?: boolean;
-				embedUrl?: string;
-			};
-
-			if (result.ok && result.isVideo && result.embedUrl) {
-				redditVideo = result.embedUrl;
-				redditOpen = true;
-			} else {
-				redditVideo = null;
-				imageOpen = true;
-			}
-		} catch {
-			redditVideo = null;
-			imageOpen = true;
-		} finally {
-			redditLoading = false;
-		}
+		imageFailed = true;
 	}
 </script>
 
@@ -139,47 +113,39 @@
 				{#if hasImage}
 					<img
 						referrerpolicy="no-referrer"
-						src={entry.item.thumbnail ?? ''}
+						src={displayImage}
 						alt=""
 						loading="lazy"
 						onload={onImageLoad}
-						onerror={() => (imageFailed = true)}
+						onerror={onImageError}
 					/>
 				{:else}
 					<span>{entry.source.name}</span>
 				{/if}
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={20} /></span>
 			</button>
-		{:else if reddit && hasImage}
+		{:else if reddit && entry.item.thumbnail}
 			<button
 				class="feed-thumb feed-thumb-button feed-thumb-reddit"
-				class:loading={redditLoading}
 				type="button"
-				aria-label={`Abrir mídia do Reddit: ${entry.item.title}`}
-				title="Abrir mídia do Reddit"
+				aria-label={`Ver imagem do Reddit: ${entry.item.title}`}
+				title="Ver imagem"
 				style={thumbStyle}
-				onclick={openRedditMedia}
-				disabled={redditLoading}
+				onclick={() => (imageOpen = true)}
 			>
-				<img
-					referrerpolicy="no-referrer"
-					src={entry.item.thumbnail ?? ''}
-					alt=""
-					loading="lazy"
-					onload={onImageLoad}
-					onerror={() => (imageFailed = true)}
-				/>
-				<span class="feed-reddit" aria-hidden="true">
-					{#if redditLoading}
-						<span class="feed-spinner"></span>
-					{:else if redditVideo}
-						<Icon name="play" size={12} />
-					{:else if redditVideo === null}
-						<Icon name="expand" size={12} />
-					{:else}
-						R
-					{/if}
-				</span>
+				{#if hasImage}
+					<img
+						referrerpolicy="no-referrer"
+						src={displayImage}
+						alt=""
+						loading="lazy"
+						onload={onImageLoad}
+						onerror={onImageError}
+					/>
+				{:else}
+					<span>{entry.source.name}</span>
+				{/if}
+				<span class="feed-reddit" aria-hidden="true">R</span>
 			</button>
 		{:else if hasImage}
 			<button
@@ -191,11 +157,11 @@
 			>
 				<img
 					referrerpolicy="no-referrer"
-					src={entry.item.thumbnail ?? ''}
+					src={displayImage}
 					alt=""
 					loading="lazy"
 					onload={onImageLoad}
-					onerror={() => (imageFailed = true)}
+					onerror={onImageError}
 				/>
 				<span class="feed-zoom" aria-hidden="true"><Icon name="expand" size={14} /></span>
 			</button>
@@ -295,47 +261,39 @@
 				{#if hasImage}
 					<img
 						referrerpolicy="no-referrer"
-						src={entry.item.thumbnail ?? ''}
+						src={displayImage}
 						alt=""
 						loading="lazy"
 						onload={onImageLoad}
-						onerror={() => (imageFailed = true)}
+						onerror={onImageError}
 					/>
 				{:else}
 					<span class="feed-thumb-fallback">{entry.source.name}</span>
 				{/if}
 				<span class="feed-play" aria-hidden="true"><Icon name="play" size={22} /></span>
 			</button>
-		{:else if reddit && hasImage}
+		{:else if reddit && entry.item.thumbnail}
 			<button
 				class="feed-thumb feed-thumb-button feed-thumb-reddit"
-				class:loading={redditLoading}
 				type="button"
-				aria-label={`Abrir mídia do Reddit: ${entry.item.title}`}
-				title="Abrir mídia do Reddit"
+				aria-label={`Ver imagem do Reddit: ${entry.item.title}`}
+				title="Ver imagem"
 				style={thumbStyle}
-				onclick={openRedditMedia}
-				disabled={redditLoading}
+				onclick={() => (imageOpen = true)}
 			>
-				<img
-					referrerpolicy="no-referrer"
-					src={entry.item.thumbnail ?? ''}
-					alt=""
-					loading="lazy"
-					onload={onImageLoad}
-					onerror={() => (imageFailed = true)}
-				/>
-				<span class="feed-reddit" aria-hidden="true">
-					{#if redditLoading}
-						<span class="feed-spinner"></span>
-					{:else if redditVideo}
-						<Icon name="play" size={13} />
-					{:else if redditVideo === null}
-						<Icon name="expand" size={13} />
-					{:else}
-						R
-					{/if}
-				</span>
+				{#if hasImage}
+					<img
+						referrerpolicy="no-referrer"
+						src={displayImage}
+						alt=""
+						loading="lazy"
+						onload={onImageLoad}
+						onerror={onImageError}
+					/>
+				{:else}
+					<span class="feed-thumb-fallback">{entry.source.name}</span>
+				{/if}
+				<span class="feed-reddit" aria-hidden="true">R</span>
 			</button>
 		{:else if hasImage}
 			<button
@@ -347,11 +305,11 @@
 			>
 				<img
 					referrerpolicy="no-referrer"
-					src={entry.item.thumbnail ?? ''}
+					src={displayImage}
 					alt=""
 					loading="lazy"
 					onload={onImageLoad}
-					onerror={() => (imageFailed = true)}
+					onerror={onImageError}
 				/>
 				<span class="feed-zoom" aria-hidden="true"><Icon name="expand" size={15} /></span>
 			</button>
@@ -468,19 +426,25 @@
 
 {#if imageOpen && entry.item.thumbnail}
 	<ImageLightbox
-		src={entry.item.thumbnail}
+		src={displayImage}
+		fallbackSrc={thumbnail}
 		title={entry.item.title}
 		publicationUrl={entry.item.url}
+		onplayer={reddit && redditVideoHint
+			? () => {
+					imageOpen = false;
+					redditOpen = true;
+				}
+			: undefined}
 		onclose={() => (imageOpen = false)}
 	/>
 {/if}
 
-{#if redditOpen && redditVideo}
+{#if redditOpen && reddit}
 	<RedditPlayerDialog
-		embedUrl={redditVideo}
-		postUrl={reddit?.canonicalUrl ?? entry.item.url}
+		embedUrl={reddit.embedUrl}
+		postUrl={reddit.canonicalUrl}
 		title={entry.item.title}
-		locale={entry.source.locale}
 		onclose={() => (redditOpen = false)}
 	/>
 {/if}

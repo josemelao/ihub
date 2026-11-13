@@ -64,7 +64,6 @@
 		target: string;
 		intervalMinutes: number;
 		maxItems: number;
-		locale: string;
 		fullText: boolean;
 		enabled: boolean;
 		include: string;
@@ -123,7 +122,6 @@
 			target: feedSource?.target ?? '',
 			intervalMinutes: feedSource?.intervalMinutes ?? 30,
 			maxItems: feedSource?.maxItems ?? 30,
-			locale: feedSource?.locale ?? '',
 			fullText: feedSource?.fullText ?? false,
 			enabled: feedSource?.enabled ?? true,
 			include: (feedSource?.include ?? []).join(', '),
@@ -168,7 +166,6 @@
 	let target = $state(seed.target);
 	let intervalMinutes = $state(seed.intervalMinutes);
 	let maxItems = $state(seed.maxItems);
-	let redditEnglish = $state(seed.locale === 'en');
 	let fullText = $state(seed.fullText);
 	let enabled = $state(seed.enabled);
 	let include = $state(seed.include);
@@ -200,7 +197,6 @@
 			target,
 			intervalMinutes,
 			maxItems,
-			redditEnglish,
 			fullText,
 			enabled,
 			include,
@@ -472,15 +468,14 @@
 						sourcePatch: {
 							...sourceBase,
 							groupId: groupId || null,
-							locale: sourceType === 'reddit' && redditEnglish ? 'en' : null
+							locale: null
 						}
 					}
 				: {
 						action: 'add-source',
 						source: {
 							...sourceBase,
-							...(groupId ? { groupId } : {}),
-							...(sourceType === 'reddit' && redditEnglish ? { locale: 'en' } : {})
+							...(groupId ? { groupId } : {})
 						}
 					};
 		} else if (kind === 'category') {
@@ -658,12 +653,8 @@
 					</div>
 
 					{#if sourceType === 'reddit'}
-						<label class="check">
-							<input type="checkbox" bind:checked={redditEnglish} />
-							Exibir em inglês
-						</label>
 						<span class="muted small">
-							Desligado: usa o idioma do navegador (ex.: português).
+							O embed do Reddit abre no idioma do seu navegador/conta.
 						</span>
 					{/if}
 

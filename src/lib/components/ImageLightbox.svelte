@@ -10,12 +10,24 @@
 
 	let {
 		src,
+		fallbackSrc,
 		title,
 		publicationUrl,
+		onplayer,
 		onclose
-	}: { src: string; title: string; publicationUrl: string; onclose: () => void } = $props();
+	}: {
+		src: string;
+		fallbackSrc?: string;
+		title: string;
+		publicationUrl: string;
+		onplayer?: () => void;
+		onclose: () => void;
+	} = $props();
 
 	let dialogEl = $state<HTMLDialogElement | null>(null);
+	let fallbackActive = $state(false);
+	let imageFailed = $state(false);
+	const currentSrc = $derived(fallbackActive && fallbackSrc ? fallbackSrc : src);
 	const backdropState: BackdropPointerState = { pointerDownOnBackdrop: false };
 
 	onMount(() => {
@@ -26,6 +38,14 @@
 	onDestroy(() => {
 		dialogEl?.close();
 	});
+
+	function handleImageError(): void {
+		if (!fallbackActive && fallbackSrc && fallbackSrc !== src) {
+			fallbackActive = true;
+			return;
+		}
+		imageFailed = true;
+	}
 
 	function handleCancel(event: Event): void {
 		event.preventDefault();
@@ -63,11 +83,27 @@
 		</div>
 
 		<div class="image-frame">
-			<img referrerpolicy="no-referrer" {src} alt={title} decoding="async" />
+			{#if imageFailed}
+				<p class="muted">Não foi possível carregar a imagem.</p>
+			{:else}
+				<img
+					referrerpolicy="no-referrer"
+					src={currentSrc}
+					alt={title}
+					decoding="async"
+					onerror={handleImageError}
+				/>
+			{/if}
 		</div>
 
 		<div class="image-actions">
-			<a class="chip link" href={src} target="_blank" rel="noopener noreferrer">
+			{#if onplayer}
+				<button class="chip link" type="button" onclick={onplayer}>
+					<Icon name="play" size={16} />
+					Ver no player
+				</button>
+			{/if}
+			<a class="chip link" href={currentSrc} target="_blank" rel="noopener noreferrer">
 				<Icon name="external" size={16} />
 				Abrir imagem
 			</a>

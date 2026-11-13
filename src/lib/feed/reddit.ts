@@ -42,23 +42,39 @@ export function redditPostInfo(url: string): RedditPostInfo | null {
 		id,
 		slug,
 		canonicalUrl: `https://www.reddit.com/r/${encodeURIComponent(subreddit)}/comments/${id}${suffix}/`,
-		embedUrl: `https://www.redditmedia.com/r/${encodeURIComponent(subreddit)}/comments/${id}${suffix}/?embed=true&showmedia=1`
+		// Embed oficial: aceita iframe (frame-ancestors *) e renderiza vídeo,
+		// imagem única e carrossel. O antigo redditmedia.com passou a dar 403.
+		embedUrl: `https://embed.reddit.com/r/${encodeURIComponent(subreddit)}/comments/${id}${suffix}/`
 	};
 }
 
-export function isRedditVideoHtml(html: string): boolean {
-	return /v\.redd\.it|"type"\s*:\s*"video"|&quot;type&quot;:&quot;video&quot;|"is_video"\s*:\s*true|HLSPlaylist/i.test(
-		html
-	);
+/**
+ * O RSS do Reddit entrega prévias assinadas (`preview.redd.it`) com largura
+ * fixa — muitas vezes 140 px. O arquivo original fica em `i.redd.it` com o
+ * mesmo caminho, então trocamos o host e descartamos a query.
+ */
+export function redditFullImage(url: string | null | undefined): string | null {
+	if (!url) return null;
+	try {
+		const parsed = new URL(url);
+		if (parsed.hostname.toLowerCase() !== 'preview.redd.it') return null;
+		return `https://i.redd.it${parsed.pathname}`;
+	} catch {
+		return null;
+	}
 }
 
-export function redditEmbedUrlWithLocale(embedUrl: string, locale?: string): string {
-	if (!locale) return embedUrl;
+/**
+ * Heurística para o botão "Ver no player": o Reddit usa
+ * `external-preview.redd.it` para vídeos (e mídia externa); galerias e imagens
+ * hospedadas usam `preview.redd.it`. Sem consultar o Reddit, é o sinal
+ * disponível no RSS.
+ */
+export function redditLikelyVideo(url: string | null | undefined): boolean {
+	if (!url) return false;
 	try {
-		const url = new URL(embedUrl);
-		url.searchParams.set('locale', locale);
-		return url.toString();
+		return new URL(url).hostname.toLowerCase() === 'external-preview.redd.it';
 	} catch {
-		return embedUrl;
+		return false;
 	}
 }

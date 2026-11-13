@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isRedditVideoHtml, redditEmbedUrlWithLocale, redditPostInfo } from './reddit';
+import { redditFullImage, redditLikelyVideo, redditPostInfo } from './reddit';
 
 describe('redditPostInfo', () => {
 	it('extrai subreddit, id, slug e URLs do post', () => {
@@ -16,7 +16,7 @@ describe('redditPostInfo', () => {
 			'https://www.reddit.com/r/DarkTide/comments/1xskv1q/another_round_of_clips/'
 		);
 		expect(info?.embedUrl).toBe(
-			'https://www.redditmedia.com/r/DarkTide/comments/1xskv1q/another_round_of_clips/?embed=true&showmedia=1'
+			'https://embed.reddit.com/r/DarkTide/comments/1xskv1q/another_round_of_clips/'
 		);
 	});
 
@@ -36,31 +36,48 @@ describe('redditPostInfo', () => {
 	});
 });
 
-describe('isRedditVideoHtml', () => {
-	it('detecta marcadores de vídeo', () => {
-		expect(isRedditVideoHtml('https://v.redd.it/abc/HLSPlaylist.m3u8')).toBe(true);
-		expect(isRedditVideoHtml('"type":"video"')).toBe(true);
-		expect(isRedditVideoHtml('&quot;type&quot;:&quot;video&quot;')).toBe(true);
-		expect(isRedditVideoHtml('"is_video":true')).toBe(true);
+describe('redditLikelyVideo', () => {
+	it('marca external-preview como vídeo provável', () => {
+		expect(
+			redditLikelyVideo('https://external-preview.redd.it/cWV3Zmg2eWFyYjFp.png?width=640')
+		).toBe(true);
 	});
 
-	it('não marca páginas sem vídeo', () => {
-		expect(isRedditVideoHtml('<html><img src="https://preview.redd.it/a.jpeg"></html>')).toBe(
-			false
-		);
-		expect(isRedditVideoHtml('')).toBe(false);
+	it('não marca prévias de imagem nem i.redd.it', () => {
+		expect(redditLikelyVideo('https://preview.redd.it/0gmcgoqkdd1i1.png?width=140')).toBe(false);
+		expect(redditLikelyVideo('https://i.redd.it/0gmcgoqkdd1i1.png')).toBe(false);
+	});
+
+	it('ignora vazio e URL inválida', () => {
+		expect(redditLikelyVideo(null)).toBe(false);
+		expect(redditLikelyVideo('')).toBe(false);
+		expect(redditLikelyVideo('não é url')).toBe(false);
 	});
 });
 
-describe('redditEmbedUrlWithLocale', () => {
-	const embed =
-		'https://www.redditmedia.com/r/DarkTide/comments/1xskv1q/another_round_of_clips/?embed=true&showmedia=1';
-
-	it('adiciona locale quando definido', () => {
-		expect(redditEmbedUrlWithLocale(embed, 'en')).toBe(`${embed}&locale=en`);
+describe('redditFullImage', () => {
+	it('troca a prévia por i.redd.it, sem query', () => {
+		expect(
+			redditFullImage(
+				'https://preview.redd.it/0gmcgoqkdd1i1.png?width=140&height=104&auto=webp&s=abc'
+			)
+		).toBe('https://i.redd.it/0gmcgoqkdd1i1.png');
 	});
 
-	it('mantém a URL quando locale não é definido', () => {
-		expect(redditEmbedUrlWithLocale(embed)).toBe(embed);
+	it('mantém o caminho de prévias menores de 640', () => {
+		expect(redditFullImage('https://preview.redd.it/0di0wi95951i1.png?width=640&crop=smart')).toBe(
+			'https://i.redd.it/0di0wi95951i1.png'
+		);
+	});
+
+	it('não tenta derivar de external-preview ou de outros hosts', () => {
+		expect(
+			redditFullImage(
+				'https://external-preview.redd.it/cWV3Zmg2eWFyYjFpMY1tU7jKuktCJipiBCcg7af9zSHk0ZI.png'
+			)
+		).toBeNull();
+		expect(redditFullImage('https://example.com/preview.redd.it/a.png')).toBeNull();
+		expect(redditFullImage('')).toBeNull();
+		expect(redditFullImage(null)).toBeNull();
 	});
 });
