@@ -184,13 +184,13 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 ### Título, notificações e tema
 
 - O título da aba mostra os não lidos (`(3) Meu Hub`) e o favicon ganha um badge com a contagem.
-- Notificações de posts novos são **opt-in** (Gerenciar → Aparência), só aparecem com a aba oculta, respeitam a permissão do navegador e nunca notificam posts já lidos.
+- Notificações de posts novos são **opt-in** (Gerenciar → Aparência), só aparecem com a aba oculta, respeitam a permissão do navegador e nunca notificam posts já lidos. Se a permissão for negada, o próprio card explica como liberar (cadeado → Notificações → Permitir) e mostra o aviso em vermelho, não como sucesso.
 - Cores de estado (hover, sucesso, perigo) vêm de tokens em `:root`; componentes não usam mais `font-size` inline (exceto o ícone dimensionado por prop).
 
 ### Mobile e preferências de leitura
 
 - Abaixo de 900 px a navegação vira **drawer**: o menu abre pelo botão ☰, fecha ao navegar, no backdrop ou com Esc, e não ocupa a primeira tela.
-- Em **Gerenciar → Aparência** há densidade (confortável/compacta), tamanho do texto (13/14/15 px) e contraste alto; tudo fica salvo no `hub.json` e vale para todas as telas.
+- Em **Gerenciar → Aparência** há densidade (confortável/compacta), tamanho do texto (13/14/15 px), contraste alto e **layout da home** (empilhado/dividido); tudo fica salvo no `hub.json` e vale para todas as telas.
 
 ### Busca, comandos e notas
 
@@ -198,7 +198,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Operadores: `>texto` só comandos, `tag:build`, `source:rss`, `is:unread` e `is:saved`.
 - Comandos prontos: adicionar link/fonte/categoria, abrir Gerenciar/Biblioteca/Salvos, exportar os dados e atualizar o feed (com progresso).
 - A **Nota rápida** da home fica em `data/notes.json` (não no navegador), entra no export/import e sobrevive a limpar o navegador.
-- O **Acesso rápido** respeita `settings.quickAccessOrder`; arraste para reordenar ou use ↑/↓ no modo _Reordenar_, e fixe/desafixe itens direto na Biblioteca.
+- O **Acesso rápido** respeita `settings.quickAccessOrder`; arraste para reordenar ou use ↑/↓ no modo _Reordenar_, fixe/desafixe itens e **grupos** direto na Biblioteca, e resolva o excedente no próprio modo de edição (seção “Fora do acesso rápido”).
 - No editor de fonte, **Testar** mostra quantos posts chegam, quantos passam nas regras e os primeiros títulos, sem gravar no cache.
 
 ### Feed (M3)
@@ -214,7 +214,9 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - O contador de não lidos da sidebar usa a mesma visão do feed (ignora fontes removidas/desligadas); cache de fonte removida é limpo ao carregar.
 - **Selecionar** entra no modo de seleção: clique em qualquer lugar do card (ou no checkbox) para alternar, shift+clique redefine o intervalo (desmarcando quem ficou fora), e barra de ações em lote (lido/não lido, salvar/remover, selecionar todos).
 - Atalhos no feed: `j`/`k` navegam, `m` marca lido, `s` salva, `o`/`Enter` abrem, `?` mostra a ajuda e `Esc` sai da seleção.
-- A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
+- O **Acesso rápido** fica no card de mesmo nome no topo da home: **9 atalhos fixos** (itens e grupos) em grade adaptativa — 3 colunas no layout empilhado, 2 no dividido —, com reordenação por arrastar ou ↑/↓ sem alterar a altura do card.
+- Um **grupo fixado** aparece como atalho “Grupo · N itens” e abre a **Biblioteca já focada** naquele grupo (`/biblioteca?grupo=...`), expandindo a categoria e destacando o grupo.
+- Quando há mais fixados que o limite, o excedente aparece no modo **Reordenar** em “Fora do acesso rápido”, com ↑ para trazer de volta e ✕ para desafixar.
 - Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Salvos** (rota `/favoritos`); o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Salvos mesmo se a fonte for removida ou o cache expirar.
 - **Vídeos do YouTube**: a thumbnail mostra um botão **▶**; o clique abre um player em modal com `youtube-nocookie` e autoplay, sem alterar o layout do Bento. O modal fecha por Esc, botão fechar ou clique fora e tem o atalho **Abrir no YouTube**.
 - **Vídeos do Reddit**: a thumbnail mostra um selo **Reddit**; ao clicar, o hub consulta o embed oficial e detecta se o post é vídeo. Se for, abre o player do Reddit em modal; se não, mantém o lightbox de imagem. O resultado fica em cache por 10 minutos. Não há scraping do JSON nem extração de MP4/HLS. O idioma do player vem da fonte: **Exibir em inglês** (`locale=en`) ou navegador quando desligado; snapshots de salvos preservam essa escolha.
@@ -222,7 +224,8 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - **Visualizações**: **Bento** (masonry em colunas iguais: 2 colunas, 3 quando o feed está largo, imagens 3:2 e retrato adaptativo), **Compacto** (imagem ou placeholder com o nome da fonte, meta, título e ações; sem excerpt) e **Completo** (lista com imagem lateral maior e texto expansível). A escolha fica salva no navegador.
 - No Bento o texto flui naturalmente (sem corte de linhas) e o masonry posiciona cada card na coluna mais curta, sem buracos.
 - Cards filtrados/marcados como lidos desaparecem com fade e os restantes deslizam para a nova posição. **Ao entrar/trocar de página ou trocar de visualização não há animação**; ela só é ativada após o feed assentar (~400ms) e passa a valer para filtros, busca, lidos e “Carregar mais”. Respeita `prefers-reduced-motion`.
-- A **home é um painel geral**: faixa de 3 cards (Acesso rápido, Resumo do dia, Ações rápidas), só as **5 últimas notícias** e o botão “Ver feed completo”. Os filtros ficam no Feed completo.
+- A **home é o centro do fluxo**: linha de status (não lidos, última atualização e erro só quando existe), **Acesso rápido** (9 atalhos) e **Ferramentas** no topo, e as **5 últimas notícias** em largura total. Em Gerenciar → Aparência dá para trocar para o **layout dividido** (atalhos 1/3 com Ferramentas abaixo, ao lado do feed 2/3; a barra direita desce em telas menores que 1600 px). Os filtros completos ficam no Feed.
+- A barra superior usa uma **busca compacta** que abre a palette (`Ctrl K`) em vez de um campo falso; na home ela mostra o título **Início** e uma única ação **Adicionar**, sem duplicar o botão Editar.
 - A barra direita é fixa/sticky e mostra Fontes do feed, Filtros salvos, Salvos recentemente e Nota rápida. A sidebar esquerda é fixa, com rodapé fixo e engrenagem no topo.
 - Imagens vêm de `media:*`, `enclosure`, do primeiro `<img>` do conteúdo e, para YouTube, do ID do vídeo.
 - Cache: até 30 posts por fonte, retenção de 30 dias, deduplicação por URL/guid. Requisições com timeout de 10 s, User-Agent identificado e limite de 5 MB por resposta.
@@ -307,24 +310,24 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 
 ## Telas
 
-| Rota                  | Tela                                                                                       |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| `/`                   | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito    |
-| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                  |
-| `/feed`               | Feed completo com filtros e fontes cadastradas                                             |
-| `/favoritos`          | Salvos: posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação |
-| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps               |
-| `/apps`               | Redireciona para `/biblioteca`                                                             |
-| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                        |
-| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                     |
-| `/api/export`         | Download do bundle (hub + estado)                                                          |
-| `/api/import`         | Importação validada (substituir/mesclar)                                                   |
-| `/api/feed`           | Cache do feed com status por fonte                                                         |
-| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)      |
-| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                                |
-| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                             |
-| `/api/search/content` | Busca no texto extraído dos salvos e nos destaques (`?q=&limit=&sort=`)                    |
-| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                              |
+| Rota                  | Tela                                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------- |
+| `/`                   | Início: status, acesso rápido (9 atalhos/grupos), ferramentas, 5 últimas notícias e painel direito |
+| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                          |
+| `/feed`               | Feed completo com filtros e fontes cadastradas                                                     |
+| `/favoritos`          | Salvos: posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação         |
+| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps                       |
+| `/apps`               | Redireciona para `/biblioteca`                                                                     |
+| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                                |
+| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                             |
+| `/api/export`         | Download do bundle (hub + estado)                                                                  |
+| `/api/import`         | Importação validada (substituir/mesclar)                                                           |
+| `/api/feed`           | Cache do feed com status por fonte                                                                 |
+| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)              |
+| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                                        |
+| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                                     |
+| `/api/search/content` | Busca no texto extraído dos salvos e nos destaques (`?q=&limit=&sort=`)                            |
+| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                                      |
 
 ## Segurança e privacidade
 

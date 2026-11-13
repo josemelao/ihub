@@ -105,7 +105,7 @@ data/
 ### Navegação e layout
 
 - Sidebar esquerda **sticky** (100vh, rolagem interna), rodapé fixo com Gerenciar e engrenagem no cabeçalho; responsiva.
-- Início: **painel geral** com 3 cards (Acesso rápido, Resumo do dia, Ações rápidas), só as **5 últimas notícias** e “Ver feed completo”; barra direita fixa com Fontes, Filtros salvos, Salvos recentemente e Nota rápida.
+- Início: **centro do fluxo** com linha de status, **Acesso rápido** (9 atalhos e grupos) e **Ferramentas** no topo, só as **5 últimas notícias** e “Ver feed completo”; barra direita fixa com Ferramentas (no layout dividido), Fontes, Filtros salvos, Salvos recentemente e Nota rápida. O card “Resumo do dia” foi removido.
 - Category: grupos, links/apps e feed da categoria.
 - Feed, Favoritos, Biblioteca e Gerenciar.
 - **Feed completo**: cabeçalho com total no cache, fontes ativas e última atualização; lista de fontes com estado ativa/desligada.
@@ -115,8 +115,10 @@ data/
 ### Acesso rápido
 
 - É **manual**: itens com `pinned: true`.
-- Definido em Gerenciar → Links/Apps → Editar → “Fixar no acesso rápido da home”.
-- Na home, aparece no **card “Acesso rápido”** no topo (grade compacta de 2 colunas, até 6 itens), não mais na barra direita.
+- Itens **e grupos** podem ser fixados: checkbox “Fixar no acesso rápido da home” no editor de item/grupo.
+- Na home, aparece no **card “Acesso rápido”** no topo (9 atalhos fixos em grade adaptativa: 3 colunas no layout empilhado, 2 no dividido), não mais na barra direita.
+- Grupo fixado vira um atalho “Grupo · N itens” e abre `/biblioteca?grupo=<id>`, expandindo a categoria e destacando o grupo.
+- Modo **Reordenar** usa controles em overlay no canto do tile (posição, ↑/↓ e ✕) e arrastar; a altura do card não muda. O excedente aparece em “Fora do acesso rápido”.
 - Não há rastreamento de uso.
 
 ### Busca Ctrl K
@@ -783,3 +785,85 @@ Executada em 12/11/2026 sobre a página `/highlights`.
   distintos sem tirar recurso.
 - **Teste**: E2E novo cobre o chip de cor (filtra e mantém `aria-pressed`); axe
   em `/highlights` segue verde.
+
+## 41. Home 50/50: atalhos + notícias e layout dividido
+
+Executada sobre a `v0.32.0`, depois do pull.
+
+- **“Resumo do dia” removido**: as quatro métricas repetiam informação já visível
+  na página (não lidos somados nas fontes, salvos em “Salvos recentemente”, posts
+  no próprio feed e erros em Gerenciar). “Não lidos” e “atualizado há…” viraram
+  uma linha de status; “fontes com erro” só aparece quando `> 0`.
+- **Layout empilhado (padrão)**: Acesso rápido em 2/3 + Ferramentas em 1/3, e as
+  5 últimas notícias em largura total. **Layout dividido**: Acesso rápido em 1/3
+  ao lado do feed em 2/3; a barra direita mantém Ferramentas no topo e desce para
+  baixo (em grade) abaixo de 1600 px. A escolha fica em
+  `settings.homeLayout` (`stacked`/`split`), editável em Gerenciar → Aparência.
+- **Acesso rápido com 6 fixos**: o `<select>` de “Mostrar 6/8/10” vivia **dentro
+  do `{#each}`**, então era renderizado uma vez por tile — daí o “Mostrar”
+  repetido e cortado. O limite saiu da home (`quickAccessLimit` segue no schema,
+  mas a home ignora), e a grade usa container query: 1 coluna < 300 px, 2 até
+  640 px, 3 acima disso.
+- **Reordenar sem crescer o card**: os controles viraram overlay no canto do tile
+  (↑/↓ + número da posição) e o ✕ de desafixar saiu do dashboard. Arrastar só
+  funciona no modo de edição, evitando arrasto acidental.
+- **Arquivos**: `HomeDashboard.svelte` foi dividido em `HomeStatus.svelte` e
+  `HomeTools.svelte`; `+page.svelte` compõe os dois layouts. Testes: schema e
+  `updateSettings` cobrem `homeLayout`; E2E cobre o layout dividido e o nome
+  “Ferramentas”. `npm run check`, `lint`, 839 testes unitários e 40 E2E verdes.
+
+## 42. Acesso rápido com grupos e limite de 9
+
+Executada sobre a v0.32.0, na sequência da home 50/50.
+
+- **Limite de 9** (`DEFAULT_QUICK_ACCESS_LIMIT`): no layout empilhado fecha
+  3×3; no dividido em 1440 px vira 2 colunas com uma sobra, aceito no plano.
+  As colunas passaram a mudar em ~420 px (antes 640 px), então o card de 2/3 já
+  usa 3 colunas.
+- **Grupos no acesso rápido**: `Group.pinned` + checkbox “Fixar no acesso rápido
+  da home” no editor de grupo. O tile mostra “Grupo · N itens” e navega para
+  `/biblioteca?grupo=<id>`; a Biblioteca expande a categoria, rola até o grupo e
+  destaca a caixa enquanto o parâmetro estiver na URL. O `GroupCard` da página de
+  categoria ganhou “abrir na biblioteca”.
+- **Ordem unificada**: `settings.quickAccessOrder` passa a usar chaves
+  `item:<id>`/`group:<id>`; ids antigos continuam válidos como item (sem
+  migração). Fixar pelo editor/Biblioteca **põe a entrada na frente** da ordem,
+  então o atalho novo sempre aparece; ao desafixar, a chave sai da ordem.
+- **Overflow visível**: o modo Reordenar lista também os fixados além do limite
+  em “Fora do acesso rápido”, com ↑ para trazer e ✕ para desafixar — resolve o
+  “fixei e não apareceu, agora tenho que caçar outro item”. No modo edição a
+  grade cai para 2 colunas até 700 px para os três controles caberem sem cortar
+  o nome.
+- **Aparência**: “Salvar leitura” virou **“Salvar aparência”**; o card virou
+  “Interface e home” com a explicação de densidade/fonte/contraste, e
+  “Notificar posts novos” saiu para um card próprio.
+- **Testes**: 847 unitários (novos para entradas de grupo, chaves legadas,
+  limite 9, fixar/desafixar no `applyHubAction` e `Group.pinned` no schema) e 41
+  E2E (novo: grupo fixado abre a Biblioteca focada). `verify` verde.
+
+## 43. Ajustes de home: grupos, notificações e top bar
+
+Executada depois do item 42, a partir do uso real.
+
+- **Grupo não aparecia no acesso rápido**: a ordem recebia `group:darktide`, mas o
+  `pinned` não chegava ao `hub.json`. O código estava certo (testes unitários e
+  E2E passavam); o dev server mantinha uma cópia antiga de `hub-edit.ts` em
+  memória. Reiniciar o `npm run dev` resolveu. Para não depender disso de novo,
+  novo teste de integração em `src/routes/api/hub/update-group.test.ts` faz POST
+  real e confere `pinned` no hub gravado.
+- **Notificações**: a mensagem de permissão negada aparecia como `notice` (verde)
+  e no topo da página. Agora há `notifyKind` (`ok`/`error`), o aviso fica dentro
+  do card, em vermelho quando é erro, e explica o caminho (cadeado →
+  Notificações → Permitir → recarregar). O estado `denied` é detectado no mount.
+- **Interface e home**: grade de campos em 2 colunas com labels consistentes;
+  “Contraste alto” virou um campo alinhado aos selects; o botão “Salvar
+  aparência” foi para um rodapé próprio. Notificações ficaram num card separado.
+- **Layout dividido**: Ferramentas desceu para baixo do Acesso rápido, na mesma
+  coluna (`home-split-side`), em vez de ocupar o topo do aside.
+- **Top bar**: busca deixou de ser uma barra falsa e virou botão compacto
+  (lupa + “Buscar” + `Ctrl K`, só ícone abaixo de 700 px), com o placeholder da
+  página no tooltip. A home ganhou o título **Início** e uma única ação
+  **Adicionar** (`?tab=itens&add=link`); o “Editar” duplicado saiu via
+  `showEdit={false}`.
+- **Testes**: 849 unitários (novos: integração da rota de grupo) e 41 E2E
+  ajustados para Ferramentas dentro do `.home-split`.
