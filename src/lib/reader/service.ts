@@ -1,5 +1,6 @@
 import { fetchPublicText } from '../net/safe-fetch';
 import { toSafeHttpUrl } from '../net/url';
+import { invalidateContentIndex } from './content-index';
 import type { FeedItem, HubStorage, ReadingArticle } from '../types';
 import { extractReadable, ReaderError } from './extract';
 
@@ -57,5 +58,6 @@ export async function getOrExtractArticle(
 	};
 
 	await storage.saveArticle(article);
+	invalidateContentIndex();
 	return article;
 }

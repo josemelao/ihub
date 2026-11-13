@@ -307,6 +307,8 @@ export interface HubStorage {
 	updateNotes(fn: (notes: NotesData) => NotesData | Promise<NotesData>): Promise<NotesData>;
 	saveNotes(data: NotesData): Promise<void>;
 	loadArticle(id: string): Promise<ReadingArticle | null>;
+	/** Ids dos artigos já extraídos em `data/reading/`. */
+	listArticleIds(): Promise<string[]>;
 	saveArticle(article: ReadingArticle): Promise<void>;
 	deleteArticle(id: string): Promise<void>;
 	loadHighlights(): Promise<HighlightsData>;

@@ -81,6 +81,15 @@ describe('storage de leitura', () => {
 		expect((await storage.exportBundle()).highlights?.highlights).toHaveLength(1);
 	});
 
+	it('lista os ids de artigos gravados', async () => {
+		expect(await storage.listArticleIds()).toEqual([]);
+
+		await storage.saveArticle(article);
+		await storage.saveArticle({ ...article, id: 'def' });
+
+		expect((await storage.listArticleIds()).sort()).toEqual(['abc', 'def']);
+	});
+
 	it('importa destaques no replace e mescla por id', async () => {
 		await storage.importBundle({ hub: EMPTY_HUB, highlights }, 'replace');
 		expect((await storage.loadHighlights()).highlights).toHaveLength(1);

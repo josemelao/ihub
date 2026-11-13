@@ -1,11 +1,7 @@
 import type { FeedItem, FeedSource, MatchMode } from '../types';
+import { normalize, normalizeWithMap } from '../text/normalize';
 
-export function normalize(text: string): string {
-	return text
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase();
-}
+export { normalize } from '../text/normalize';
 
 function normalizedTerms(terms: string[]): string[] {
 	return terms.map((term) => normalize(term).trim()).filter(Boolean);
@@ -45,24 +41,6 @@ export function matchesSourceRules(item: FeedItem, source: FeedSource): boolean 
 export interface HighlightSegment {
 	text: string;
 	highlight: boolean;
-}
-
-function normalizeWithMap(text: string): { normalized: string; map: number[] } {
-	let normalized = '';
-	const map: number[] = [];
-
-	for (let index = 0; index < text.length; index += 1) {
-		const chars = text[index]
-			.normalize('NFD')
-			.replace(/[\u0300-\u036f]/g, '')
-			.toLowerCase();
-		for (const char of chars) {
-			normalized += char;
-			map.push(index);
-		}
-	}
-
-	return { normalized, map };
 }
 
 export function splitHighlights(text: string, terms: string[]): HighlightSegment[] {

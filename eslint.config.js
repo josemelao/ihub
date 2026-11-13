@@ -41,6 +41,7 @@ export default defineConfig(
 			'src/lib/components/ItemRow.svelte',
 			'src/lib/components/QuickAccess.svelte',
 			'src/lib/components/FeedCard.svelte',
+			'src/lib/components/SavedContentSearch.svelte',
 			'src/lib/components/TopBar.svelte',
 			'src/lib/components/ImageLightbox.svelte',
 			'src/lib/components/RedditPlayerDialog.svelte',

@@ -18,6 +18,7 @@
 	import ConfirmDialog from './ConfirmDialog.svelte';
 	import FeedCard from './FeedCard.svelte';
 	import Icon from './Icon.svelte';
+	import SavedContentSearch from './SavedContentSearch.svelte';
 	import ShortcutHelp from './ShortcutHelp.svelte';
 
 	type FeedView = 'bento' | 'compact' | 'completo';
@@ -72,6 +73,7 @@
 	let lastInitialSourceId = untrack(() => initialSourceId);
 	let savedQuery = $state('');
 	let savedSort = $state<'saved' | 'published'>('saved');
+	let savedMode = $state<'title' | 'content'>('title');
 	let filtersOpen = $state(
 		untrack(() =>
 			shouldOpenFeedFilters({
@@ -125,6 +127,8 @@
 			view = 'completo';
 			writeLocal('meu-hub:feed-view', 'completo');
 		}
+		const searchMode = readLocal('meu-hub:saved-search-mode');
+		if (searchMode === 'title' || searchMode === 'content') savedMode = searchMode;
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		if (!overview && !saved) {
@@ -302,6 +306,12 @@
 			selectedIds = [];
 			selectionAnchor = null;
 		}
+	}
+
+	function setSavedMode(mode: 'title' | 'content'): void {
+		savedMode = mode;
+		writeLocal('meu-hub:saved-search-mode', mode);
+		resetLimit();
 	}
 
 	function enterSelection(): void {
@@ -918,35 +928,57 @@
 						oninput={resetLimit}
 					/>
 				</div>
-				<div class="chips" role="group" aria-label="Ordenação dos salvos">
+				<div class="chips" role="group" aria-label="Modo de busca">
 					<button
 						class="chip"
-						class:active={savedSort === 'saved'}
+						class:active={savedMode === 'title'}
 						type="button"
-						aria-pressed={savedSort === 'saved'}
-						onclick={() => {
-							savedSort = 'saved';
-							resetLimit();
-						}}
+						aria-pressed={savedMode === 'title'}
+						onclick={() => setSavedMode('title')}
 					>
-						Salvos
+						Título
 					</button>
 					<button
 						class="chip"
-						class:active={savedSort === 'published'}
+						class:active={savedMode === 'content'}
 						type="button"
-						aria-pressed={savedSort === 'published'}
-						onclick={() => {
-							savedSort = 'published';
-							resetLimit();
-						}}
+						aria-pressed={savedMode === 'content'}
+						onclick={() => setSavedMode('content')}
 					>
-						Publicados
+						Conteúdo
 					</button>
 				</div>
-				<span class="muted small" style="margin-left: auto">
-					Mostrando {Math.min(limit, savedFiltered.length)} de {savedFiltered.length} salvos
-				</span>
+				{#if savedMode === 'title'}
+					<div class="chips" role="group" aria-label="Ordenação dos salvos">
+						<button
+							class="chip"
+							class:active={savedSort === 'saved'}
+							type="button"
+							aria-pressed={savedSort === 'saved'}
+							onclick={() => {
+								savedSort = 'saved';
+								resetLimit();
+							}}
+						>
+							Salvos
+						</button>
+						<button
+							class="chip"
+							class:active={savedSort === 'published'}
+							type="button"
+							aria-pressed={savedSort === 'published'}
+							onclick={() => {
+								savedSort = 'published';
+								resetLimit();
+							}}
+						>
+							Publicados
+						</button>
+					</div>
+					<span class="muted small" style="margin-left: auto">
+						Mostrando {Math.min(limit, savedFiltered.length)} de {savedFiltered.length} salvos
+					</span>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -1219,90 +1251,94 @@
 		</div>
 	{/if}
 
-	<div class="feed-container" class:view-ready={viewReady}>
-		<div
-			class="feed-layout"
-			class:bento={view === 'bento'}
-			class:completo-view={view === 'completo'}
-			class:compact-view={view === 'compact'}
-			class:motion-enabled={animationsEnabled && viewMotionReady}
-			use:masonry={{ enabled: view === 'bento', gap: 12 }}
-		>
-			{#each visible as entry (entry.item.id)}
-				<div
-					class="feed-slot"
-					class:selected={selectedSet.has(entry.item.id)}
-					class:keyboard-focused={keyboardId === entry.item.id}
-					id={`feed-card-${entry.item.id}`}
-					tabindex="-1"
-					in:fade={{ duration: fadeDuration }}
-					out:fade={{ duration: fadeDuration }}
-					animate:flip={{ duration: motionDuration }}
-				>
-					{#if selectionMode}
-						<button
-							type="button"
-							class="select-surface"
-							tabindex="-1"
-							aria-label={`Selecionar ${entry.item.title}`}
-							onclick={(event) => toggleSelect(entry, event)}
-						></button>
-						<button
-							type="button"
-							class="select-box"
-							class:active={selectedSet.has(entry.item.id)}
-							role="checkbox"
-							aria-checked={selectedSet.has(entry.item.id)}
-							title="Selecionar post"
-							aria-label={`Selecionar ${entry.item.title}`}
-							onclick={(event) => toggleSelect(entry, event)}
-						>
-							{#if selectedSet.has(entry.item.id)}
-								<Icon name="check" size={14} />
-							{/if}
-						</button>
-					{/if}
-					<FeedCard
-						{entry}
-						terms={saved ? savedTerms : terms}
-						variant={view}
-						onread={() => toggleRead(entry)}
-						onsave={() => toggleSave(entry)}
-					/>
-				</div>
-			{/each}
+	{#if saved && savedMode === 'content'}
+		<SavedContentSearch query={savedQuery} savedCount={entries.length} />
+	{:else}
+		<div class="feed-container" class:view-ready={viewReady}>
+			<div
+				class="feed-layout"
+				class:bento={view === 'bento'}
+				class:completo-view={view === 'completo'}
+				class:compact-view={view === 'compact'}
+				class:motion-enabled={animationsEnabled && viewMotionReady}
+				use:masonry={{ enabled: view === 'bento', gap: 12 }}
+			>
+				{#each visible as entry (entry.item.id)}
+					<div
+						class="feed-slot"
+						class:selected={selectedSet.has(entry.item.id)}
+						class:keyboard-focused={keyboardId === entry.item.id}
+						id={`feed-card-${entry.item.id}`}
+						tabindex="-1"
+						in:fade={{ duration: fadeDuration }}
+						out:fade={{ duration: fadeDuration }}
+						animate:flip={{ duration: motionDuration }}
+					>
+						{#if selectionMode}
+							<button
+								type="button"
+								class="select-surface"
+								tabindex="-1"
+								aria-label={`Selecionar ${entry.item.title}`}
+								onclick={(event) => toggleSelect(entry, event)}
+							></button>
+							<button
+								type="button"
+								class="select-box"
+								class:active={selectedSet.has(entry.item.id)}
+								role="checkbox"
+								aria-checked={selectedSet.has(entry.item.id)}
+								title="Selecionar post"
+								aria-label={`Selecionar ${entry.item.title}`}
+								onclick={(event) => toggleSelect(entry, event)}
+							>
+								{#if selectedSet.has(entry.item.id)}
+									<Icon name="check" size={14} />
+								{/if}
+							</button>
+						{/if}
+						<FeedCard
+							{entry}
+							terms={saved ? savedTerms : terms}
+							variant={view}
+							onread={() => toggleRead(entry)}
+							onsave={() => toggleSave(entry)}
+						/>
+					</div>
+				{/each}
+			</div>
 		</div>
-	</div>
 
-	{#if isEmpty}
-		<div class="placeholder-panel">
-			<span class="placeholder-title">
-				{entries.length === 0
-					? emptyTitle || (saved ? 'Nenhum post salvo ainda' : 'Nenhum post no cache ainda')
-					: saved
-						? 'Nenhum salvo com essa busca'
-						: 'Nenhum post com esse filtro'}
-			</span>
-			<span class="muted">
-				{entries.length === 0
-					? emptyHint ||
-						(saved
-							? "Use 'Salvar para depois' nos cards do feed."
-							: 'Clique em "Atualizar agora" para buscar as fontes cadastradas.')
-					: saved
-						? 'Ajuste a busca ou o modo de ordenação.'
-						: 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
-			</span>
-			{#if saved && entries.length === 0}
-				<a class="chip link" href={resolve('/feed')}>Ir para o feed</a>
-			{/if}
-		</div>
-	{/if}
+		{#if isEmpty}
+			<div class="placeholder-panel">
+				<span class="placeholder-title">
+					{entries.length === 0
+						? emptyTitle || (saved ? 'Nenhum post salvo ainda' : 'Nenhum post no cache ainda')
+						: saved
+							? 'Nenhum salvo com essa busca'
+							: 'Nenhum post com esse filtro'}
+				</span>
+				<span class="muted">
+					{entries.length === 0
+						? emptyHint ||
+							(saved
+								? "Use 'Salvar para depois' nos cards do feed."
+								: 'Clique em "Atualizar agora" para buscar as fontes cadastradas.')
+						: saved
+							? 'Ajuste a busca ou o modo de ordenação.'
+							: 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
+				</span>
+				{#if saved && entries.length === 0}
+					<a class="chip link" href={resolve('/feed')}>Ir para o feed</a>
+				{/if}
+			</div>
+		{/if}
 
-	{#if saved ? limit < savedFiltered.length : !overview && limit < filtered.length}
-		<button class="btn" type="button" style="align-self: center" onclick={() => (limit += 10)}>
-			Carregar mais
-		</button>
+		{#if saved ? limit < savedFiltered.length : !overview && limit < filtered.length}
+			<button class="btn" type="button" style="align-self: center" onclick={() => (limit += 10)}>
+				Carregar mais
+			</button>
+		{/if}
 	{/if}
 </section>
 

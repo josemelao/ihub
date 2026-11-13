@@ -8,6 +8,7 @@ const pages = [
 	'/gerenciar',
 	'/ler/e2e-post',
 	'/highlights',
+	'/favoritos',
 	'/arquivo/e2e-post'
 ];
 

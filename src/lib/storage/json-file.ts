@@ -424,6 +424,15 @@ export class JsonFileStorage implements HubStorage {
 		return readArticleFile(this.readingDir(), id);
 	}
 
+	async listArticleIds(): Promise<string[]> {
+		try {
+			const names = await readdir(this.readingDir());
+			return names.filter((name) => name.endsWith('.json')).map((name) => name.slice(0, -5));
+		} catch {
+			return [];
+		}
+	}
+
 	async saveArticle(article: ReadingArticle): Promise<void> {
 		await writeArticleFile(this.readingDir(), article);
 		await pruneArticleFiles(this.readingDir()).catch(() => undefined);
