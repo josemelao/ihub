@@ -1385,6 +1385,10 @@ h3 {
 	margin-left: auto;
 }
 
+.saved-count {
+	white-space: nowrap;
+}
+
 .filter-extra {
 	display: flex;
 	flex-direction: column;

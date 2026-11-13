@@ -755,6 +755,7 @@ Executada em 12/11/2026 sobre a busca do READ-05.
 - **Ordenação no modo conteúdo**: os chips continuam visíveis ao trocar para
   “Conteúdo” e passam a reordenar os grupos por `savedAt` ou `publishedAt`
   (`&sort=` na API). Antes eles sumiam, o que parecia um controle quebrado.
-- **Animação**: a seção de filtros do feed abre/fecha com `slide` de 160 ms e o
-  contador de salvos aparece/some com `fade` de 120 ms; ambos zeram a duração
-  quando `prefers-reduced-motion` está ligado.
+- **Animação**: a seção de filtros do feed abre/fecha com `slide` de 160 ms; o
+  contador de salvos usa **slide horizontal** de 160 ms, encolhendo a largura e
+  empurrando os chips sem salto. Ambos zeram a duração quando
+  `prefers-reduced-motion` está ligado.

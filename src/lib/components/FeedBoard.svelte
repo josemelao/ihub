@@ -977,9 +977,9 @@
 				</div>
 				{#if savedMode === 'title'}
 					<span
-						class="muted small"
+						class="muted small saved-count"
 						style="margin-left: auto"
-						transition:fade={{ duration: reduceMotion ? 0 : 120 }}
+						transition:slide={{ axis: 'x', duration: reduceMotion ? 0 : 160 }}
 					>
 						Mostrando {Math.min(limit, savedFiltered.length)} de {savedFiltered.length} salvos
 					</span>
