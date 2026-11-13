@@ -265,6 +265,9 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 - **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
 - YouTube aceita `@handle`, URL do canal, ID `UC...` ou URL de feed; o ID é resolvido automaticamente no refresh e pelo botão **Detectar**.
+- O feed do YouTube (`/feeds/videos.xml`) cai com 404/500 por horas, do lado
+  deles. O app preserva o cache e tenta de novo a cada intervalo; alternativas
+  mapeadas em [`docs/youtube-feed-contingencia.md`](docs/youtube-feed-contingencia.md).
 - Fontes de feed têm `order` opcional; DnD de grupos/categorias/fontes ainda não entrou (↑/↓ cobre).
 - `npm audit` completo tem avisos em dependências de desenvolvimento (ESLint).
 - O feed é sempre por data; não há ordenação alternativa.
@@ -908,3 +911,9 @@ Executada depois do item 43, a partir de um feed do GE que “não era encontrad
 - **Verificação real**: `POST /api/discover-feed` passou a responder `ok:true`
   para GE Corinthians, G1 Política, UOL e Meu Timão; refresh ao vivo marcou
   `r/Darktide` e depois `Legends of Runeterra` sem 429.
+- **YouTube (não corrigido, só diagnosticado)**: a fonte "Mister E" falha com
+  `HTTP 404`/`500` porque o endpoint `feeds/videos.xml` do próprio YouTube
+  responde 404 em janelas de horas — o ID do canal está certo (confirmado na
+  página do canal) e o cache de 15 vídeos é preservado. Plano de contingência,
+  opções e esboço de fallback em
+  [`docs/youtube-feed-contingencia.md`](docs/youtube-feed-contingencia.md).
