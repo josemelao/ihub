@@ -33,6 +33,7 @@ import {
 	type SourcePatch
 } from './hub-edit';
 import { removeTag, renameTag } from './tags';
+import { quickAccessKey } from './quick-access';
 import type { HubData } from './types';
 
 export interface HubPayload {
@@ -67,17 +68,45 @@ function requireDirection(payload: HubPayload): 'up' | 'down' {
 	return payload.direction;
 }
 
+/** Coloca a chave na frente do acesso rápido (item/grupo recém-fixado). */
+function pinFirst(hub: HubData, kind: 'item' | 'group', id: string): HubData {
+	const key = quickAccessKey(kind, id);
+	const order = (hub.settings.quickAccessOrder ?? []).filter(
+		(entry) => entry !== key && entry !== id
+	);
+	return { ...hub, settings: { ...hub.settings, quickAccessOrder: [key, ...order] } };
+}
+
+/** Remove a chave da ordem ao desafixar (aceita ids legados para itens). */
+function unpinKey(hub: HubData, kind: 'item' | 'group', id: string): HubData {
+	const order = hub.settings.quickAccessOrder;
+	if (!order) return hub;
+	const key = quickAccessKey(kind, id);
+	const next = order.filter((entry) => entry !== key && !(kind === 'item' && entry === id));
+	return { ...hub, settings: { ...hub.settings, quickAccessOrder: next } };
+}
+
 export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 	switch (payload.action) {
 		case 'add-item': {
 			if (!payload.item) throw new Error('Informe o item.');
-			return payload.item.type === 'app'
-				? addApp(hub, payload.item as AppInput)
-				: addLink(hub, payload.item as LinkInput);
+			const next =
+				payload.item.type === 'app'
+					? addApp(hub, payload.item as AppInput)
+					: addLink(hub, payload.item as LinkInput);
+			if (!payload.item.pinned) return next;
+			const added = next.items.find((item) => !hub.items.some((old) => old.id === item.id));
+			return added ? pinFirst(next, 'item', added.id) : next;
 		}
 
-		case 'update-item':
-			return updateItem(hub, requireId(payload), payload.patch ?? {});
+		case 'update-item': {
+			const id = requireId(payload);
+			const wasPinned = hub.items.find((item) => item.id === id)?.pinned ?? false;
+			const next = updateItem(hub, id, payload.patch ?? {});
+			if (payload.patch?.pinned === true && !wasPinned) return pinFirst(next, 'item', id);
+			if (payload.patch?.pinned === false) return unpinKey(next, 'item', id);
+			return next;
+		}
 
 		case 'delete-item':
 			return removeItem(hub, requireId(payload));
@@ -122,12 +151,22 @@ export function applyHubAction(hub: HubData, payload: HubPayload): HubData {
 			if (!payload.category) throw new Error('Informe a categoria.');
 			return addCategory(hub, payload.category);
 
-		case 'add-group':
+		case 'add-group': {
 			if (!payload.group) throw new Error('Informe o grupo.');
-			return addGroup(hub, payload.group);
+			const next = addGroup(hub, payload.group);
+			if (!payload.group.pinned) return next;
+			const added = next.groups.find((group) => !hub.groups.some((old) => old.id === group.id));
+			return added ? pinFirst(next, 'group', added.id) : next;
+		}
 
-		case 'update-group':
-			return updateGroup(hub, requireId(payload), payload.groupPatch ?? {});
+		case 'update-group': {
+			const id = requireId(payload);
+			const wasPinned = hub.groups.find((group) => group.id === id)?.pinned ?? false;
+			const next = updateGroup(hub, id, payload.groupPatch ?? {});
+			if (payload.groupPatch?.pinned === true && !wasPinned) return pinFirst(next, 'group', id);
+			if (payload.groupPatch?.pinned === false) return unpinKey(next, 'group', id);
+			return next;
+		}
 
 		case 'delete-group':
 			return removeGroup(hub, requireId(payload));

@@ -118,7 +118,7 @@
 			categoryId,
 			groupId: (source && 'groupId' in source ? source.groupId : presetGroup) ?? '',
 			tags: item ? item.tags.join(', ') : '',
-			pinned: item?.pinned ?? false,
+			pinned: source && 'pinned' in source ? Boolean(source.pinned) : false,
 			sourceType: feedSource?.type ?? 'rss',
 			target: feedSource?.target ?? '',
 			intervalMinutes: feedSource?.intervalMinutes ?? 30,
@@ -496,9 +496,9 @@
 				? {
 						action: 'update-group',
 						id: (initial as Group).id,
-						groupPatch: { name, categoryId }
+						groupPatch: { name, categoryId, pinned }
 					}
-				: { action: 'add-group', group: { name, categoryId } };
+				: { action: 'add-group', group: { name, categoryId, pinned } };
 		} else {
 			const filter = {
 				label: filterLabel,
@@ -834,6 +834,14 @@
 							<option value={category.id}>{category.name}</option>
 						{/each}
 					</select>
+				</div>
+				<div class="editor-section">
+					<span class="editor-section-label">Acesso rápido</span>
+					<label class="check">
+						<input type="checkbox" bind:checked={pinned} />
+						Fixar no acesso rápido da home
+					</label>
+					<span class="muted small"> O atalho abre a Biblioteca já focada neste grupo. </span>
 				</div>
 			{:else}
 				<div class="field">

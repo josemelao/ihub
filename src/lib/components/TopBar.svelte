@@ -7,12 +7,16 @@
 		placeholder = 'Buscar links, apps e posts do feed',
 		action = 'Adicionar',
 		actionTitle = 'Abre o gerenciador',
-		actionHref = resolve('/gerenciar')
+		actionHref = resolve('/gerenciar'),
+		title = '',
+		showEdit = true
 	}: {
 		placeholder?: string;
 		action?: string;
 		actionTitle?: string;
 		actionHref?: string;
+		title?: string;
+		showEdit?: boolean;
 	} = $props();
 </script>
 
@@ -26,18 +30,23 @@
 	>
 		<span aria-hidden="true">☰</span>
 	</button>
+	{#if title}
+		<span class="topbar-title">{title}</span>
+	{/if}
 	<button
-		class="search search-button"
+		class="search-button"
 		type="button"
 		onclick={() => ui.openPalette()}
-		title="Abrir busca rápida (Ctrl K)"
+		title={`${placeholder} (Ctrl K)`}
 	>
 		<Icon name="search" />
-		<span class="search-text">{placeholder}</span>
+		<span class="search-text">Buscar</span>
 		<span class="kbd" aria-hidden="true">Ctrl K</span>
 	</button>
 	<div class="topbar-actions">
-		<a class="btn" href={resolve('/gerenciar')} title={actionTitle}>Editar</a>
+		{#if showEdit}
+			<a class="btn" href={resolve('/gerenciar')} title={actionTitle}>Editar</a>
+		{/if}
 		<a class="btn btn-primary" href={actionHref} title={actionTitle}>
 			<Icon name="plus" size={16} />
 			{action}

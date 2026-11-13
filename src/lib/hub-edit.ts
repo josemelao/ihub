@@ -75,6 +75,7 @@ export interface CategoryInput {
 export interface GroupInput {
 	name: string;
 	categoryId: string;
+	pinned?: boolean;
 }
 
 export interface SettingsInput {
@@ -85,6 +86,7 @@ export interface SettingsInput {
 	fontSize?: 13 | 14 | 15;
 	highContrast?: boolean;
 	notifyUnread?: boolean;
+	homeLayout?: 'stacked' | 'split';
 }
 
 export type SavedFilterInput = Omit<SavedFilter, 'id'>;
@@ -509,6 +511,7 @@ export function updateSettings(hub: HubData, patch: SettingsInput): HubData {
 	if (patch.fontSize) settings.fontSize = patch.fontSize;
 	if (patch.highContrast !== undefined) settings.highContrast = patch.highContrast;
 	if (patch.notifyUnread !== undefined) settings.notifyUnread = patch.notifyUnread;
+	if (patch.homeLayout) settings.homeLayout = patch.homeLayout;
 
 	return { ...hub, settings };
 }
@@ -530,7 +533,16 @@ export function addGroup(hub: HubData, input: GroupInput): HubData {
 			.reduce((max, group) => Math.max(max, group.order), 0) + 1;
 	return {
 		...hub,
-		groups: [...hub.groups, { id, name: input.name, categoryId: input.categoryId, order }]
+		groups: [
+			...hub.groups,
+			{
+				id,
+				name: input.name,
+				categoryId: input.categoryId,
+				order,
+				...(input.pinned ? { pinned: true } : {})
+			}
+		]
 	};
 }
 
@@ -565,7 +577,15 @@ export function updateGroup(hub: HubData, id: string, patch: Partial<GroupInput>
 	return {
 		...hub,
 		groups: hub.groups.map((group) =>
-			group.id === id ? { ...group, name: patch.name ?? group.name, categoryId, order } : group
+			group.id === id
+				? {
+						...group,
+						name: patch.name ?? group.name,
+						categoryId,
+						order,
+						...(patch.pinned === undefined ? {} : { pinned: patch.pinned })
+					}
+				: group
 		),
 		items: categoryChanged
 			? hub.items.map((item) => (item.groupId === id ? { ...item, categoryId } : item))

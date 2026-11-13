@@ -99,6 +99,59 @@ describe('applyHubAction', () => {
 		expect(result.settings.accent).toBe('#E58BC0');
 	});
 
+	it('fixar um item coloca ele na frente do acesso rápido', () => {
+		const result = applyHubAction(base(), {
+			action: 'update-item',
+			id: 'wiki',
+			patch: { pinned: true }
+		});
+
+		expect(result.settings.quickAccessOrder).toEqual(['item:wiki']);
+		expect(() => parseHub(result)).not.toThrow();
+	});
+
+	it('desafixar um item remove a chave da ordem', () => {
+		const pinned = applyHubAction(base(), {
+			action: 'update-item',
+			id: 'wiki',
+			patch: { pinned: true }
+		});
+		const result = applyHubAction(pinned, {
+			action: 'update-item',
+			id: 'wiki',
+			patch: { pinned: false }
+		});
+
+		expect(result.settings.quickAccessOrder).toEqual([]);
+	});
+
+	it('fixar um grupo coloca ele na frente do acesso rápido', () => {
+		const result = applyHubAction(base(), {
+			action: 'update-group',
+			id: 'darktide',
+			groupPatch: { pinned: true }
+		});
+
+		expect(result.groups[0].pinned).toBe(true);
+		expect(result.settings.quickAccessOrder).toEqual(['group:darktide']);
+		expect(() => parseHub(result)).not.toThrow();
+	});
+
+	it('desafixar um grupo remove a chave da ordem', () => {
+		const pinned = applyHubAction(base(), {
+			action: 'update-group',
+			id: 'darktide',
+			groupPatch: { pinned: true }
+		});
+		const result = applyHubAction(pinned, {
+			action: 'update-group',
+			id: 'darktide',
+			groupPatch: { pinned: false }
+		});
+
+		expect(result.settings.quickAccessOrder).toEqual([]);
+	});
+
 	it('rejeita direção inválida', () => {
 		expect(() =>
 			applyHubAction(base(), {

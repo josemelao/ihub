@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { sortFeedSourcesForDisplay } from '#lib/feed/order';
 	import { onMount } from 'svelte';
 	import { QUICK_NOTE_ID, quickNoteOf } from '#lib/notes';
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
-	import HomeDashboard from '#lib/components/HomeDashboard.svelte';
+	import HomeStatus from '#lib/components/HomeStatus.svelte';
+	import HomeTools from '#lib/components/HomeTools.svelte';
+	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
+	import { DEFAULT_QUICK_ACCESS_LIMIT } from '#lib/quick-access';
 	import { relativeTime } from '#lib/display';
 	import { matchesFilter } from '#lib/feed/filter';
 	import { buildFeedView, buildSavedView } from '#lib/feed/view';
@@ -15,6 +19,7 @@
 	let { data }: PageProps = $props();
 
 	const hub = $derived(data.hub);
+	const layout = $derived(hub.settings.homeLayout ?? 'stacked');
 	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
 	const sources = $derived(
 		sortFeedSourcesForDisplay(
@@ -55,6 +60,28 @@
 		}
 	}
 
+	async function updateHub(payload: unknown): Promise<void> {
+		const response = await fetch('/api/hub', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(payload)
+		});
+		if (!response.ok) return;
+		await invalidateAll();
+	}
+
+	function reorderQuickAccess(ids: string[]): void {
+		void updateHub({ action: 'update-settings', settings: { quickAccessOrder: ids } });
+	}
+
+	function unpinQuickAccess(kind: 'item' | 'group', id: string): void {
+		void updateHub(
+			kind === 'item'
+				? { action: 'update-item', id, patch: { pinned: false } }
+				: { action: 'update-group', id, groupPatch: { pinned: false } }
+		);
+	}
+
 	function unreadFor(sourceId: string): number {
 		return data.feed.items.filter((item) => item.sourceId === sourceId && !data.state.read[item.id])
 			.length;
@@ -78,12 +105,58 @@
 
 <h1 class="sr-only">Início</h1>
 
-<TopBar />
+<TopBar
+	title="Início"
+	showEdit={false}
+	action="Adicionar"
+	actionTitle="Adicionar item ao hub"
+	actionHref={`${resolve('/gerenciar')}?tab=itens&add=link`}
+/>
 
-<div class="home-columns">
+<div class="home-columns" data-layout={layout}>
 	<div class="home-main">
-		<HomeDashboard hub={data.hub} feed={data.feed} hubState={data.state} />
-		<FeedBoard {entries} title="Últimas notícias" overview />
+		<HomeStatus {hub} feed={data.feed} hubState={data.state} />
+		{#if layout === 'split'}
+			<div class="home-split">
+				<div class="home-split-side">
+					<section class="panel dashboard-card" aria-labelledby="d-rapido">
+						<QuickAccess
+							{hub}
+							title="Acesso rápido"
+							grid
+							limit={DEFAULT_QUICK_ACCESS_LIMIT}
+							onreorder={reorderQuickAccess}
+							onunpin={unpinQuickAccess}
+						/>
+						<span class="sr-only" id="d-rapido">Acesso rápido</span>
+					</section>
+					<section class="panel dashboard-card" aria-labelledby="d-acoes">
+						<h2 id="d-acoes" class="dashboard-title">Ferramentas</h2>
+						<HomeTools />
+					</section>
+				</div>
+				<FeedBoard {entries} title="Últimas notícias" overview />
+			</div>
+		{:else}
+			<div class="home-top">
+				<section class="panel dashboard-card" aria-labelledby="d-rapido">
+					<QuickAccess
+						{hub}
+						title="Acesso rápido"
+						grid
+						limit={DEFAULT_QUICK_ACCESS_LIMIT}
+						onreorder={reorderQuickAccess}
+						onunpin={unpinQuickAccess}
+					/>
+					<span class="sr-only" id="d-rapido">Acesso rápido</span>
+				</section>
+				<section class="panel dashboard-card" aria-labelledby="d-acoes">
+					<h2 id="d-acoes" class="dashboard-title">Ferramentas</h2>
+					<HomeTools />
+				</section>
+			</div>
+			<FeedBoard {entries} title="Últimas notícias" overview />
+		{/if}
 	</div>
 
 	<aside class="home-aside" aria-label="Painel lateral">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
@@ -25,6 +25,15 @@
 		if (response.ok) await invalidateAll();
 	}
 
+	async function toggleGroupPin(id: string, pinned: boolean): Promise<void> {
+		const response = await fetch('/api/hub', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ action: 'update-group', id, groupPatch: { pinned } })
+		});
+		if (response.ok) await invalidateAll();
+	}
+
 	type Tab = 'todos' | 'app' | 'link';
 	let tab = $state<Tab>('todos');
 	let query = $state('');
@@ -39,6 +48,9 @@
 	let motionEnabled = $state(false);
 	let searchSnapshot: Record<string, boolean> | null = null;
 	let wasSearching = false;
+	let mounted = $state(false);
+	let focusMessage = $state('');
+	const focusedGroupId = $derived(page.url.searchParams.get('grupo') ?? '');
 
 	onMount(() => {
 		reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -48,10 +60,43 @@
 		} catch {
 			collapsed = {};
 		}
+		mounted = true;
 		const timer = setTimeout(() => {
 			motionEnabled = true;
 		}, 300);
 		return () => clearTimeout(timer);
+	});
+
+	let lastFocusParam: string | null = null;
+
+	async function focusGroup(id: string): Promise<void> {
+		const group = hub.groups.find((entry) => entry.id === id);
+		if (!group) {
+			focusMessage = 'Grupo não encontrado. Ele pode ter sido removido.';
+			return;
+		}
+
+		focusMessage = '';
+		collapsed = { ...collapsed, [group.categoryId]: false };
+		await tick();
+
+		const element = document.getElementById(`grupo-${id}`);
+		if (!element) {
+			focusMessage = `“${group.name}” não tem itens visíveis na biblioteca.`;
+			return;
+		}
+
+		element.scrollIntoView({
+			behavior: reduceMotion ? 'auto' : 'smooth',
+			block: 'center'
+		});
+	}
+
+	$effect(() => {
+		const param = page.url.searchParams.get('grupo');
+		if (!mounted || param === lastFocusParam) return;
+		lastFocusParam = param;
+		if (param) void focusGroup(param);
 	});
 
 	onMount(() => {
@@ -105,6 +150,7 @@
 					.map((group) => ({
 						id: group.id,
 						name: group.name,
+						pinned: Boolean(group.pinned),
 						items: hub.items
 							.filter(
 								(item) =>
@@ -126,7 +172,7 @@
 					.sort((a, b) => a.order - b.order);
 
 				if (ungrouped.length > 0) {
-					groups.push({ id: '__sem-grupo', name: 'Sem grupo', items: ungrouped });
+					groups.push({ id: '__sem-grupo', name: 'Sem grupo', pinned: false, items: ungrouped });
 				}
 
 				return {
@@ -199,6 +245,10 @@
 		{hub.items.length} itens · {appCount} apps do PC · {linkCount} links no navegador
 	</span>
 </div>
+
+{#if focusMessage}
+	<div class="alert reader-status" role="status">{focusMessage}</div>
+{/if}
 
 <div class="tabs" role="tablist" aria-label="Filtrar a biblioteca por plataforma">
 	<button
@@ -314,10 +364,29 @@
 				transition:slide={{ duration: motionDuration }}
 			>
 				{#each section.groups as group (group.id)}
-					<div class="library-group">
+					<div
+						class="library-group"
+						id={`grupo-${group.id}`}
+						class:focused={focusedGroupId === group.id}
+					>
 						<div class="library-group-head">
 							<span class="library-group-name">{group.name}</span>
 							<span class="muted small">{group.items.length} serviços</span>
+							{#if group.id !== '__sem-grupo'}
+								<button
+									class="library-pin"
+									type="button"
+									class:pinned={group.pinned}
+									aria-pressed={group.pinned}
+									aria-label={group.pinned
+										? `Desafixar ${group.name} do Acesso rápido`
+										: `Fixar ${group.name} no Acesso rápido`}
+									title={group.pinned ? 'Desafixar do Acesso rápido' : 'Fixar no Acesso rápido'}
+									onclick={() => toggleGroupPin(group.id, !group.pinned)}
+								>
+									{group.pinned ? '★' : '☆'}
+								</button>
+							{/if}
 							<a
 								class="library-group-edit"
 								href={resolve('/gerenciar') + '?tab=grupos&focus=' + group.id}

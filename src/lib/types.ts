@@ -15,6 +15,8 @@ export interface HubSettings {
 	highContrast?: boolean;
 	/** Notificar no sistema quando chegarem posts novos. */
 	notifyUnread?: boolean;
+	/** Como a home organiza acesso rápido e notícias. */
+	homeLayout?: 'stacked' | 'split';
 }
 
 export interface Category {
@@ -29,6 +31,8 @@ export interface Group {
 	categoryId: string;
 	name: string;
 	order: number;
+	/** Fixado no Acesso rápido da home. */
+	pinned?: boolean;
 }
 
 interface ItemBase {

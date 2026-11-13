@@ -74,6 +74,10 @@
 	{:else if name === 'book'}
 		<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
 		<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+	{:else if name === 'layers'}
+		<path d="M12 3l9 5-9 5-9-5 9-5z" />
+		<path d="M3 12.5l9 5 9-5" />
+		<path d="M3 17l9 5 9-5" />
 	{:else if name === 'play'}
 		<path d="M8 5l11 7-11 7z" fill="currentColor" stroke="none" />
 	{:else if name === 'expand'}

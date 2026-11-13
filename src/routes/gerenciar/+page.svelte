@@ -215,9 +215,15 @@
 	let dropTargetKey = $state<string | null>(null);
 	let accent = $state(untrack(() => data.hub.settings.accent));
 	let density = $state(untrack(() => data.hub.settings.density ?? 'comfortable'));
+	let homeLayout = $state<'stacked' | 'split'>(
+		untrack(() => data.hub.settings.homeLayout ?? 'stacked')
+	);
 	let fontSize = $state(untrack(() => data.hub.settings.fontSize ?? 14));
 	let highContrast = $state(untrack(() => Boolean(data.hub.settings.highContrast)));
 	let notifyUnread = $state(untrack(() => Boolean(data.hub.settings.notifyUnread)));
+	let notifyMessage = $state('');
+	let notifyKind = $state<'ok' | 'error' | ''>('');
+	let notifyBlocked = $state(false);
 	let health = $state<{
 		ok: boolean;
 		writable: boolean;
@@ -480,7 +486,7 @@
 	async function saveReading(): Promise<void> {
 		await mutate({
 			action: 'update-settings',
-			settings: { density, fontSize, highContrast, notifyUnread }
+			settings: { density, fontSize, highContrast, notifyUnread, homeLayout }
 		});
 	}
 
@@ -497,15 +503,21 @@
 		}
 	}
 
-	async function toggleNotify(): Promise<void> {
-		if (notifyUnread) {
+	async function toggleNotify(event: Event): Promise<void> {
+		const input = event.currentTarget as HTMLInputElement;
+		notifyMessage = '';
+		notifyKind = '';
+
+		if (!input.checked) {
 			notifyUnread = false;
 			await saveReading();
 			return;
 		}
 
 		if (typeof Notification === 'undefined') {
-			actionMessage = 'Este navegador não oferece notificações.';
+			input.checked = false;
+			notifyKind = 'error';
+			notifyMessage = 'Este navegador não oferece notificações.';
 			return;
 		}
 
@@ -514,12 +526,28 @@
 				? await Notification.requestPermission()
 				: Notification.permission;
 
+		if (permission === 'denied') {
+			input.checked = false;
+			notifyUnread = false;
+			notifyBlocked = true;
+			notifyKind = 'error';
+			notifyMessage =
+				'Notificações bloqueadas para este site. Abra o cadeado na barra de endereço → Notificações → Permitir e recarregue a página.';
+			return;
+		}
+
 		if (permission !== 'granted') {
-			actionMessage = 'Permissão de notificação negada pelo navegador.';
+			input.checked = false;
+			notifyKind = 'error';
+			notifyMessage =
+				'Permissão não concedida. Clique em “Permitir” na janela do navegador para ativar.';
 			return;
 		}
 
 		notifyUnread = true;
+		notifyBlocked = false;
+		notifyKind = 'ok';
+		notifyMessage = 'Notificações ativadas.';
 		await saveReading();
 	}
 
@@ -781,6 +809,9 @@
 	onMount(() => {
 		void loadBackupInfo();
 		void loadArchiveEntries();
+		if (typeof Notification !== 'undefined') {
+			notifyBlocked = Notification.permission === 'denied';
+		}
 		return () => {
 			if (archivePoll) clearInterval(archivePoll);
 		};
@@ -1846,11 +1877,15 @@
 		<button class="btn btn-primary" type="button" onclick={saveAccent}>Salvar cor</button>
 	</div>
 
-	<div class="appearance-card">
+	<div class="appearance-card appearance-card-form">
 		<div class="appearance-main">
-			<strong>Leitura e densidade</strong>
-			<span class="muted small">Vale para todas as telas e fica salvo no hub.</span>
-			<div class="reading-grid">
+			<div>
+				<strong>Interface e home</strong>
+				<span class="muted small">
+					Densidade e tamanho valem para todas as telas; tudo fica salvo no hub.
+				</span>
+			</div>
+			<div class="appearance-form">
 				<div class="field">
 					<label for="e-density">Densidade</label>
 					<select id="e-density" bind:value={density}>
@@ -1866,17 +1901,57 @@
 						<option value={15}>15 px</option>
 					</select>
 				</div>
-				<label class="check">
-					<input type="checkbox" bind:checked={highContrast} />
-					Contraste alto
-				</label>
-				<label class="check">
-					<input type="checkbox" checked={notifyUnread} onchange={toggleNotify} />
-					Notificar posts novos
-				</label>
+				<div class="field">
+					<label for="e-home-layout">Layout da home</label>
+					<select id="e-home-layout" bind:value={homeLayout}>
+						<option value="stacked">Empilhado — atalhos e notícias</option>
+						<option value="split">Dividido — atalhos ao lado do feed</option>
+					</select>
+				</div>
+				<div class="field field-check">
+					<span class="field-label">Contraste</span>
+					<label class="check">
+						<input type="checkbox" bind:checked={highContrast} />
+						Contraste alto
+					</label>
+				</div>
 			</div>
+			<span class="muted small">
+				Compacta reduz os espaçamentos; 15 px aumenta o texto do app inteiro; contraste alto clareia
+				textos secundários e bordas.
+			</span>
 		</div>
-		<button class="btn btn-primary" type="button" onclick={saveReading}> Salvar leitura </button>
+		<div class="appearance-actions">
+			<button class="btn btn-primary" type="button" onclick={saveReading}>
+				Salvar aparência
+			</button>
+		</div>
+	</div>
+
+	<div class="appearance-card appearance-card-form">
+		<div class="appearance-main">
+			<div>
+				<strong>Notificações</strong>
+				<span class="muted small">
+					Aviso do navegador quando chegam posts novos e a aba está oculta.
+				</span>
+			</div>
+			<label class="check">
+				<input type="checkbox" checked={notifyUnread} onchange={toggleNotify} />
+				Notificar posts novos
+			</label>
+			{#if notifyBlocked && !notifyMessage}
+				<span class="muted small">
+					Bloqueadas pelo navegador. Abra o cadeado na barra de endereço → Notificações → Permitir e
+					recarregue.
+				</span>
+			{/if}
+			{#if notifyMessage}
+				<div class:alert={notifyKind === 'error'} class:notice={notifyKind === 'ok'} role="status">
+					{notifyMessage}
+				</div>
+			{/if}
+		</div>
 	</div>
 
 	<div class="appearance-card">

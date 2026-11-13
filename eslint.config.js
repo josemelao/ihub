@@ -57,7 +57,9 @@ export default defineConfig(
 		// Estes componentes montam links internos com query string já resolvida
 		// (ex.: resolve('/feed') + '?fonte=...'), que a regra não consegue analisar.
 		files: [
-			'src/lib/components/HomeDashboard.svelte',
+			'src/lib/components/HomeStatus.svelte',
+			'src/lib/components/HomeTools.svelte',
+			'src/lib/components/GroupCard.svelte',
 			'src/lib/components/Sidebar.svelte',
 			'src/routes/biblioteca/+page.svelte',
 			'src/routes/feed/+page.svelte'

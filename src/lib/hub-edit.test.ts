@@ -440,6 +440,15 @@ describe('grupos', () => {
 		expect(hub.feedSources[0].categoryId).toBe('trabalho');
 	});
 
+	it('fixa e desafixa o grupo no acesso rápido', () => {
+		const pinned = updateGroup(base(), 'darktide', { pinned: true });
+		expect(pinned.groups.find((group) => group.id === 'darktide')?.pinned).toBe(true);
+		expect(() => parseHub(pinned)).not.toThrow();
+
+		const unpinned = updateGroup(pinned, 'darktide', { pinned: false });
+		expect(unpinned.groups.find((group) => group.id === 'darktide')?.pinned).toBe(false);
+	});
+
 	it('não remove grupo em uso', () => {
 		expect(() => removeGroup(base(), 'darktide')).toThrow(/em uso/i);
 	});
@@ -486,6 +495,12 @@ describe('limite de posts e configurações', () => {
 	it('atualiza a cor de destaque', () => {
 		const hub = updateSettings(base(), { accent: '#7DD3A8' });
 		expect(hub.settings.accent).toBe('#7DD3A8');
+		expect(() => parseHub(hub)).not.toThrow();
+	});
+
+	it('salva o layout da home', () => {
+		const hub = updateSettings(base(), { homeLayout: 'split' });
+		expect(hub.settings.homeLayout).toBe('split');
 		expect(() => parseHub(hub)).not.toThrow();
 	});
 });

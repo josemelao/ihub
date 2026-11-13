@@ -191,6 +191,13 @@ describe('parseHub', () => {
 		}
 	});
 
+	it('rejeita layout da home desconhecido', () => {
+		const invalid = structuredClone(base) as { settings: Record<string, unknown> };
+		invalid.settings.homeLayout = 'quatro-colunas';
+
+		expect(() => parseHub(invalid)).toThrow(HubValidationError);
+	});
+
 	it('rejeita app com protocolo perigoso', () => {
 		const invalid = {
 			version: 1,

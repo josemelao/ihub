@@ -86,6 +86,7 @@
 				{group}
 				items={itemsFor(group.id, group.id === `${category.id}-sem-grupo`)}
 				color={category.color}
+				virtual={group.id === `${category.id}-sem-grupo`}
 			/>
 		{/each}
 	</div>

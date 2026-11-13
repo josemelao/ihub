@@ -1,9 +1,9 @@
 import { expect, test } from './fixtures';
 
-test('ações rápidas não repetem a navegação e incluem manutenção', async ({ page }) => {
+test('ferramentas não repetem a navegação e incluem manutenção', async ({ page }) => {
 	await page.goto('/');
 
-	const card = page.getByRole('region', { name: 'Ações rápidas' });
+	const card = page.getByRole('region', { name: 'Ferramentas' });
 	await expect(card.getByRole('button', { name: 'Atualizar agora' })).toBeVisible();
 	await expect(card.getByRole('button', { name: 'Backup agora' })).toBeVisible();
 	await expect(card.getByRole('link', { name: 'Exportar dados' })).toBeVisible();
@@ -13,6 +13,59 @@ test('ações rápidas não repetem a navegação e incluem manutenção', async
 	await expect(card.getByRole('link', { name: 'Ver feed completo' })).toHaveCount(0);
 	await expect(card.getByRole('link', { name: 'Favoritos' })).toHaveCount(0);
 	await expect(card.getByRole('link', { name: 'Gerenciar' })).toHaveCount(0);
+});
+
+test('layout dividido coloca atalhos ao lado do feed e ferramentas no aside', async ({ page }) => {
+	const setLayout = async (homeLayout: 'stacked' | 'split') => {
+		const response = await page.request.post('/api/hub', {
+			data: { action: 'update-settings', settings: { homeLayout } }
+		});
+		expect(response.ok()).toBe(true);
+	};
+
+	await setLayout('split');
+	try {
+		await page.goto('/');
+
+		await expect(page.locator('.home-split')).toBeVisible();
+		await expect(page.locator('.home-split .quick-grid')).toBeVisible();
+		await expect(
+			page.locator('.home-split').getByRole('heading', { name: 'Últimas notícias' })
+		).toBeVisible();
+		await expect(
+			page.locator('.home-split').getByRole('region', { name: 'Ferramentas' })
+		).toBeVisible();
+		await expect(
+			page.locator('.home-aside').getByRole('region', { name: 'Ferramentas' })
+		).toHaveCount(0);
+		await expect(page.locator('.home-top')).toHaveCount(0);
+	} finally {
+		await setLayout('stacked');
+	}
+});
+
+test('grupo fixado abre a biblioteca focada no grupo', async ({ page }) => {
+	const pin = await page.request.post('/api/hub', {
+		data: { action: 'update-group', id: 'darktide', groupPatch: { pinned: true } }
+	});
+	expect(pin.ok()).toBe(true);
+
+	try {
+		await page.goto('/');
+		const tile = page.locator('.quick-grid a[href*="/biblioteca?grupo=darktide"]');
+		await expect(tile).toBeVisible();
+
+		await tile.click();
+		await expect(page).toHaveURL(/\/biblioteca\?grupo=darktide/);
+
+		const group = page.locator('#grupo-darktide');
+		await expect(group).toBeVisible();
+		await expect(group).toHaveClass(/focused/);
+	} finally {
+		await page.request.post('/api/hub', {
+			data: { action: 'update-group', id: 'darktide', groupPatch: { pinned: false } }
+		});
+	}
 });
 
 test('backup agora cria um ponto de restauração', async ({ page }) => {
