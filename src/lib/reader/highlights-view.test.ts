@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { groupHighlights, totalHighlights } from './highlights-view';
+import {
+	countByColor,
+	filterHighlights,
+	groupHighlights,
+	totalHighlights
+} from './highlights-view';
 import type { ReadingHighlight } from '../types';
 
 const h = (id: string, itemId: string, itemTitle: string, at: string): ReadingHighlight => ({
@@ -44,5 +49,51 @@ describe('groupHighlights', () => {
 		]);
 
 		expect(totalHighlights(groups)).toBe(3);
+	});
+});
+
+describe('filterHighlights', () => {
+	const groups = groupHighlights([
+		{ ...h('1', 'a', 'Patch', '2026-01-01T00:00:00.000Z'), quote: 'dano do Flamethrower' },
+		{
+			...h('2', 'a', 'Patch', '2026-01-02T00:00:00.000Z'),
+			quote: 'economia',
+			color: 'blue',
+			note: 'revisar depois'
+		},
+		{ ...h('3', 'b', 'Guia', '2026-01-03T00:00:00.000Z'), quote: 'build de ogryn' }
+	]);
+
+	it('sem filtro devolve os mesmos grupos', () => {
+		expect(filterHighlights(groups, {})).toBe(groups);
+	});
+
+	it('filtra por busca sem acento e mantém o grupo', () => {
+		const filtered = filterHighlights(groups, { query: 'flamethrower' });
+		expect(filtered).toHaveLength(1);
+		expect(totalHighlights(filtered)).toBe(1);
+	});
+
+	it('busca também na nota', () => {
+		const filtered = filterHighlights(groups, { query: 'revisar' });
+		expect(totalHighlights(filtered)).toBe(1);
+		expect(filtered[0].highlights[0].id).toBe('2');
+	});
+
+	it('filtra por cor e remove grupos vazios', () => {
+		const filtered = filterHighlights(groups, { color: 'blue' });
+		expect(filtered).toHaveLength(1);
+		expect(filtered[0].itemId).toBe('a');
+		expect(filtered[0].highlights.map((highlight) => highlight.id)).toEqual(['2']);
+	});
+
+	it('combina busca e cor', () => {
+		expect(filterHighlights(groups, { query: 'economia', color: 'yellow' })).toHaveLength(0);
+		expect(filterHighlights(groups, { query: 'economia', color: 'blue' })).toHaveLength(1);
+	});
+
+	it('conta por cor', () => {
+		const all = countByColor(groups.flatMap((group) => group.highlights));
+		expect(all).toEqual({ all: 3, yellow: 2, green: 0, blue: 1, pink: 0 });
 	});
 });

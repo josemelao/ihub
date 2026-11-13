@@ -4,15 +4,20 @@
 	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
-	import { normalize } from '#lib/feed/filter';
-	import { HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlight-meta';
-	import { totalHighlights } from '#lib/reader/highlights-view';
+	import { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_LABELS } from '#lib/reader/highlight-meta';
+	import {
+		countByColor,
+		filterHighlights,
+		totalHighlights,
+		type HighlightColorFilter
+	} from '#lib/reader/highlights-view';
 	import type { ReadingHighlight } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	let query = $state('');
+	let colorFilter = $state<HighlightColorFilter>('all');
 	let removing = $state<ReadingHighlight | null>(null);
 	let removeError = $state('');
 
@@ -41,27 +46,19 @@
 	}
 
 	const total = $derived(totalHighlights(data.groups));
-
-	const terms = $derived(
-		query
-			.trim()
-			.split(/\s+/)
-			.filter(Boolean)
-			.map((term) => normalize(term))
-	);
-
-	const groups = $derived(
-		terms.length === 0
-			? data.groups
-			: data.groups.filter((group) => {
-					const haystack = normalize(
-						`${group.itemTitle}\n${group.highlights
-							.map((highlight) => `${highlight.quote}\n${highlight.note ?? ''}`)
-							.join('\n')}`
-					);
-					return terms.every((term) => haystack.includes(term));
-				})
-	);
+	const queryGroups = $derived(filterHighlights(data.groups, { query }));
+	const colorCounts = $derived(countByColor(queryGroups.flatMap((group) => group.highlights)));
+	const groups = $derived(filterHighlights(queryGroups, { color: colorFilter }));
+	const visible = $derived(totalHighlights(groups));
+	const filtering = $derived(Boolean(query.trim()) || colorFilter !== 'all');
+	const emptyMessage = $derived.by(() => {
+		if (data.groups.length === 0) return 'Nenhum destaque ainda.';
+		const color = colorFilter !== 'all' ? HIGHLIGHT_COLOR_LABELS[colorFilter] : '';
+		const term = query.trim();
+		if (term && color) return `Nenhum destaque ${color} com “${term}”.`;
+		if (term) return 'Nenhum destaque para esta busca.';
+		return `Nenhum destaque ${color}.`;
+	});
 </script>
 
 <svelte:head>
@@ -73,19 +70,53 @@
 <div class="section-head">
 	<h1>Destaques</h1>
 	<span class="muted small">
-		{total}
+		{#if filtering}{visible} de {total}{:else}{total}{/if}
 		{total === 1 ? 'trecho marcado' : 'trechos marcados'}
 	</span>
 </div>
 
-<div class="section">
-	<label class="sr-only" for="hl-search">Buscar destaques</label>
-	<input
-		id="hl-search"
-		type="search"
-		bind:value={query}
-		placeholder="Buscar trecho, nota ou título"
-	/>
+<div class="filter-panel highlights-filter">
+	<div class="filter-row">
+		<div class="filter-input">
+			<Icon name="search" size={16} />
+			<label class="sr-only" for="hl-search">Buscar destaques</label>
+			<input
+				id="hl-search"
+				type="search"
+				bind:value={query}
+				placeholder="Buscar trecho, nota ou título"
+			/>
+		</div>
+		{#if filtering}
+			<span class="muted small filter-count" aria-live="polite">
+				{visible} de {total} trechos
+			</span>
+		{/if}
+	</div>
+	<div class="chips" role="group" aria-label="Filtrar por cor">
+		<button
+			class="chip"
+			class:solid={colorFilter === 'all'}
+			type="button"
+			aria-pressed={colorFilter === 'all'}
+			onclick={() => (colorFilter = 'all')}
+		>
+			Todas · {colorCounts.all}
+		</button>
+		{#each HIGHLIGHT_COLORS as color (color)}
+			<button
+				class="chip"
+				class:active={colorFilter === color}
+				type="button"
+				aria-pressed={colorFilter === color}
+				onclick={() => (colorFilter = color)}
+			>
+				<span class="color-dot hl-{color}" aria-hidden="true"></span>
+				{HIGHLIGHT_COLOR_LABELS[color]}{#if colorCounts[color]}
+					· {colorCounts[color]}{/if}
+			</button>
+		{/each}
+	</div>
 </div>
 
 {#if removeError}
@@ -102,9 +133,7 @@
 {/if}
 
 {#if groups.length === 0}
-	<p class="muted section">
-		{query.trim() ? 'Nenhum destaque para esta busca.' : 'Nenhum destaque ainda.'}
-	</p>
+	<p class="muted section">{emptyMessage}</p>
 {:else}
 	{#each groups as group (group.itemId)}
 		<section class="panel section" aria-labelledby={`t-hl-${group.itemId}`}>

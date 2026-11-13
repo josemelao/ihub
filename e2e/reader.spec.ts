@@ -76,3 +76,35 @@ test('tela de destaques permite remover com confirmação', async ({ page }) => 
 
 	await expect(page.getByText(/Nenhum destaque/i)).toBeVisible();
 });
+
+test('tela de destaques filtra por cor', async ({ page }) => {
+	const ids: string[] = [];
+	for (const [quote, color] of [
+		['trecho amarelo', 'yellow'],
+		['trecho azul', 'blue']
+	] as const) {
+		const response = await page.request.post('/api/highlights', {
+			data: { action: 'save', itemId: 'e2e-post', quote, color }
+		});
+		const body = (await response.json()) as {
+			highlights: { highlights: { id: string; quote: string }[] };
+		};
+		ids.push(body.highlights.highlights.find((highlight) => highlight.quote === quote)!.id);
+	}
+
+	try {
+		await page.goto('/highlights');
+		await page.getByRole('button', { name: /^azul/ }).click();
+
+		await expect(page.getByRole('button', { name: /^azul/ })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+		await expect(page.getByText('trecho azul')).toBeVisible();
+		await expect(page.getByText('trecho amarelo')).toHaveCount(0);
+	} finally {
+		for (const id of ids) {
+			await page.request.post('/api/highlights', { data: { action: 'delete', id } });
+		}
+	}
+});

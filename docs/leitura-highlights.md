@@ -169,7 +169,7 @@ acontece com `notes.json` — limitação registrada, fora do escopo.
 - **Ler:** card → “Ler aqui” → `/ler/[id]`; com cache abre na hora; sem cache extrai (spinner),
   sanitiza, grava e renderiza. Falha → mensagem + “Abrir original”.
 - **Destacar:** selecionar texto → toolbar → cor ou “Anotar” → salva e aparece na lista.
-- **Revisar:** `/highlights` lista por post, com busca por trecho/nota/título e link para o reader.
+- **Revisar:** `/highlights` lista por post, com busca por trecho/nota/título, filtro por cor (Todas/amarelo/verde/azul/rosa, com contagem), contador “X de Y trechos” e link para o reader.
 - **Offline:** artigo já extraído abre sem rede; sem cache, mensagem clara.
 
 ## Segurança

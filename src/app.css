@@ -3553,3 +3553,37 @@ html[data-contrast='high'] .feed-card.read {
 	align-self: flex-start;
 	margin-top: 4px;
 }
+
+/* Filtro da página de destaques (READ-05) */
+.highlights-filter {
+	gap: 8px;
+	padding: 10px 12px;
+}
+
+.highlights-filter .filter-input input {
+	height: 36px;
+	padding-left: 32px;
+}
+
+.highlights-filter .filter-input svg {
+	top: 10px;
+	left: 10px;
+}
+
+.highlights-filter .chip {
+	height: 30px;
+	padding: 0 11px;
+	font-size: 12.5px;
+}
+
+.highlights-filter .filter-count {
+	margin-left: auto;
+}
+
+.color-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--hl);
+	flex: 0 0 auto;
+}

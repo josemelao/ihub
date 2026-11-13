@@ -759,3 +759,23 @@ Executada em 12/11/2026 sobre a busca do READ-05.
   contador de salvos usa **slide horizontal** de 160 ms, encolhendo a largura e
   empurrando os chips sem salto. Ambos zeram a duração quando
   `prefers-reduced-motion` está ligado.
+
+## 40. Destaques: busca no padrão e filtro por cor (na mesma leva da v0.32.0)
+
+Executada em 12/11/2026 sobre a página `/highlights`.
+
+- **Campo vanilla substituído**: a busca da página de Destaques era um
+  `<input type="search">` solto. Agora usa o mesmo `.filter-panel` +
+  `.filter-input` de Salvos/feed, com ícone, contador “X de Y trechos” e
+  `aria-live`.
+- **Filtro por cor**: chips Todas/amarelo/verde/azul/rosa com contagem por cor
+  (a contagem já considera a busca atual). Cor + texto combinam; grupos que
+  ficam sem trechos são removidos.
+- **Lógica extraída**: `filterHighlights(groups, { query, color })` e
+  `countByColor` em `highlights-view.ts`, com 6 testes novos.
+- **Por que manter a página**: ela é a visão de revisão/gerenciamento (inclui
+  destaques de posts não salvos e permite remover), enquanto a busca de Salvos
+  serve para encontrar uma passagem e abrir o leitor. Os papéis ficaram
+  distintos sem tirar recurso.
+- **Teste**: E2E novo cobre o chip de cor (filtra e mantém `aria-pressed`); axe
+  em `/highlights` segue verde.
