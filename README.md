@@ -166,7 +166,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - A sidebar mostra, por categoria, **itens · fontes de feed** (ex.: `17 · 3`), com detalhes no tooltip.
 - Organização por **categoria → grupo**. Um grupo pode combinar serviços do mesmo assunto (ex.: Darktide = app na Steam + site de builds + wiki + subreddit), e cada item mantém seu `type` (`app` ou `link`).
 - Itens sem grupo aparecem em **“Sem grupo”**.
-- **Ícones**: links usam o favicon do domínio (via DuckDuckGo) e apps usam o ícone do protocolo (Simple Icons, ex.: `steam://` → Steam). Se a imagem falhar, aparecem as iniciais.
+- **Ícones**: links usam o favicon do domínio (DuckDuckGo → Google → `/favicon.ico`) e apps usam o favicon do site oficial (VS Code, Steam, Word etc.), com Simple Icons como fallback. Todos ficam sobre um tile claro para contraste; se a cadeia falhar, aparecem as iniciais.
 - **Descrição curta** opcional por item aparece no card da Biblioteca, no tooltip do Acesso rápido e na busca.
 - O campo opcional `icon` sobrescreve o ícone: use um slug do Simple Icons (`github`) ou uma URL `https://...`.
 - A rota antiga `/apps` redireciona para `/biblioteca`.

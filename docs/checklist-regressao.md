@@ -71,7 +71,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] “Recolher tudo / Expandir tudo” funciona.
 - [ ] Busca expande categorias e restaura o estado anterior.
 - [ ] Grupos mostram itens e fontes corretos.
-- [ ] Ícones de favicon/Simple Icons têm fallback de iniciais.
+- [ ] Ícones têm cadeia de favicons (DuckDuckGo → Google → direto) e fallback de iniciais.
 - [ ] Itens sem grupo aparecem em “Sem grupo”.
 
 ## Salvos
