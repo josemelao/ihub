@@ -2,18 +2,90 @@ import { lookup } from 'node:dns/promises';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { isIP } from 'node:net';
+import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
+import { blockedFor, noteHostSuccess, noteRateLimited, rateLimitMessage } from './host-gate';
 
 // Reddit (e outros sites) bloqueiam UA genérico com 429; formato compatível com
 // a política deles: Mozilla/5.0 (compatible; App/versão; +URL).
 const USER_AGENT = 'Mozilla/5.0 (compatible; MeuHub/0.1; +https://github.com/josemelao/ihub)';
 
-function httpError(status: number): Error {
+/** 429 tratado como estado recuperável: o refresh não deve marcar a fonte como buscada. */
+export class RateLimitError extends Error {
+	readonly retryAfterMs: number | null;
+
+	constructor(message: string, retryAfterMs: number | null = null) {
+		super(message);
+		this.name = 'RateLimitError';
+		this.retryAfterMs = retryAfterMs;
+	}
+}
+
+function parseRetryAfter(value: string | null): number | null {
+	if (!value) return null;
+	const seconds = Number(value);
+	if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+	const date = Date.parse(value);
+	if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+	return null;
+}
+
+function httpError(status: number, retryAfter: string | null = null): Error {
 	if (status === 429) {
-		return new Error(
-			'O site limitou temporariamente as requisições (429). Tente de novo em alguns minutos.'
+		return new RateLimitError(
+			'O site limitou temporariamente as requisições (429). Tente de novo em alguns minutos.',
+			parseRetryAfter(retryAfter)
 		);
 	}
 	return new Error(`HTTP ${status}`);
+}
+
+/**
+ * O `node:http` entrega o corpo como veio: um CDN pode comprimir mesmo sem
+ * `accept-encoding` no pedido (a Globo faz isso). Descomprime pelo
+ * `content-encoding` e, se o header estiver mentindo, devolve o corpo original.
+ */
+export function decodeBody(body: Buffer, encoding: string | null, maxBytes: number): Buffer {
+	const layers = (encoding ?? '')
+		.split(',')
+		.map((layer) => layer.trim().toLowerCase())
+		.filter((layer) => layer !== '' && layer !== 'identity');
+
+	let out = body;
+	for (const layer of layers.reverse()) {
+		const options = { maxOutputLength: Math.max(1, maxBytes) };
+		try {
+			if (layer === 'gzip' || layer === 'x-gzip') out = gunzipSync(out, options);
+			else if (layer === 'deflate' || layer === 'x-deflate') out = inflateSync(out, options);
+			else if (layer === 'br') out = brotliDecompressSync(out, options);
+			else return body;
+		} catch (error) {
+			if ((error as NodeJS.ErrnoException)?.code === 'ERR_BUFFER_TOO_LARGE') {
+				throw new Error('Resposta muito grande.', { cause: error });
+			}
+			return body;
+		}
+	}
+	return out;
+}
+
+/** Charset do header, depois da declaração XML, depois UTF-8. */
+function charsetOf(contentType: string | null, body: Buffer): string {
+	const fromHeader = /charset\s*=\s*"?([^";]+)"?/i.exec(contentType ?? '')?.[1];
+	if (fromHeader) return fromHeader.trim();
+	const fromDecl = /<\?xml[^>]*encoding\s*=\s*["']([^"']+)["']/i.exec(
+		body.subarray(0, 200).toString('latin1')
+	)?.[1];
+	return fromDecl ? fromDecl.trim() : 'utf-8';
+}
+
+/** Decodifica respeitando o charset; label desconhecido cai para UTF-8. */
+export function decodeText(body: Buffer, contentType: string | null): string {
+	const charset = charsetOf(contentType, body);
+	try {
+		return new TextDecoder(charset).decode(body);
+	} catch {
+		return new TextDecoder('utf-8').decode(body);
+	}
 }
 
 function expandIpv6(value: string): string[] | null {
@@ -330,6 +402,9 @@ function fetchTextPinned(
 		let current = new URL(target);
 
 		for (let redirects = 0; redirects < 4; redirects += 1) {
+			const wait = blockedFor(current);
+			if (wait > 0) throw new RateLimitError(rateLimitMessage(wait), wait);
+
 			const pinned = await resolvePublicAddress(current);
 			const response = await requestPinned(current, pinned, options);
 
@@ -341,7 +416,11 @@ function fetchTextPinned(
 			}
 
 			if (response.status < 200 || response.status >= 300) {
-				throw httpError(response.status);
+				const error = httpError(response.status, headerOf(response.headers, 'retry-after'));
+				if (error instanceof RateLimitError) {
+					noteRateLimited(current, error.retryAfterMs);
+				}
+				throw error;
 			}
 
 			const contentType = headerOf(response.headers, 'content-type');
@@ -349,7 +428,17 @@ function fetchTextPinned(
 				throw new Error(`Tipo de conteúdo não suportado: ${contentType}`);
 			}
 
-			return { text: response.body.toString('utf8'), finalUrl: current.toString() };
+			noteHostSuccess(current);
+
+			// Alguns CDNs comprimem mesmo sem nós pedirmos (GE/G1) e o
+			// `toString('utf8')` transformava 1f 8b em lixo.
+			const body = decodeBody(
+				response.body,
+				headerOf(response.headers, 'content-encoding'),
+				options.maxBytes
+			);
+
+			return { text: decodeText(body, contentType), finalUrl: current.toString() };
 		}
 
 		throw new Error('Muitos redirecionamentos.');
@@ -492,6 +581,9 @@ async function fetchBytesPinned(
 	let current = new URL(target);
 
 	for (let redirects = 0; redirects < 4; redirects += 1) {
+		const wait = blockedFor(current);
+		if (wait > 0) throw new RateLimitError(rateLimitMessage(wait), wait);
+
 		const pinned = await resolvePublicAddress(current);
 		const response = await requestPinned(current, pinned, options);
 
@@ -503,7 +595,11 @@ async function fetchBytesPinned(
 		}
 
 		if (response.status < 200 || response.status >= 300) {
-			throw httpError(response.status);
+			const error = httpError(response.status, headerOf(response.headers, 'retry-after'));
+			if (error instanceof RateLimitError) {
+				noteRateLimited(current, error.retryAfterMs);
+			}
+			throw error;
 		}
 
 		const contentType = headerOf(response.headers, 'content-type');
@@ -511,8 +607,12 @@ async function fetchBytesPinned(
 			throw new Error(`Tipo de conteúdo não suportado: ${contentType}`);
 		}
 
+		noteHostSuccess(current);
+
 		return {
-			bytes: new Uint8Array(response.body),
+			bytes: new Uint8Array(
+				decodeBody(response.body, headerOf(response.headers, 'content-encoding'), options.maxBytes)
+			),
 			contentType,
 			finalUrl: current.toString()
 		};
