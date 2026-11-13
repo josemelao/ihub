@@ -7,6 +7,7 @@ export interface ContentDoc {
 	url: string;
 	sourceName: string;
 	savedAt?: string;
+	publishedAt?: string;
 	/** Texto extraído já limpo; vazio quando o post não passou pelo leitor. */
 	text: string;
 }
@@ -32,6 +33,7 @@ export interface ContentGroup {
 	sourceName: string;
 	saved: boolean;
 	savedAt?: string;
+	publishedAt?: string;
 	matches: ContentMatch[];
 }
 
@@ -49,11 +51,14 @@ export interface ContentSearchResult {
 	coverage: ContentCoverage;
 }
 
+export type ContentSort = 'saved' | 'published';
+
 export interface SearchContentInput {
 	docs: ContentDoc[];
 	highlights: ReadingHighlight[];
 	query: string;
 	limit: number;
+	sort?: ContentSort;
 	coverage: ContentCoverage;
 }
 
@@ -129,11 +134,17 @@ export function searchContent(input: SearchContentInput): ContentSearchResult {
 			sourceName: doc.sourceName,
 			saved: true,
 			savedAt: doc.savedAt,
+			publishedAt: doc.publishedAt,
 			matches
 		});
 	}
 
-	groups.sort((a, b) => (b.savedAt ?? '').localeCompare(a.savedAt ?? ''));
+	const sort = input.sort ?? 'saved';
+	const dateOf = (group: ContentGroup): string =>
+		sort === 'published'
+			? (group.publishedAt ?? group.savedAt ?? '')
+			: (group.savedAt ?? group.publishedAt ?? '');
+	groups.sort((a, b) => dateOf(b).localeCompare(dateOf(a)));
 
 	const outside: ContentGroup[] = [];
 	for (const [itemId, itemHighlights] of highlightsByItem) {

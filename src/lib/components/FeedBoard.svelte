@@ -3,7 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { flip } from 'svelte/animate';
 	import { onMount, untrack } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 	import { masonry } from '#lib/actions/masonry';
 	import { readLocal, writeLocal } from '#lib/browser-storage';
 	import { countActiveFeedFilters, shouldOpenFeedFilters } from '#lib/feed/filter-bar';
@@ -948,35 +948,39 @@
 						Conteúdo
 					</button>
 				</div>
+				<div class="chips" role="group" aria-label="Ordenar a lista">
+					<span class="muted small">Ordenar:</span>
+					<button
+						class="chip"
+						class:active={savedSort === 'saved'}
+						type="button"
+						aria-pressed={savedSort === 'saved'}
+						onclick={() => {
+							savedSort = 'saved';
+							resetLimit();
+						}}
+					>
+						Salvamento
+					</button>
+					<button
+						class="chip"
+						class:active={savedSort === 'published'}
+						type="button"
+						aria-pressed={savedSort === 'published'}
+						onclick={() => {
+							savedSort = 'published';
+							resetLimit();
+						}}
+					>
+						Publicação
+					</button>
+				</div>
 				{#if savedMode === 'title'}
-					<div class="chips" role="group" aria-label="Ordenar a lista">
-						<span class="muted small">Ordenar:</span>
-						<button
-							class="chip"
-							class:active={savedSort === 'saved'}
-							type="button"
-							aria-pressed={savedSort === 'saved'}
-							onclick={() => {
-								savedSort = 'saved';
-								resetLimit();
-							}}
-						>
-							Salvamento
-						</button>
-						<button
-							class="chip"
-							class:active={savedSort === 'published'}
-							type="button"
-							aria-pressed={savedSort === 'published'}
-							onclick={() => {
-								savedSort = 'published';
-								resetLimit();
-							}}
-						>
-							Publicação
-						</button>
-					</div>
-					<span class="muted small" style="margin-left: auto">
+					<span
+						class="muted small"
+						style="margin-left: auto"
+						transition:fade={{ duration: reduceMotion ? 0 : 120 }}
+					>
 						Mostrando {Math.min(limit, savedFiltered.length)} de {savedFiltered.length} salvos
 					</span>
 				{/if}
@@ -1021,7 +1025,11 @@
 			</div>
 
 			{#if filtersOpen}
-				<div id="feed-filters-extra" class="filter-extra">
+				<div
+					id="feed-filters-extra"
+					class="filter-extra"
+					transition:slide={{ duration: reduceMotion ? 0 : 160 }}
+				>
 					<div class="chips">
 						<button
 							class="chip"
@@ -1253,7 +1261,7 @@
 	{/if}
 
 	{#if saved && savedMode === 'content'}
-		<SavedContentSearch query={savedQuery} savedCount={entries.length} />
+		<SavedContentSearch query={savedQuery} savedCount={entries.length} sort={savedSort} />
 	{:else}
 		<div class="feed-container" class:view-ready={viewReady}>
 			<div

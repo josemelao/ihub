@@ -75,9 +75,10 @@ exibida para explicar uma busca vazia.
 
 ## Interface
 
-- Alternador **Título** (padrão) · **Conteúdo** no campo de busca de Salvos;
-  a escolha fica em `localStorage` (`meu-hub:saved-search-mode`).
+- Alternador **Título** (padrão) · **Conteúdo** no campo de busca de Salvos; a escolha fica em `localStorage` (`meu-hub:saved-search-mode`).
+- **Ordenar: Salvamento / Publicação** vale nos dois modos. No conteúdo, reordena os grupos por `savedAt` ou `publishedAt` (com fallback entre eles).
 - Debounce de 250 ms, `AbortController`, mínimo de 2 caracteres.
+- A barra de filtros do feed abre e fecha com `slide` de 160 ms (0 quando `prefers-reduced-motion`).
 - Uma linha por resultado, duas no máximo para o trecho; sem cards ou imagens.
 - Termo destacado com `<mark>`; a busca marca **todos** os termos da consulta.
 - Título abre `/ler/<id>`; na seção externa abre o original.

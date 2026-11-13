@@ -65,6 +65,7 @@ export async function getSavedContentIndex(
 				url: snapshot?.item.url ?? '',
 				sourceName: snapshot?.sourceName ?? '',
 				savedAt: snapshot?.savedAt,
+				publishedAt: snapshot?.item.publishedAt,
 				text
 			});
 		})

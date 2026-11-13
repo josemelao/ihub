@@ -58,6 +58,14 @@ test('busca no conteúdo do salvo, nos destaques e fora dos salvos', async ({ pa
 		await page.goto('/favoritos');
 		await page.getByRole('button', { name: 'Conteúdo', exact: true }).click();
 
+		// A ordenação continua disponível e funcional no modo conteúdo.
+		await expect(page.getByRole('button', { name: 'Salvamento' })).toBeVisible();
+		await page.getByRole('button', { name: 'Publicação' }).click();
+		await expect(page.getByRole('button', { name: 'Publicação' })).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+
 		const search = page.getByLabel('Buscar nos salvos');
 		await search.fill('primeiro parágrafo');
 

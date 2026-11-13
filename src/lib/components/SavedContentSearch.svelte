@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { splitHighlights } from '#lib/feed/filter';
-	import type { ContentSearchResult, ContentSnippet } from '#lib/reader/content-search';
+	import type {
+		ContentSearchResult,
+		ContentSnippet,
+		ContentSort
+	} from '#lib/reader/content-search';
 
-	let { query, savedCount }: { query: string; savedCount: number } = $props();
+	let {
+		query,
+		savedCount,
+		sort = 'saved'
+	}: { query: string; savedCount: number; sort?: ContentSort } = $props();
 
 	const terms = $derived(query.trim().split(/\s+/).filter(Boolean));
 
@@ -19,10 +27,15 @@
 	let controller: AbortController | null = null;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
-	async function run(term: string, requested: number, ctrl: AbortController): Promise<void> {
+	async function run(
+		term: string,
+		requested: number,
+		order: ContentSort,
+		ctrl: AbortController
+	): Promise<void> {
 		try {
 			const response = await fetch(
-				`/api/search/content?q=${encodeURIComponent(term)}&limit=${requested}`,
+				`/api/search/content?q=${encodeURIComponent(term)}&limit=${requested}&sort=${order}`,
 				{ signal: ctrl.signal }
 			);
 			if (!response.ok) {
@@ -41,6 +54,7 @@
 	$effect(() => {
 		const term = query.trim();
 		const requested = limit;
+		const order = sort;
 		clearTimeout(timer);
 		controller?.abort();
 
@@ -55,7 +69,7 @@
 		error = '';
 		timer = setTimeout(() => {
 			controller = new AbortController();
-			void run(term, requested, controller);
+			void run(term, requested, order, controller);
 		}, 250);
 
 		return () => {

@@ -17,6 +17,7 @@ export const GET: RequestHandler = async ({ url }) => {
 	const limit = Number.isFinite(requested)
 		? Math.min(Math.max(Math.trunc(requested), 1), MAX_LIMIT)
 		: DEFAULT_LIMIT;
+	const sort = url.searchParams.get('sort') === 'published' ? 'published' : 'saved';
 
 	try {
 		const storage = getStorage();
@@ -31,6 +32,7 @@ export const GET: RequestHandler = async ({ url }) => {
 				highlights: highlights.highlights,
 				query,
 				limit,
+				sort,
 				coverage: { saved: index.savedCount, savedWithText: index.savedWithText }
 			})
 		);

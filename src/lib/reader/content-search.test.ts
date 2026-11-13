@@ -9,6 +9,7 @@ const docs: ContentDoc[] = [
 		url: 'https://e.com/a',
 		sourceName: 'r/Darktide',
 		savedAt: '2026-01-02T00:00:00.000Z',
+		publishedAt: '2026-01-01T00:00:00.000Z',
 		text: 'O novo patch corrige o dano do flamethrower e ajusta a economia.'
 	},
 	{
@@ -17,6 +18,7 @@ const docs: ContentDoc[] = [
 		url: 'https://e.com/b',
 		sourceName: 'Steam',
 		savedAt: '2026-01-01T00:00:00.000Z',
+		publishedAt: '2026-01-01T00:00:00.000Z',
 		text: 'Hotfix ajusta a economia e o drop.'
 	}
 ];
@@ -80,6 +82,43 @@ describe('searchContent', () => {
 			coverage: { saved: 2, savedWithText: 2 }
 		});
 		expect(result.groups.map((group) => group.itemId)).toEqual(['a', 'b']);
+	});
+
+	it('ordena pela data de publicação quando pedido', () => {
+		const crossed: ContentDoc[] = [
+			{
+				...docs[0],
+				itemId: 'a',
+				savedAt: '2026-01-05T00:00:00.000Z',
+				publishedAt: '2026-01-01T00:00:00.000Z'
+			},
+			{
+				...docs[1],
+				itemId: 'b',
+				savedAt: '2026-01-01T00:00:00.000Z',
+				publishedAt: '2026-01-05T00:00:00.000Z'
+			}
+		];
+
+		const saved = searchContent({
+			docs: crossed,
+			highlights: [],
+			query: 'economia',
+			limit: 50,
+			sort: 'saved',
+			coverage: { saved: 2, savedWithText: 2 }
+		});
+		const published = searchContent({
+			docs: crossed,
+			highlights: [],
+			query: 'economia',
+			limit: 50,
+			sort: 'published',
+			coverage: { saved: 2, savedWithText: 2 }
+		});
+
+		expect(saved.groups.map((group) => group.itemId)).toEqual(['a', 'b']);
+		expect(published.groups.map((group) => group.itemId)).toEqual(['b', 'a']);
 	});
 
 	it('inclui destaque do próprio post e evita repetir o mesmo trecho', () => {

@@ -752,3 +752,9 @@ Executada em 12/11/2026 sobre a busca do READ-05.
   atualizados. Seções históricas do HANDOFF foram preservadas.
 - **Teste**: E2E novo garante o `h1` “Salvos”, o link “Salvos” na sidebar e os
   botões “Salvamento” e “Publicação”.
+- **Ordenação no modo conteúdo**: os chips continuam visíveis ao trocar para
+  “Conteúdo” e passam a reordenar os grupos por `savedAt` ou `publishedAt`
+  (`&sort=` na API). Antes eles sumiam, o que parecia um controle quebrado.
+- **Animação**: a seção de filtros do feed abre/fecha com `slide` de 160 ms e o
+  contador de salvos aparece/some com `fade` de 120 ms; ambos zeram a duração
+  quando `prefers-reduced-motion` está ligado.
