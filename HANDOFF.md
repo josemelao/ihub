@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
 Data: 2026-11-11
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.31.1 entregues; validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
+Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.32.0 entregues; validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
 
 ## 1. O que é
 
@@ -269,14 +269,18 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-Próximo bloco definido: **leitura (READ-01/02)** — reader mode e highlights/notas.
+Próximo bloco definido: **READ-05 fatia 2 — estatísticas de leitura** (`v0.32.1`),
+seguido de **PLAT-04** (conflito de sincronização), que é o aberto com maior
+risco de perda de dados.
 
-1. Fila de escrita/otimistic lock no storage.
-2. Validar `bundle.state` antes de importar.
-3. Suporte a proxy (`HTTPS_PROXY`) no refresh/discover.
-4. Revisão de acessibilidade do masonry (ordem visual x DOM já é preservada).
-5. Testes de componente/e2e para as visualizações e para a Biblioteca.
-6. Página própria por grupo (`/g/[slug]`) com feed do grupo, se necessário.
+1. READ-05 fatia 2: faixa de estatísticas em Salvos (`stats.ts` + page load).
+2. PLAT-04: detecção de conflito de sincronização e lock stale.
+3. PLAT-12: performance com 1.000 posts + critério para SQLite.
+4. ORG-11: links quebrados/duplicados + cache de favicons.
+5. PLAT-03b (proxy de imagem), PLAT-06 (widgets), ORG-14/15.
+6. READ-06 (TTS, opcional).
+7. Dívidas adiadas: render inline dos destaques, export/backup dos arquivos
+   arquivados, HTML arquivado → Markdown, imagens no ZIP.
 
 ## 12. Notas para o próximo agente
 

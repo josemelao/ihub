@@ -76,10 +76,22 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 
 ## Salvos
 
-- [ ] Busca local funciona.
-- [ ] Ordenação Salvos/Publicados funciona.
+- [ ] Busca por título funciona.
+- [ ] Alternador Título/Conteúdo funciona e lembra a escolha.
+- [ ] Busca no conteúdo encontra uma frase do texto extraído, com trecho marcado.
+- [ ] Destaque de post não salvo aparece em “Destaques fora dos salvos”.
+- [ ] Cobertura “N de M salvos com texto” aparece e explica busca vazia.
+- [ ] Ordenação **Salvamento/Publicação** funciona nos dois modos.
+- [ ] Contador “Mostrando X de Y” desliza ao trocar para Conteúdo.
 - [ ] Badge da sidebar reflete a quantidade.
 - [ ] Snapshot permanece se a fonte/cache sumir.
+
+## Destaques
+
+- [ ] Busca por trecho, nota ou título funciona.
+- [ ] Chips de cor (Todas/amarelo/verde/azul/rosa) filtram e mostram contagem.
+- [ ] Cor + busca combinam e “X de Y trechos” reflete o filtro.
+- [ ] Remover destaque pede confirmação.
 
 ## Gerenciar
 

@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo e export Markdown.
-- **Versão atual:** `v0.31.0` · **791 testes** em 114 arquivos · **29 E2E**.
-- **Próximos blocos planejados:** busca full-text nos salvos (READ-05).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos e filtro por cor em Destaques.
+- **Versão atual:** `v0.32.0` · **837 testes** em 132 arquivos · **39 E2E**.
+- **Próximos blocos planejados:** estatísticas de leitura (READ-05 fatia 2, `v0.32.1`) e conflito de sincronização (PLAT-04).
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -229,12 +229,20 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 
 > Observações: o feed RSS do Reddit pode sofrer rate limit (429) — o erro fica visível e a fonte tenta de novo no próximo intervalo. Para YouTube, o hub aceita `@handle`, URL do canal ou ID `UC...` e resolve o ID automaticamente.
 
+### Salvos (busca por título ou conteúdo)
+
+- A página **Salvos** (`/favoritos`) lista os posts salvos com busca por **título** (padrão: título, resumo e fonte) ou por **conteúdo**, pelo alternador **Título / Conteúdo**; a escolha fica no navegador.
+- No modo conteúdo, a busca cobre o texto extraído pelo reader e **todos** os destaques e notas, inclusive de posts não salvos (seção “Destaques fora dos salvos”). Cada trecho aparece com o termo marcado e o título abre `/ler/<id>`.
+- A consulta exige todos os termos, ignora acento/caixa e mostra a cobertura (“N de M salvos com texto”) para explicar uma busca vazia. Só encontra conteúdo já extraído.
+- **Ordenar: Salvamento / Publicação** reordena a lista (e os resultados de conteúdo) pela data em que você salvou ou pela data original do post.
+- O contador “Mostrando X de Y” sai com slide horizontal ao trocar para Conteúdo, empurrando os chips sem salto; `prefers-reduced-motion` desliga a animação.
+
 ### Reader e destaques
 
 - Em **Gerenciar → Fontes**, fontes RSS têm **Buscar texto completo (reader)** (padrão desligado). O botão **Ler aqui** no card abre `/ler/<id>`.
 - O reader busca a página com as mesmas proteções do feed (SSRF, timeout e limite de 5 MB), extrai o conteúdo principal com Readability, sanitiza o HTML e guarda em `data/reading/<id>.json`. A próxima abertura é servida do cache, inclusive offline.
 - Se a extração falhar, o reader mostra o motivo e mantém **Abrir original**. YouTube e Reddit não têm reader.
-- **Destaques**: selecione um trecho no reader e escolha uma cor ou **Anotar**. O trecho e a nota ficam em `data/highlights.json` e aparecem no fim do artigo e em **Destaques** (`/highlights`), com busca por trecho, nota ou título.
+- **Destaques**: selecione um trecho no reader e escolha uma cor ou **Anotar**. O trecho e a nota ficam em `data/highlights.json` e aparecem no fim do artigo e em **Destaques** (`/highlights`), com busca por trecho, nota ou título e **filtro por cor** (Todas/amarelo/verde/azul/rosa, com contagem).
 - Limites: HTML sanitizado de até 2 MB, texto de até 200 mil caracteres (truncado, com tamanho original preservado), 300 artigos e trechos/notas de até 2.000 caracteres. Destaques entram no export/import; os artigos extraídos ficam só na máquina.
 
 ### Arquivo/offline do salvo
@@ -299,23 +307,24 @@ O servidor relê o `hub.json` a cada requisição, então basta recarregar a pá
 
 ## Telas
 
-| Rota                  | Tela                                                                                    |
-| --------------------- | --------------------------------------------------------------------------------------- |
-| `/`                   | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito |
-| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                               |
-| `/feed`               | Feed completo com filtros e fontes cadastradas                                          |
-| `/favoritos`          | Posts salvos para depois, com busca e ordenação por salvos/publicados                   |
-| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps            |
-| `/apps`               | Redireciona para `/biblioteca`                                                          |
-| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                     |
-| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                  |
-| `/api/export`         | Download do bundle (hub + estado)                                                       |
-| `/api/import`         | Importação validada (substituir/mesclar)                                                |
-| `/api/feed`           | Cache do feed com status por fonte                                                      |
-| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)   |
-| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                             |
-| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                          |
-| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                           |
+| Rota                  | Tela                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `/`                   | Início: painel geral, 5 últimas notícias, acesso rápido, resumo, ações e painel direito    |
+| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                  |
+| `/feed`               | Feed completo com filtros e fontes cadastradas                                             |
+| `/favoritos`          | Salvos: posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação |
+| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps               |
+| `/apps`               | Redireciona para `/biblioteca`                                                             |
+| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                        |
+| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                     |
+| `/api/export`         | Download do bundle (hub + estado)                                                          |
+| `/api/import`         | Importação validada (substituir/mesclar)                                                   |
+| `/api/feed`           | Cache do feed com status por fonte                                                         |
+| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)      |
+| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                                |
+| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                             |
+| `/api/search/content` | Busca no texto extraído dos salvos e nos destaques (`?q=&limit=&sort=`)                    |
+| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                              |
 
 ## Segurança e privacidade
 
@@ -338,6 +347,9 @@ src/
     display.ts            # helpers de exibição (iniciais, cor, contagens)
     storage/              # JsonFileStorage e fábrica
     feed/                 # parser RSS/Atom, refresh, filtros, view e scheduler
+    reader/               # reader, destaques e busca no conteúdo dos salvos
+    text/                 # normalização sem acento e trechos de busca
+    export/               # export Markdown
     components/           # Sidebar, TopBar, QuickAccess, FeedBoard, cards...
   routes/                 # páginas e APIs
 data/hub.example.json     # seed versionado
@@ -364,7 +376,7 @@ npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chr
 npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
 
-O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`) e cobre 7 fluxos (adicionar link, salvar/desfavoritar post, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, mobile 375 px) e axe nas telas principais. O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **39 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
