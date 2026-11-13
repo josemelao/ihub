@@ -3,9 +3,10 @@ import { fetchPublicText, type FetchTextOptions } from '../net/safe-fetch';
 import { refreshFeed, type Fetcher } from './refresh';
 import type { FeedCache, FeedItem, FeedSource, HubData } from '../types';
 
-vi.mock('../net/safe-fetch', () => ({
-	fetchPublicText: vi.fn()
-}));
+vi.mock('../net/safe-fetch', async (importOriginal) => {
+	const actual = await importOriginal<typeof import('../net/safe-fetch')>();
+	return { ...actual, fetchPublicText: vi.fn() };
+});
 
 const fetchTextMock = vi.mocked(fetchPublicText);
 const defaultFetchText = async (target: string, options: FetchTextOptions = {}) => {
