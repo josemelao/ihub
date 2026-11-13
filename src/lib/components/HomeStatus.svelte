@@ -9,7 +9,15 @@
 	const errors = $derived(
 		hub.feedSources.filter((source) => source.enabled && Boolean(feed.sources[source.id]?.error))
 	);
-	const errorNames = $derived(errors.map((source) => source.name).join(', '));
+	// 429 não é defeito: a fonte tem conteúdo, só está esperando o site liberar.
+	const rateLimited = $derived(
+		errors.filter((source) => /429/.test(feed.sources[source.id]?.error ?? ''))
+	);
+	const failed = $derived(
+		errors.filter((source) => !/429/.test(feed.sources[source.id]?.error ?? ''))
+	);
+	const failedNames = $derived(failed.map((source) => source.name).join(', '));
+	const waitingNames = $derived(rateLimited.map((source) => source.name).join(', '));
 	const updated = $derived(
 		feed.items.length > 0 ? relativeTime(feed.updatedAt) : 'nunca atualizado'
 	);
@@ -22,14 +30,20 @@
 	</a>
 	<span class="home-status-sep" aria-hidden="true">·</span>
 	<span class="muted small">atualizado {updated}</span>
-	{#if errors.length > 0}
+	{#if rateLimited.length > 0}
+		<span class="muted small" title={waitingNames}>
+			{rateLimited.length}
+			{rateLimited.length === 1 ? 'fonte' : 'fontes'} aguardando limite do site
+		</span>
+	{/if}
+	{#if failed.length > 0}
 		<a
 			class="home-status-error"
 			href={resolve('/gerenciar') + '?tab=fontes&status=erro'}
-			title={errorNames}
+			title={failedNames}
 		>
-			{errors.length}
-			{errors.length === 1 ? 'fonte com erro' : 'fontes com erro'}
+			{failed.length}
+			{failed.length === 1 ? 'fonte com erro' : 'fontes com erro'}
 		</a>
 	{/if}
 </div>
