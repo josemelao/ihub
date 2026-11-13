@@ -56,7 +56,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 ## Reddit
 
 - [ ] Selo Reddit aparece na thumbnail.
-- [ ] Post de vídeo abre o player do Reddit.
+- [ ] Post de vídeo do Reddit abre o embed oficial (e oferece “Abrir no Reddit” como fallback).
 - [ ] Post de imagem cai no lightbox.
 - [ ] “Abrir no Reddit” funciona.
 - [ ] Fonte com “Exibir em inglês” ligado usa `locale=en`.

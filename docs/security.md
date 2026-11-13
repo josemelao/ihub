@@ -33,7 +33,7 @@
   - `/api/hub`: 2 MB;
   - `/api/state`: 2 MB;
   - `/api/import`: 10 MB;
-  - `/api/refresh`, `/api/discover-feed`, `/api/reddit-media`: 64 KB.
+  - `/api/refresh`, `/api/discover-feed`: 64 KB.
 - Excesso retorna **413** sem gravar.
 
 ### SEC-05 — Fetch seguro no refresh
