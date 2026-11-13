@@ -75,7 +75,7 @@ exibida para explicar uma busca vazia.
 
 ## Interface
 
-- Alternador **Título** (padrão) · **Conteúdo** no campo de busca de Favoritos;
+- Alternador **Título** (padrão) · **Conteúdo** no campo de busca de Salvos;
   a escolha fica em `localStorage` (`meu-hub:saved-search-mode`).
 - Debounce de 250 ms, `AbortController`, mínimo de 2 caracteres.
 - Uma linha por resultado, duas no máximo para o trecho; sem cards ou imagens.

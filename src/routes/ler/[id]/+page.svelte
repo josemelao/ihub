@@ -481,7 +481,7 @@
 	{#if confirmingRemoveArchive}
 		<ConfirmDialog
 			title="Remover arquivo"
-			message="Apagar a cópia local desta página? O post continua salvo nos favoritos."
+			message="Apagar a cópia local desta página? O post continua na página Salvos."
 			onconfirm={removeArchive}
 			oncancel={() => (confirmingRemoveArchive = false)}
 		/>

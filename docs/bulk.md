@@ -18,7 +18,7 @@
   - **Selecionar todos os filtrados (N)**, **Limpar** e **Sair da seleção**.
 - Seleção é limpa ao mudar busca, filtro, categoria, fonte ou “não lidos”.
 - “Marcar lido” em lote reaproveita o desfazer de 30 segundos.
-- Salvar/remover em lote mostram toast e atualizam Favoritos.
+- Salvar/remover em lote mostram toast e atualizam Salvos.
 
 ### Backend em lote
 

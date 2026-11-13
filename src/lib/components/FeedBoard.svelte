@@ -949,7 +949,8 @@
 					</button>
 				</div>
 				{#if savedMode === 'title'}
-					<div class="chips" role="group" aria-label="Ordenação dos salvos">
+					<div class="chips" role="group" aria-label="Ordenar a lista">
+						<span class="muted small">Ordenar:</span>
 						<button
 							class="chip"
 							class:active={savedSort === 'saved'}
@@ -960,7 +961,7 @@
 								resetLimit();
 							}}
 						>
-							Salvos
+							Salvamento
 						</button>
 						<button
 							class="chip"
@@ -972,7 +973,7 @@
 								resetLimit();
 							}}
 						>
-							Publicados
+							Publicação
 						</button>
 					</div>
 					<span class="muted small" style="margin-left: auto">

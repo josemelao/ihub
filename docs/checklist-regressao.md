@@ -74,7 +74,7 @@ Use antes de fechar qualquer sprint ou mudança que toque em feed, editor, Bibli
 - [ ] Ícones de favicon/Simple Icons têm fallback de iniciais.
 - [ ] Itens sem grupo aparecem em “Sem grupo”.
 
-## Favoritos
+## Salvos
 
 - [ ] Busca local funciona.
 - [ ] Ordenação Salvos/Publicados funciona.

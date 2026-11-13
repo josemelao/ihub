@@ -58,7 +58,7 @@
 			</a>
 			<a class="nav-link" class:active={active('/favoritos')} href={resolve('/favoritos')}>
 				<Icon name="star" />
-				Favoritos
+				Salvos
 				{#if savedCount > 0}
 					<span class="badge">{savedCount}</span>
 				{/if}

@@ -32,7 +32,7 @@ function notFound(entry?: ArchiveEntry): Response {
 <body>
 <header class="archive-bar">
 	<div class="archive-title"><strong>Arquivo não encontrado</strong></div>
-	<nav><a href="/favoritos">Voltar aos favoritos</a></nav>
+	<nav><a href="/favoritos">Voltar aos salvos</a></nav>
 </header>
 <main class="archive-body">
 	<p>Esta página não tem cópia local disponível. O post pode ter sido removido dos salvos, o arquivamento pode ter falhado ou o arquivo foi apagado.</p>

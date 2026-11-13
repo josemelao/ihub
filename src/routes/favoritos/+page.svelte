@@ -10,13 +10,13 @@
 </script>
 
 <svelte:head>
-	<title>Favoritos · Meu Hub</title>
+	<title>Salvos · Meu Hub</title>
 </svelte:head>
 
-<TopBar placeholder="Buscar favoritos" />
+<TopBar placeholder="Buscar salvos" />
 
 <div class="section-head">
-	<h1>Favoritos</h1>
+	<h1>Salvos</h1>
 	<span class="muted small">
 		{entries.length}
 		{entries.length === 1 ? 'post salvo' : 'posts salvos'} para ler depois

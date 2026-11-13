@@ -47,3 +47,11 @@ test('filtros abrem sozinhos quando já há escopo na URL', async ({ page }) => 
 	await page.goto('/feed?nao-lidos=1');
 	await expect(page.locator('#feed-filters-extra')).toBeVisible();
 });
+
+test('página Salvos não confunde o nome com a ordenação', async ({ page }) => {
+	await page.goto('/favoritos');
+	await expect(page.getByRole('heading', { level: 1, name: 'Salvos' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Salvamento' })).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Publicação' })).toBeVisible();
+	await expect(page.getByRole('navigation').getByRole('link', { name: /^Salvos/ })).toBeVisible();
+});

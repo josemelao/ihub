@@ -215,7 +215,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - **Selecionar** entra no modo de seleção: clique em qualquer lugar do card (ou no checkbox) para alternar, shift+clique redefine o intervalo (desmarcando quem ficou fora), e barra de ações em lote (lido/não lido, salvar/remover, selecionar todos).
 - Atalhos no feed: `j`/`k` navegam, `m` marca lido, `s` salva, `o`/`Enter` abrem, `?` mostra a ajuda e `Esc` sai da seleção.
 - A **Acesso rápido** fica no card de mesmo nome no topo da home (grade compacta, até 6 atalhos).
-- Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Favoritos**; o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Favoritos mesmo se a fonte for removida ou o cache expirar.
+- Ações por post: **Abrir**, **Salvar para depois** e **Marcar como lido** — exibidas como ícones (link externo, bookmark e check), com tooltip e `aria-label`. Os posts salvos aparecem em **Salvos** (rota `/favoritos`); o contador da sidebar mostra não lidos. Ao salvar, um snapshot do post é guardado, então ele continua em Salvos mesmo se a fonte for removida ou o cache expirar.
 - **Vídeos do YouTube**: a thumbnail mostra um botão **▶**; o clique abre um player em modal com `youtube-nocookie` e autoplay, sem alterar o layout do Bento. O modal fecha por Esc, botão fechar ou clique fora e tem o atalho **Abrir no YouTube**.
 - **Vídeos do Reddit**: a thumbnail mostra um selo **Reddit**; ao clicar, o hub consulta o embed oficial e detecta se o post é vídeo. Se for, abre o player do Reddit em modal; se não, mantém o lightbox de imagem. O resultado fica em cache por 10 minutos. Não há scraping do JSON nem extração de MP4/HLS. O idioma do player vem da fonte: **Exibir em inglês** (`locale=en`) ou navegador quando desligado; snapshots de salvos preservam essa escolha.
 - **Imagens do feed**: thumbnails que não são vídeo abrem um **lightbox** com a imagem, título e atalhos **Abrir imagem** e **Abrir publicação**; não é mais necessário sair do hub só para ver a imagem.
@@ -239,7 +239,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 
 ### Arquivo/offline do salvo
 
-- Ao **salvar** um post de fonte RSS, o hub arquiva automaticamente a página inteira (HTML sanitizado + imagens) em `data/archive/<id>/`; o status aparece em **Favoritos/reader** e em **Gerenciar → Backups → Leitura arquivada**.
+- Ao **salvar** um post de fonte RSS, o hub arquiva automaticamente a página inteira (HTML sanitizado + imagens) em `data/archive/<id>/`; o status aparece em **Salvos/reader** e em **Gerenciar → Backups → Leitura arquivada**.
 - O arquivo abre em `/arquivo/<id>` como página de topo, com CSP restrita (`script-src 'none'`, imagens só locais) e CSS próprio. Funciona offline e depois de a URL original sair do ar.
 - “Arquivar agora” cria a cópia de um post já salvo; “Remover arquivo” apaga a cópia e mantém o post/snapshot. Dessalvar também apaga o arquivo. Importar/restaurar não apaga arquivos automaticamente.
 - SEO/privacidade: a cópia é local, sem scripts e sem requisições externas ao abrir. Limites: 5 MB de HTML por página, 3 MB sanitizado, 20 imagens de até 2 MB (20 MB no total), 200 arquivos e 500 MB no total; ao atingir o teto, novos arquivamentos falham com aviso para remover em Gerenciar.

@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`), leva Reddit/fechamentos (`v0.28.0`), READ-01/READ-02 (`v0.29.0`), READ-03 (`v0.30.0`), READ-04 (`v0.31.0`), ajustes de densidade + correção do dev em `/highlights` (`v0.31.1`) e READ-05 fatia 1, busca no conteúdo (`v0.32.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
+> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`), leva Reddit/fechamentos (`v0.28.0`), READ-01/READ-02 (`v0.29.0`), READ-03 (`v0.30.0`), READ-04 (`v0.31.0`), ajustes de densidade + correção do dev em `/highlights` (`v0.31.1`) e READ-05 fatia 1, busca no conteúdo + nomenclatura Salvos (`v0.32.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -106,23 +106,23 @@ Antes de começar uma tarefa:
 
 **Escopo aprovado:** executar primeiro o **P0 de UX**, depois **segurança** e **integridade de dados**. P2/P3 ficam para depois; reader mode, highlights, PWA, widgets e SQLite não entram agora.
 
-| Tema            | Decisão                                                                                                                                                            |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Busca           | Incluir posts do feed na palette (Opção A), com limite e índice memoizado.                                                                                         |
-| Terminologia    | Página **Favoritos**; ação **Salvar para depois**; contadores “posts salvos”. **Biblioteca** = links + apps; **Fontes** = origens do feed; **Gerenciar** = edição. |
-| Notas           | Arquivo próprio `notes.json`, fora do `hub.json`, incluído no export.                                                                                              |
-| Reader mode     | `@mozilla/readability` + `linkedom`, com sanitização; adiado para P2.                                                                                              |
-| Sync            | Continuar pasta + detecção de conflito; sem serviço externo.                                                                                                       |
-| Autostart       | VBS/atalho na pasta Startup primeiro; Task Scheduler depois, se necessário.                                                                                        |
-| LAN             | Manter `127.0.0.1`; token opcional só se houver exposição na rede.                                                                                                 |
-| Tema            | Manter somente dark.                                                                                                                                               |
-| IA              | Sem IA na nuvem; qualquer IA local seria opcional e fora do escopo atual.                                                                                          |
-| Retenção/backup | Lidos: 90 dias (nunca salvar itens lidos); backups: 7 gerações em `data/backups/`.                                                                                 |
-| SQLite          | Só quando bater o critério (>5.000 posts, >500 itens, full-text/highlights ou múltiplos processos).                                                                |
-| Read later      | Metadados + highlights primeiro; arquivo completo depois.                                                                                                          |
-| CSP             | Fazer com allowlist para YouTube, Reddit, fontes e imagens; Report-Only antes de enforce.                                                                          |
-| Migrações       | Usar defaults do Zod para campos opcionais; migração versionada só para mudanças quebrantes.                                                                       |
-| CI              | Sem remote no Git; criar `npm run verify` local. GitHub Actions só quando houver remote.                                                                           |
+| Tema            | Decisão                                                                                                                                                                             |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Busca           | Incluir posts do feed na palette (Opção A), com limite e índice memoizado.                                                                                                          |
+| Terminologia    | Página **Salvos** (rota `/favoritos`); ação **Salvar para depois**; contadores “posts salvos”. **Biblioteca** = links + apps; **Fontes** = origens do feed; **Gerenciar** = edição. |
+| Notas           | Arquivo próprio `notes.json`, fora do `hub.json`, incluído no export.                                                                                                               |
+| Reader mode     | `@mozilla/readability` + `linkedom`, com sanitização; adiado para P2.                                                                                                               |
+| Sync            | Continuar pasta + detecção de conflito; sem serviço externo.                                                                                                                        |
+| Autostart       | VBS/atalho na pasta Startup primeiro; Task Scheduler depois, se necessário.                                                                                                         |
+| LAN             | Manter `127.0.0.1`; token opcional só se houver exposição na rede.                                                                                                                  |
+| Tema            | Manter somente dark.                                                                                                                                                                |
+| IA              | Sem IA na nuvem; qualquer IA local seria opcional e fora do escopo atual.                                                                                                           |
+| Retenção/backup | Lidos: 90 dias (nunca salvar itens lidos); backups: 7 gerações em `data/backups/`.                                                                                                  |
+| SQLite          | Só quando bater o critério (>5.000 posts, >500 itens, full-text/highlights ou múltiplos processos).                                                                                 |
+| Read later      | Metadados + highlights primeiro; arquivo completo depois.                                                                                                                           |
+| CSP             | Fazer com allowlist para YouTube, Reddit, fontes e imagens; Report-Only antes de enforce.                                                                                           |
+| Migrações       | Usar defaults do Zod para campos opcionais; migração versionada só para mudanças quebrantes.                                                                                        |
+| CI              | Sem remote no Git; criar `npm run verify` local. GitHub Actions só quando houver remote.                                                                                            |
 
 **Baseline e checklist:** `docs/sprint-0.md` e `docs/checklist-regressao.md`.
 

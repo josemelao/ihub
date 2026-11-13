@@ -735,3 +735,20 @@ estatísticas de leitura ficaram para a fatia 2 (`v0.32.1`).
   busca no conteúdo dentro da paleta Ctrl K e na Biblioteca.
 - **Docs**: `docs/busca-conteudo.md` e plano em
   `C:\Users\PICHAU\.opencode\plan\2026-11-12-busca-conteudo-salvos.md`.
+
+## 39. Nomenclatura: página Salvos e ordenação explícita (na mesma leva da v0.32.0)
+
+Executada em 12/11/2026 sobre a busca do READ-05.
+
+- **Um nome por conceito**: “Favoritos” saiu da sidebar, do título da página, do
+  `<title>`, do placeholder da TopBar e do rodapé da página arquivada; tudo passou
+  a dizer **Salvos**. A rota continua `/favoritos` e a ação continua “Salvar para
+  depois”, então nenhum link ou atalho mudou.
+- **Fim da ambiguidade da ordenação**: os chips “Salvos / Publicados” viraram
+  **Ordenar: Salvamento / Publicação**. Antes, “Salvos” era o objeto (posts
+  salvos) e também um critério de ordem; agora o substantivo não é reaproveitado.
+- **Glossário e docs**: decisão registrada no `PLANO-EXECUCAO.md` (seção 1.7),
+  README e `docs/busca-conteudo.md`; `docs/checklist-regressao.md` e `docs/bulk.md`
+  atualizados. Seções históricas do HANDOFF foram preservadas.
+- **Teste**: E2E novo garante o `h1` “Salvos”, o link “Salvos” na sidebar e os
+  botões “Salvamento” e “Publicação”.
