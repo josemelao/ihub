@@ -707,3 +707,31 @@ Executada em 12/11/2026 sobre `v0.31.0`.
 - **Filtros do feed recolhíveis**: barra fechada de **58 px** com busca + “Filtros (N)” + “Mostrando X de Y”. Abre ao clicar (`aria-expanded`/`aria-controls`) e **abre sozinha** quando há escopo na URL (`?filtro=`, `?fonte=`, `?nao-lidos=1`) ou filtro salvo aplicado. Aberta ocupa ~203 px (antes ~260 px).
 - **Qualidade**: **802 testes** em 128 arquivos e **33 E2E** (3 novos: ações da home, backup, barra recolhida/autoaberta); `npm run verify` e Playwright verdes; axe segue sem violações em `/`, `/feed`, `/biblioteca`, `/gerenciar`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`; mobile 375 px sem overflow.
 - **Diagnóstico do ambiente**: em dev, `/highlights` agora renderiza normalmente sem erro de console (validado com Chromium em `127.0.0.1:5757`).
+
+## 38. Fase 3 — busca no conteúdo dos salvos (v0.32.0, fatia 1 do READ-05)
+
+Executada em 12/11/2026 sobre `v0.31.1`, entregando a busca do READ-05. As
+estatísticas de leitura ficaram para a fatia 2 (`v0.32.1`).
+
+- **Backend**: `GET /api/search/content?q=&limit=` (mín. 2 caracteres, máx. 100
+  resultados). `src/lib/reader/content-search.ts` (puro) procura no texto
+  extraído dos salvos e em **todos** os destaques/notas, com AND, sem
+  acento/caixa, agrupando por post, deduplicando destaque × texto e separando
+  “Destaques fora dos salvos”.
+- **Índice**: `content-index.ts` monta os documentos a partir de
+  `state.savedItems` + `data/reading/<id>.json`, truncando em 50k caracteres,
+  com cache por processo e invalidação em `getOrExtractArticle`. Cobertura
+  (`N de M salvos com texto`) entra na resposta.
+- **Texto**: `normalize`/`normalizeWithMap` foram para `src/lib/text/normalize.ts`
+  (reexportados por `feed/filter.ts`), junto com `findSnippet`, que preserva
+  acentos no trecho e corta em limite de palavra.
+- **UI**: alternador **Título/Conteúdo** em `/favoritos` (preferência em
+  `localStorage`), debounce de 250 ms, `AbortController`, trecho em até 2 linhas
+  com todos os termos em `<mark>`, contagem em `aria-live`, “Mostrar mais” +20 e
+  estados vazios explicando a cobertura.
+- **Qualidade**: 830 testes em 132 arquivos e 37 E2E (busca real, destaque fora
+  dos salvos, axe com resultados e 375 px); `npm run verify` e Playwright verdes.
+- **Adiado**: estatísticas (fatia 2), extração em lote dos salvos sem texto,
+  busca no conteúdo dentro da paleta Ctrl K e na Biblioteca.
+- **Docs**: `docs/busca-conteudo.md` e plano em
+  `C:\Users\PICHAU\.opencode\plan\2026-11-12-busca-conteudo-salvos.md`.
