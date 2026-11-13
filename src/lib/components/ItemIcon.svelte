@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { initials, itemIconUrl, tint } from '#lib/display';
+	import { initials, itemIconCandidates, tint } from '#lib/display';
 	import type { HubItem } from '#lib/types';
 
 	let {
@@ -8,7 +8,9 @@
 		size = 34
 	}: { item: HubItem; color?: string; size?: number } = $props();
 
-	const src = $derived(itemIconUrl(item, color));
+	const candidates = $derived(itemIconCandidates(item));
+	let index = $state(0);
+	const src = $derived(candidates[index] ?? '');
 </script>
 
 <span
@@ -28,9 +30,7 @@
 				loading="lazy"
 				decoding="async"
 				referrerpolicy="no-referrer"
-				onerror={(event) => {
-					(event.currentTarget as HTMLImageElement).style.display = 'none';
-				}}
+				onerror={() => (index += 1)}
 			/>
 		{/key}
 	{/if}

@@ -62,49 +62,77 @@ export function itemPlatform(item: HubItem): 'PC' | 'Link' {
 	return item.type === 'app' ? 'PC' : 'Link';
 }
 
+/** Slugs do Simple Icons que ainda existem (fallback após o favicon oficial). */
 const APP_ICON_SLUGS: Record<string, string> = {
 	steam: 'steam',
 	discord: 'discord',
-	vscode: 'visualstudiocode',
 	obsidian: 'obsidian',
 	spotify: 'spotify',
-	slack: 'slack',
 	notion: 'notion',
 	figma: 'figma',
 	zoom: 'zoom',
 	telegram: 'telegram',
-	whatsapp: 'whatsapp',
-	'ms-word': 'microsoftword',
-	'ms-excel': 'microsoftexcel',
-	'ms-powerpoint': 'microsoftpowerpoint',
-	'ms-outlook': 'microsoftoutlook'
+	whatsapp: 'whatsapp'
 };
 
-export function faviconUrl(url: string): string | null {
+/** Domínio oficial de cada protocolo: favicon colorido e atualizado. */
+const APP_ICON_DOMAINS: Record<string, string> = {
+	steam: 'store.steampowered.com',
+	discord: 'discord.com',
+	vscode: 'code.visualstudio.com',
+	obsidian: 'obsidian.md',
+	spotify: 'open.spotify.com',
+	slack: 'slack.com',
+	notion: 'notion.so',
+	figma: 'figma.com',
+	zoom: 'zoom.us',
+	telegram: 'telegram.org',
+	whatsapp: 'web.whatsapp.com',
+	teams: 'teams.microsoft.com',
+	'ms-word': 'word.cloud.microsoft',
+	'ms-excel': 'excel.cloud.microsoft',
+	'ms-powerpoint': 'powerpoint.cloud.microsoft',
+	'ms-outlook': 'outlook.live.com'
+};
+
+function hostIconCandidates(host: string): string[] {
+	const clean = host.trim().toLowerCase();
+	if (!clean) return [];
+	return [
+		`https://icons.duckduckgo.com/ip3/${clean}.ico`,
+		`https://www.google.com/s2/favicons?domain=${encodeURIComponent(clean)}&sz=64`,
+		`https://${clean}/favicon.ico`
+	];
+}
+
+/** Cadeia de favicons: DuckDuckGo → Google → favicon direto do site. */
+export function faviconCandidates(url: string): string[] {
 	try {
 		const hostname = new URL(url).hostname;
-		if (!hostname) return null;
-		return `https://icons.duckduckgo.com/ip3/${hostname}.ico`;
+		return hostname ? hostIconCandidates(hostname) : [];
 	} catch {
-		return null;
+		return [];
 	}
 }
 
-export function appIconUrl(value: string, color = '#C9D2E3'): string | null {
+/** Apps: favicon do domínio oficial e, se falhar, o ícone do Simple Icons. */
+export function appIconCandidates(value: string): string[] {
 	const scheme = value.split(':')[0]?.toLowerCase() ?? '';
+	const domain = APP_ICON_DOMAINS[scheme];
 	const slug = APP_ICON_SLUGS[scheme];
-	if (!slug) return null;
-	return `https://cdn.simpleicons.org/${slug}/${color.replace('#', '')}`;
+	const candidates = domain ? hostIconCandidates(domain) : [];
+	if (slug) candidates.push(`https://cdn.simpleicons.org/${slug}`);
+	return [...new Set(candidates)];
 }
 
-export function itemIconUrl(item: HubItem, color = '#C9D2E3'): string | null {
+/** Lista ordenada de URLs de ícone; o componente tenta uma a uma. */
+export function itemIconCandidates(item: HubItem): string[] {
+	const defaults =
+		item.type === 'link' ? faviconCandidates(item.url) : appIconCandidates(item.launch.value);
 	const custom = item.icon?.trim();
-	if (custom) {
-		return /^https?:\/\//i.test(custom)
-			? custom
-			: `https://cdn.simpleicons.org/${custom}/${color.replace('#', '')}`;
-	}
-	return item.type === 'link' ? faviconUrl(item.url) : appIconUrl(item.launch.value, color);
+	if (!custom) return defaults;
+	const customUrl = /^https?:\/\//i.test(custom) ? custom : `https://cdn.simpleicons.org/${custom}`;
+	return [customUrl, ...defaults.filter((url) => url !== customUrl)];
 }
 
 export function itemHref(item: HubItem): string {

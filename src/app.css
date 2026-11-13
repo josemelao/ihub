@@ -1437,9 +1437,12 @@ h3 {
 .item-icon img {
 	position: absolute;
 	inset: 0;
-	width: 66%;
-	height: 66%;
-	margin: auto;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 4px;
+	border-radius: 8px;
+	background: #f4f7fb;
 	object-fit: contain;
 }
 
