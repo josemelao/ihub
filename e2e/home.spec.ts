@@ -15,6 +15,28 @@ test('ferramentas não repetem a navegação e incluem manutenção', async ({ p
 	await expect(card.getByRole('link', { name: 'Gerenciar' })).toHaveCount(0);
 });
 
+test('home mostra só não lidos e o desfazer devolve o card', async ({ page }) => {
+	// Estado conhecido: o único post da fonte ativa fica não lido.
+	await page.request.post('/api/state', { data: { action: 'mark-unread', ids: ['e2e-post'] } });
+
+	try {
+		await page.goto('/');
+
+		const card = page.locator('.feed-slot', { hasText: 'Post de teste E2E' });
+		await expect(card).toHaveCount(1);
+
+		await card.getByRole('button', { name: 'Marcar como lido' }).click();
+		await expect(card).toHaveCount(0);
+
+		await page.getByRole('status').getByRole('button', { name: 'Desfazer' }).click();
+		await expect(card).toHaveCount(1);
+	} finally {
+		await page.request.post('/api/state', {
+			data: { action: 'mark-unread', ids: ['e2e-post'] }
+		});
+	}
+});
+
 test('layout dividido coloca atalhos ao lado do feed e ferramentas no aside', async ({ page }) => {
 	const setLayout = async (homeLayout: 'stacked' | 'split') => {
 		const response = await page.request.post('/api/hub', {

@@ -135,7 +135,14 @@
 						<HomeTools />
 					</section>
 				</div>
-				<FeedBoard {entries} title="Últimas notícias" overview />
+				<FeedBoard
+					{entries}
+					title="Últimas notícias"
+					overview
+					initialUnreadOnly
+					emptyFilteredTitle="Tudo lido por aqui"
+					emptyFilteredHint="Nenhum post não lido. Abra o feed completo para ver o histórico."
+				/>
 			</div>
 		{:else}
 			<div class="home-top">
@@ -155,7 +162,14 @@
 					<HomeTools />
 				</section>
 			</div>
-			<FeedBoard {entries} title="Últimas notícias" overview />
+			<FeedBoard
+				{entries}
+				title="Últimas notícias"
+				overview
+				initialUnreadOnly
+				emptyFilteredTitle="Tudo lido por aqui"
+				emptyFilteredHint="Nenhum post não lido. Abra o feed completo para ver o histórico."
+			/>
 		{/if}
 	</div>
 

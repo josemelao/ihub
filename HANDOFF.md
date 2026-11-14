@@ -945,3 +945,29 @@ Executada depois do item 44, a partir do uso real.
   Reader continua só para `type: 'rss'`.
 - **Verificação**: `npm run verify` verde (870 testes) e 20 E2E de reader,
   arquivo e a11y verdes; conferido em 1855 px, 1240 px e 390 px.
+
+## 46. Home: "Últimas notícias" só com não lidos
+
+Executada depois do item 45, a partir do uso real.
+
+- **Comportamento**: a home passou a listar **apenas posts não lidos**, no
+  máximo 5, sem completar com lidos. Marcar como lido tira o card na hora e o
+  próximo não lido entra na vaga. A implementação é o `initialUnreadOnly` que o
+  `FeedBoard` já expunha (o mesmo usado por `/feed?nao-lidos=1`); nada de
+  contagem ou ordenação nova.
+- **Sem custo de rede**: `postState` → `POST /api/state` → `invalidateAll()`,
+  que só relê `hub.json`/`estado.json`/`feed-cache.json`. O scheduler é
+  `setInterval` no servidor e continua no intervalo de cada fonte.
+- **Menos de 5 não lidos** → mostra menos. Tudo lido → painel novo
+  `emptyFilteredTitle`/`emptyFilteredHint` ("Tudo lido por aqui"). As props
+  `emptyTitle`/`emptyHint` que já existiam continuam restritas ao caso "sem
+  posts", porque o `favoritos` depende do texto de busca sem resultado.
+- **Desfazer**: marcar como lido mostra um toast de **8 s** com `Desfazer`.
+  Reaproveita `undoIds`/`undoMarkAllRead` (sem `sessionStorage`: o desfazer de
+  leitura individual é só em memória).
+- **Testes**: E2E novo em `home.spec.ts` — força `mark-unread`, confere o card,
+  marca como lido, confere que sumiu e desfaz; restaura o estado no `finally`.
+  Suíte completa: 42 E2E e 870 unitários verdes.
+- **Nota**: o `playwright.config.ts` sobe o `build/` existente sem rebuildar —
+  rode `npm run build` antes de `npx playwright test` depois de mexer em
+  componentes.

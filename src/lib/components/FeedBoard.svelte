@@ -33,6 +33,8 @@
 		contextNote = '',
 		emptyTitle = '',
 		emptyHint = '',
+		emptyFilteredTitle = '',
+		emptyFilteredHint = '',
 		overview = false,
 		saved = false,
 		initialFilterId = null,
@@ -48,6 +50,9 @@
 		contextNote?: string;
 		emptyTitle?: string;
 		emptyHint?: string;
+		/** Texto quando há posts, mas o filtro/escopo não deixou nenhum. */
+		emptyFilteredTitle?: string;
+		emptyFilteredHint?: string;
 		overview?: boolean;
 		saved?: boolean;
 		initialFilterId?: string | null;
@@ -60,6 +65,9 @@
 		{ id: 'compact', label: 'Compacto' },
 		{ id: 'completo', label: 'Completo' }
 	];
+
+	/** Janela do "Desfazer" depois de marcar um post como lido. */
+	const READ_UNDO_MS = 8_000;
 
 	let view = $state<FeedView>('bento');
 	let query = $state('');
@@ -713,8 +721,22 @@
 		}, remaining);
 	}
 
-	function toggleRead(entry: FeedViewItem): void {
-		void postState({ action: entry.read ? 'unread' : 'read', id: entry.item.id });
+	async function toggleRead(entry: FeedViewItem): Promise<void> {
+		// Na home o card sai da lista ao ler; oferece desfazer rápido.
+		if (entry.read) {
+			await postState({ action: 'unread', id: entry.item.id });
+			return;
+		}
+
+		const ok = await postState({ action: 'read', id: entry.item.id });
+		if (!ok) {
+			showToast('Não foi possível marcar como lido.', 'error', 5000);
+			return;
+		}
+
+		undoIds = [entry.item.id];
+		showToast('Post marcado como lido.', 'undo', 0);
+		scheduleUndoExpiry(Date.now() + READ_UNDO_MS);
 	}
 
 	function toggleSave(entry: FeedViewItem): void {
@@ -1325,7 +1347,7 @@
 						? emptyTitle || (saved ? 'Nenhum post salvo ainda' : 'Nenhum post no cache ainda')
 						: saved
 							? 'Nenhum salvo com essa busca'
-							: 'Nenhum post com esse filtro'}
+							: emptyFilteredTitle || 'Nenhum post com esse filtro'}
 				</span>
 				<span class="muted">
 					{entries.length === 0
@@ -1335,7 +1357,7 @@
 								: 'Clique em "Atualizar agora" para buscar as fontes cadastradas.')
 						: saved
 							? 'Ajuste a busca ou o modo de ordenação.'
-							: 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
+							: emptyFilteredHint || 'Ajuste a palavra-chave, o modo ou os filtros salvos.'}
 				</span>
 				{#if saved && entries.length === 0}
 					<a class="chip link" href={resolve('/feed')}>Ir para o feed</a>
