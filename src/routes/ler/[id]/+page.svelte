@@ -431,6 +431,8 @@
 		{/if}
 	</div>
 
+	<span class="reader-divider" aria-hidden="true"></span>
+
 	<aside class="reader-rail" aria-label="Detalhes da leitura">
 		<section class="reader-archive panel" aria-labelledby="t-reader-archive">
 			<div class="hl-head">

@@ -925,13 +925,16 @@ Executada depois do item 44, a partir do uso real.
 - **Sobra de espaço**: `.reader-page` era uma coluna de `72ch` centrada; numa
   janela de 1855 px sobravam ~480 px de cada lado. A medida de leitura estava
   certa — o espaço é que não fazia nada.
-- **Correção**: a página virou grade `minmax(0, 72ch) 300px` com
-  `max-width: 1120px`, `justify-content: center` e `gap: 40px`. O rail recebe
+- **Correção**: a página virou grade `minmax(0, 76ch) 1px 300px` com
+  `max-width: 1120px`, `justify-content: center` e `gap: 24px`. O rail recebe
   **Arquivo offline** e **Seus destaques**, que antes ficavam empilhados abaixo
   do texto. `position: sticky` com `max-height: calc(100vh - 40px)`.
-- **Abaixo de 1280 px** volta a uma coluna, com os mesmos painéis empilhados
-  depois do artigo — é o breakpoint em que 72ch + 300 px deixam de caber ao lado
-  da sidebar de 248 px.
+  A coluna central de 1 px é o `.reader-divider`: um fio `var(--line)` que
+  estica com a altura do artigo (não acompanha o sticky do rail).
+- **Medida**: 72ch → 76ch (+~35 px, 671 px de texto a 17 px/corpo).
+- **Abaixo de 1352 px** volta a uma coluna, com os mesmos painéis empilhados
+  depois do artigo — é o breakpoint em que 76ch + fio + 300 px deixam de caber
+  ao lado da sidebar de 248 px.
 - **Sem mudança de comportamento**: só o `<aside class="reader-rail">` novo e o
   invólucro `.reader-main`; classes `.reader-highlights`/`.reader-archive`
   mantidas, então os testes que dependem delas não mudaram.
