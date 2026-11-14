@@ -917,3 +917,28 @@ Executada depois do item 43, a partir de um feed do GE que “não era encontrad
   página do canal) e o cache de 15 vídeos é preservado. Plano de contingência,
   opções e esboço de fallback em
   [`docs/youtube-feed-contingencia.md`](docs/youtube-feed-contingencia.md).
+
+## 45. Reader: rail lateral em telas largas
+
+Executada depois do item 44, a partir do uso real.
+
+- **Sobra de espaço**: `.reader-page` era uma coluna de `72ch` centrada; numa
+  janela de 1855 px sobravam ~480 px de cada lado. A medida de leitura estava
+  certa — o espaço é que não fazia nada.
+- **Correção**: a página virou grade `minmax(0, 72ch) 300px` com
+  `max-width: 1120px`, `justify-content: center` e `gap: 40px`. O rail recebe
+  **Arquivo offline** e **Seus destaques**, que antes ficavam empilhados abaixo
+  do texto. `position: sticky` com `max-height: calc(100vh - 40px)`.
+- **Abaixo de 1280 px** volta a uma coluna, com os mesmos painéis empilhados
+  depois do artigo — é o breakpoint em que 72ch + 300 px deixam de caber ao lado
+  da sidebar de 248 px.
+- **Sem mudança de comportamento**: só o `<aside class="reader-rail">` novo e o
+  invólucro `.reader-main`; classes `.reader-highlights`/`.reader-archive`
+  mantidas, então os testes que dependem delas não mudaram.
+- **Reader do Reddit avaliado e descartado**: Readability falha na página do
+  Reddit (HTTP 200 com 8,4 KB de shell JS) e o caminho viável seria
+  `<url do post>.rss`, que devolve o post + comentários em Atom. Ficou de fora
+  porque custa uma requisição por leitura no mesmo limite de 429 do refresh.
+  Reader continua só para `type: 'rss'`.
+- **Verificação**: `npm run verify` verde (870 testes) e 20 E2E de reader,
+  arquivo e a11y verdes; conferido em 1855 px, 1240 px e 390 px.
