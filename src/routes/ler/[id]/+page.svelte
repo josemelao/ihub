@@ -361,122 +361,167 @@
 <TopBar placeholder="Buscar no hub" />
 
 <div class="reader-page">
-	<a class="soft small reader-back" href={resolve('/feed')}>
-		<Icon name="arrow-left" size={16} />
-		Voltar ao feed
-	</a>
+	<div class="reader-main">
+		<a class="soft small reader-back" href={resolve('/feed')}>
+			<Icon name="arrow-left" size={16} />
+			Voltar ao feed
+		</a>
 
-	<header class="reader-head">
-		<h1>{data.item.title}</h1>
-		<p class="muted small">
-			{#if data.source}
-				{data.source.name}
-			{/if}
-			{#if article?.siteName}
-				· {article.siteName}
-			{/if}
-			{#if article?.byline}
-				· {article.byline}
-			{/if}
-			{#if article}
-				· ~{minutes} min
-			{/if}
-		</p>
+		<header class="reader-head">
+			<h1>{data.item.title}</h1>
+			<p class="muted small">
+				{#if data.source}
+					{data.source.name}
+				{/if}
+				{#if article?.siteName}
+					· {article.siteName}
+				{/if}
+				{#if article?.byline}
+					· {article.byline}
+				{/if}
+				{#if article}
+					· ~{minutes} min
+				{/if}
+			</p>
 
-		<div class="reader-actions">
-			<a
-				class="chip link"
-				href={data.item.url}
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label="Abrir original"
-			>
-				<Icon name="external" size={16} />
-				Abrir original
-			</a>
-			{#if canActivate}
-				<button type="button" class="chip" onclick={activate} disabled={busy}>
-					Ativar texto completo nesta fonte
-				</button>
-			{/if}
-		</div>
-	</header>
-
-	{#if article}
-		<article class="reader-body" bind:this={articleEl}>
-			<!-- article.html vem exclusivamente de sanitizeArticleHtml (allowlist). -->
-			{@html article.html}
-		</article>
-	{:else if busy}
-		<p class="muted reader-status" role="status">Buscando o texto completo…</p>
-	{:else if errorMessage}
-		<div class="reader-status">
-			<div class="alert" role="status">{errorMessage}</div>
 			<div class="reader-actions">
-				<button type="button" class="chip" onclick={extract}>Tentar de novo</button>
-				{#if archive?.status === 'ready'}
-					<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
+				<a
+					class="chip link"
+					href={data.item.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label="Abrir original"
+				>
+					<Icon name="external" size={16} />
+					Abrir original
+				</a>
+				{#if canActivate}
+					<button type="button" class="chip" onclick={activate} disabled={busy}>
+						Ativar texto completo nesta fonte
+					</button>
 				{/if}
 			</div>
-		</div>
-	{:else if data.source && data.source.type !== 'rss'}
-		<p class="muted reader-status">Reader indisponível para esta fonte. Use “Abrir original”.</p>
-	{:else if canActivate}
-		<p class="muted reader-status">
-			O texto completo está desligado para esta fonte. Ative acima para ler aqui.
-		</p>
-	{:else}
-		<p class="reader-status muted">{data.item.summary}</p>
-	{/if}
+		</header>
 
-	<section class="reader-archive panel" aria-labelledby="t-reader-archive">
-		<div class="hl-head">
-			<h2 id="t-reader-archive" class="fs-15">Arquivo offline</h2>
-			{#if archive?.status === 'ready'}
-				<span class="tag">arquivado</span>
-			{/if}
-		</div>
-
-		{#if archive?.status === 'ready'}
-			<p class="muted small">
-				{formatBytes(archive.bytes)} · {archive.assets}
-				{archive.assets === 1 ? 'imagem' : 'imagens'} · {relativeTime(archive.updatedAt)}
-			</p>
-			<div class="reader-actions">
-				<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
-				<button
-					type="button"
-					class="chip"
-					onclick={() => (confirmingRemoveArchive = true)}
-					disabled={archiveBusy}
-				>
-					Remover arquivo
-				</button>
+		{#if article}
+			<article class="reader-body" bind:this={articleEl}>
+				<!-- article.html vem exclusivamente de sanitizeArticleHtml (allowlist). -->
+				{@html article.html}
+			</article>
+		{:else if busy}
+			<p class="muted reader-status" role="status">Buscando o texto completo…</p>
+		{:else if errorMessage}
+			<div class="reader-status">
+				<div class="alert" role="status">{errorMessage}</div>
+				<div class="reader-actions">
+					<button type="button" class="chip" onclick={extract}>Tentar de novo</button>
+					{#if archive?.status === 'ready'}
+						<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
+					{/if}
+				</div>
 			</div>
-		{:else if archive?.status === 'pending'}
-			<p class="muted small" role="status">Arquivando…</p>
-		{:else if archive?.status === 'failed'}
-			<div class="alert" role="status">{archive.error ?? 'Falha ao arquivar.'}</div>
-			{#if data.saved}
-				<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
-					Tentar de novo
-				</button>
-			{/if}
-		{:else if data.saved && canArchive}
-			<p class="muted small">Sem arquivo local para este post.</p>
-			<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
-				Arquivar agora
-			</button>
-		{:else if data.saved}
-			<p class="muted small">Arquivamento disponível apenas para fontes RSS.</p>
+		{:else if data.source && data.source.type !== 'rss'}
+			<p class="muted reader-status">Reader indisponível para esta fonte. Use “Abrir original”.</p>
+		{:else if canActivate}
+			<p class="muted reader-status">
+				O texto completo está desligado para esta fonte. Ative acima para ler aqui.
+			</p>
 		{:else}
-			<p class="muted small">Salve o post para guardar uma cópia local da página.</p>
+			<p class="reader-status muted">{data.item.summary}</p>
+		{/if}
+	</div>
+
+	<aside class="reader-rail" aria-label="Detalhes da leitura">
+		<section class="reader-archive panel" aria-labelledby="t-reader-archive">
+			<div class="hl-head">
+				<h2 id="t-reader-archive" class="fs-15">Arquivo offline</h2>
+				{#if archive?.status === 'ready'}
+					<span class="tag">arquivado</span>
+				{/if}
+			</div>
+
+			{#if archive?.status === 'ready'}
+				<p class="muted small">
+					{formatBytes(archive.bytes)} · {archive.assets}
+					{archive.assets === 1 ? 'imagem' : 'imagens'} · {relativeTime(archive.updatedAt)}
+				</p>
+				<div class="reader-actions">
+					<a class="chip link" href={`/arquivo/${data.item.id}`}>Abrir versão arquivada</a>
+					<button
+						type="button"
+						class="chip"
+						onclick={() => (confirmingRemoveArchive = true)}
+						disabled={archiveBusy}
+					>
+						Remover arquivo
+					</button>
+				</div>
+			{:else if archive?.status === 'pending'}
+				<p class="muted small" role="status">Arquivando…</p>
+			{:else if archive?.status === 'failed'}
+				<div class="alert" role="status">{archive.error ?? 'Falha ao arquivar.'}</div>
+				{#if data.saved}
+					<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
+						Tentar de novo
+					</button>
+				{/if}
+			{:else if data.saved && canArchive}
+				<p class="muted small">Sem arquivo local para este post.</p>
+				<button type="button" class="chip" onclick={archiveNow} disabled={archiveBusy}>
+					Arquivar agora
+				</button>
+			{:else if data.saved}
+				<p class="muted small">Arquivamento disponível apenas para fontes RSS.</p>
+			{:else}
+				<p class="muted small">Salve o post para guardar uma cópia local da página.</p>
+			{/if}
+
+			{#if archiveError}
+				<div class="alert" role="status">{archiveError}</div>
+			{/if}
+		</section>
+
+		{#if highlightError}
+			<div class="alert" role="status">{highlightError}</div>
 		{/if}
 
-		{#if archiveError}
-			<div class="alert" role="status">{archiveError}</div>
+		{#if highlights.length > 0}
+			<section class="reader-highlights panel" aria-labelledby="t-reader-highlights">
+				<h2 id="t-reader-highlights">Seus destaques</h2>
+				<ul>
+					{#each highlights as highlight (highlight.id)}
+						<li>
+							<div class="hl-head">
+								<span class="tag hl-{highlight.color}">
+									{HIGHLIGHT_COLOR_LABELS[highlight.color]}
+								</span>
+								<button
+									type="button"
+									class="chip"
+									aria-label="Editar destaque {highlight.quote.slice(0, 40)}"
+									onclick={() => editHighlight(highlight)}
+								>
+									Editar
+								</button>
+								<button
+									type="button"
+									class="chip"
+									aria-label="Remover destaque {highlight.quote.slice(0, 40)}"
+									onclick={() => (removing = highlight)}
+								>
+									Remover
+								</button>
+							</div>
+							<blockquote>{highlight.quote}</blockquote>
+							{#if highlight.note}
+								<p class="muted small">{highlight.note}</p>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			</section>
 		{/if}
-	</section>
+	</aside>
 
 	{#if confirmingRemoveArchive}
 		<ConfirmDialog
@@ -507,10 +552,6 @@
 		/>
 	{/if}
 
-	{#if highlightError}
-		<div class="alert reader-status" role="status">{highlightError}</div>
-	{/if}
-
 	{#if removing}
 		<ConfirmDialog
 			title="Remover destaque"
@@ -518,42 +559,5 @@
 			onconfirm={confirmRemove}
 			oncancel={() => (removing = null)}
 		/>
-	{/if}
-
-	{#if highlights.length > 0}
-		<section class="reader-highlights panel" aria-labelledby="t-reader-highlights">
-			<h2 id="t-reader-highlights">Seus destaques</h2>
-			<ul>
-				{#each highlights as highlight (highlight.id)}
-					<li>
-						<div class="hl-head">
-							<span class="tag hl-{highlight.color}">
-								{HIGHLIGHT_COLOR_LABELS[highlight.color]}
-							</span>
-							<button
-								type="button"
-								class="chip"
-								aria-label="Editar destaque {highlight.quote.slice(0, 40)}"
-								onclick={() => editHighlight(highlight)}
-							>
-								Editar
-							</button>
-							<button
-								type="button"
-								class="chip"
-								aria-label="Remover destaque {highlight.quote.slice(0, 40)}"
-								onclick={() => (removing = highlight)}
-							>
-								Remover
-							</button>
-						</div>
-						<blockquote>{highlight.quote}</blockquote>
-						{#if highlight.note}
-							<p class="muted small">{highlight.note}</p>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		</section>
 	{/if}
 </div>
