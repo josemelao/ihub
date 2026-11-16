@@ -1135,3 +1135,27 @@ Executada em 16/11/2026 sobre a `v0.35.0`.
   Playwright verdes.
 - **Próxima leva**: opcionais — PLAT-06 (widgets), ORG-15 (recentes/mais usados)
   e READ-06 (TTS).
+
+## 53. ORG-15 — Recentes e Mais usados (v0.37.0)
+
+Executada em 16/11/2026 sobre a `v0.36.0`.
+
+- **Storage**: `data/usage.json` (`{ version, entries: { id: { count, lastOpenedAt } } }`)
+  com Zod, escrita atômica, `.bak`, lock e `loadUsage`/`updateUsage`/`saveUsage`;
+  histórico limitado aos **500** itens mais recentes. Arquivo ignorado pelo Git.
+- **API**: `POST /api/usage` valida id e existência no hub e incrementa;
+  `GET` lê; `DELETE` limpa (JSON para o CSRF). `/api/usage` entrou na tabela de APIs.
+- **Registro**: `trackItemOpen` com `fetch` + `keepalive` em `LibraryCard`,
+  `ItemRow`, `QuickAccess` e na palette (links/apps). Falha de histórico nunca
+  bloqueia o link.
+- **Home**: painel **Recentes** na barra lateral com os 5 últimos itens abertos;
+  estado vazio explica como começar.
+- **Biblioteca**: seção **Mais usados** com os 8 itens por contagem, desempate
+  pelo mais recente, e **Limpar histórico** com `ConfirmDialog`; o layout carrega
+  `usage` junto de hub/feed/estado.
+- **Testes**: 7 unitários (contagem, cap 500, ordenações, storage) + 3 de rota
+  (POST/GET/DELETE, item inexistente/ID inválido) + 2 E2E (abrir link → Recentes;
+  ordenação → limpar). Axe segue verde.
+- **Qualidade**: 927 testes em 148 arquivos, 54 E2E, `npm run verify` e
+  Playwright verdes.
+- **Próxima leva**: opcionais PLAT-06 (widgets) e READ-06 (TTS).
