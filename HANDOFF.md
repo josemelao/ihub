@@ -1111,3 +1111,27 @@ virtualização e sem SQLite.
 - **Qualidade**: 915 testes em 144 arquivos, 48 E2E, `npm run verify` verde.
 - **Próxima leva**: ORG-14 (página `/g/[slug]` + “Abrir tudo”) ou ORG-15
   (recentes/mais usados).
+
+## 52. ORG-14 — página de grupo e “Abrir tudo” (v0.36.0)
+
+Executada em 16/11/2026 sobre a `v0.35.0`.
+
+- **Rota `/g/[slug]`**: `+page.server.ts` resolve o grupo pelo id, a categoria,
+  os itens em `item.order` e as fontes cujo `groupId` coincide; o feed é
+  `buildFeedView` filtrado por essas fontes. Grupo/categoria ausente → `error(404)`
+  com mensagem que aparece na página de erro existente.
+- **Página**: cabeçalho com nome/categoria/contadores, link para a categoria,
+  `LibraryCard` para links/apps, `FeedBoard` só com as fontes do grupo e estado
+  vazio “Nenhuma fonte vinculada a este grupo”.
+- **Abrir tudo**: aparece só para links, pede confirmação (`ConfirmDialog`) com a
+  contagem e abre em novas abas via `window.open`, limpando `opener`. Se o
+  navegador bloquear, mostra `role="status"` com quantos abriram/bloquearam e
+  orienta liberar pop-ups. Apps/protocolos ficam de fora.
+- **Descoberta**: o `GroupCard` da categoria ganhou o link “abrir grupo” ao lado
+  de “abrir na biblioteca”.
+- **Testes**: 2 de load (filtro/ordenação e 404) e 4 E2E (conteúdo, abrir tudo
+  com popup, 404, link a partir da categoria), com axe na página.
+- **Qualidade**: 917 testes em 145 arquivos, 52 E2E, `npm run verify` e
+  Playwright verdes.
+- **Próxima leva**: opcionais — PLAT-06 (widgets), ORG-15 (recentes/mais usados)
+  e READ-06 (TTS).

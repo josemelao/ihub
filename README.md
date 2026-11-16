@@ -7,8 +7,8 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 ## Status
 
 - **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, backup completo em ZIP e saúde de links + ícones locais.
-- **Versão atual:** `v0.35.0` · **915 testes** em 144 arquivos · **48 E2E**.
-- **Próximos blocos planejados:** PLAT-12 (performance com 1.000 posts e critério de SQLite) e, depois, os opcionais PLAT-06/ORG-14/ORG-15/READ-06. PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
+- **Versão atual:** `v0.36.0` · **917 testes** em 145 arquivos · **52 E2E**.
+- **Próximos blocos planejados:** opcionais PLAT-06 (widgets), ORG-15 (recentes/mais usados) e READ-06 (TTS). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -170,6 +170,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - Itens sem grupo aparecem em **“Sem grupo”**.
 - **Ícones**: links e apps usam `/api/icon?url=...`, que baixa o favicon oficial (`/favicon.ico`, `/favicon.png` ou `apple-touch-icon.png`) via `safe-fetch`, guarda em `data/icons/` e serve do cache nas próximas visitas. Sem DuckDuckGo/Google/Simple Icons no carregamento; se nada for encontrado, aparecem as iniciais.
 - **Descrição curta** opcional por item aparece no card da Biblioteca, no tooltip do Acesso rápido e na busca.
+- Cada grupo tem uma **página própria** em `/g/<id>` com os links/apps do grupo, o feed das fontes vinculadas e o botão **Abrir tudo** (com confirmação e aviso quando o navegador bloquear pop-ups). O card do grupo na categoria leva para essa página.
 - O campo opcional `icon` sobrescreve o ícone com uma URL `https://...` (também passa pelo cache local). Slugs antigos do Simple Icons não são mais buscados e caem para o favicon do item/iniciais.
 - A rota antiga `/apps` redireciona para `/biblioteca`.
 
@@ -314,6 +315,7 @@ O hub foi desenhado para uma única máquina, com `data/` local. O lock de escri
 | --------------------- | -------------------------------------------------------------------------------------------------------- |
 | `/`                   | Início: status, acesso rápido (9 atalhos/grupos), ferramentas, 5 últimas notícias e painel direito       |
 | `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                                |
+| `/g/[slug]`           | Grupo: links/apps, feed das fontes do grupo e “Abrir tudo”                                               |
 | `/feed`               | Feed completo com filtros e fontes cadastradas                                                           |
 | `/favoritos`          | Salvos: estatísticas, posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação |
 | `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps                             |
@@ -382,7 +384,7 @@ npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chr
 npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
 
-O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **48 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, links quebrados/duplicados, backup em ZIP, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **52 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, links quebrados/duplicados, backup em ZIP, página de grupo + abrir tudo, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
