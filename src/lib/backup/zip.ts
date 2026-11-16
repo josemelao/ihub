@@ -21,11 +21,7 @@ export interface BackupManifest {
 
 const BASE_FILES = ['hub.json', 'estado.json', 'feed-cache.json', 'notes.json', 'highlights.json'];
 
-async function addFileIfPresent(
-	files: BackupFile[],
-	dataDir: string,
-	name: string
-): Promise<void> {
+async function addFileIfPresent(files: BackupFile[], dataDir: string, name: string): Promise<void> {
 	const path = join(dataDir, name);
 	try {
 		const info = await stat(path);
@@ -36,11 +32,7 @@ async function addFileIfPresent(
 	files.push({ name, path });
 }
 
-async function walk(
-	directory: string,
-	prefix: string,
-	files: BackupFile[]
-): Promise<void> {
+async function walk(directory: string, prefix: string, files: BackupFile[]): Promise<void> {
 	let entries;
 	try {
 		entries = await readdir(directory, { withFileTypes: true });

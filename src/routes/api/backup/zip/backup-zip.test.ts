@@ -52,8 +52,6 @@ describe('GET /api/backup/zip', () => {
 		const response = await call('/api/backup/zip?arquivos=1');
 		const zipped = unzipSync(new Uint8Array(await response.arrayBuffer()));
 
-		expect(Object.keys(zipped)).toEqual(
-			expect.arrayContaining(['archive/post-a/index.html'])
-		);
+		expect(Object.keys(zipped)).toEqual(expect.arrayContaining(['archive/post-a/index.html']));
 	});
 });

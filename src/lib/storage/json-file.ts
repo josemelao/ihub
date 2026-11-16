@@ -807,7 +807,13 @@ export class JsonFileStorage implements HubStorage {
 		}
 
 		const files: string[] = [];
-		for (const base of ['hub.json', 'estado.json', 'feed-cache.json', 'notes.json', 'highlights.json']) {
+		for (const base of [
+			'hub.json',
+			'estado.json',
+			'feed-cache.json',
+			'notes.json',
+			'highlights.json'
+		]) {
 			const candidates = entries
 				.filter((name) => name === base || name.startsWith(`${base}.bak`))
 				.sort();
@@ -881,7 +887,9 @@ export class JsonFileStorage implements HubStorage {
 		const bundle: ExportBundle = { hub };
 
 		if (entry.hasState) {
-			bundle.state = parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'));
+			bundle.state = parseHubState(
+				await this.readJsonAt(join(entry.path, 'estado.json'), 'backup')
+			);
 		}
 		if (entry.hasNotes) {
 			bundle.notes = parseNotes(await this.readJsonAt(join(entry.path, 'notes.json'), 'backup'));
