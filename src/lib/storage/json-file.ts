@@ -735,7 +735,9 @@ export class JsonFileStorage implements HubStorage {
 					sizeBytes,
 					hasHub: names.includes('hub.json'),
 					hasState: names.includes('estado.json'),
-					hasCache: names.includes('feed-cache.json')
+					hasCache: names.includes('feed-cache.json'),
+					hasNotes: names.includes('notes.json'),
+					hasHighlights: names.includes('highlights.json')
 				});
 			} catch {
 				// pasta inacessível: ignora
@@ -777,7 +779,13 @@ export class JsonFileStorage implements HubStorage {
 
 	async backupNow(): Promise<BackupCreated> {
 		return fileLocks.withLocks(
-			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
+			[
+				this.lockKey('hub.json'),
+				this.lockKey('estado.json'),
+				this.lockKey('feed-cache.json'),
+				this.lockKey('notes.json'),
+				this.lockKey('highlights.json')
+			],
 			() => this.createBackupUnlocked()
 		);
 	}
@@ -799,7 +807,7 @@ export class JsonFileStorage implements HubStorage {
 		}
 
 		const files: string[] = [];
-		for (const base of ['hub.json', 'estado.json', 'feed-cache.json']) {
+		for (const base of ['hub.json', 'estado.json', 'feed-cache.json', 'notes.json', 'highlights.json']) {
 			const candidates = entries
 				.filter((name) => name === base || name.startsWith(`${base}.bak`))
 				.sort();
@@ -870,10 +878,21 @@ export class JsonFileStorage implements HubStorage {
 	async loadBackupBundle(id: string): Promise<ExportBundle> {
 		const entry = await this.requireManualBackup(id);
 		const hub = parseHub(await this.readJsonAt(join(entry.path, 'hub.json'), 'backup'));
-		if (!entry.hasState) return { hub };
+		const bundle: ExportBundle = { hub };
 
-		const state = parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'));
-		return { hub, state };
+		if (entry.hasState) {
+			bundle.state = parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'));
+		}
+		if (entry.hasNotes) {
+			bundle.notes = parseNotes(await this.readJsonAt(join(entry.path, 'notes.json'), 'backup'));
+		}
+		if (entry.hasHighlights) {
+			bundle.highlights = parseHighlights(
+				await this.readJsonAt(join(entry.path, 'highlights.json'), 'backup')
+			);
+		}
+
+		return bundle;
 	}
 
 	async restoreBackup(id: string): Promise<BackupRestoreResult> {
@@ -881,6 +900,12 @@ export class JsonFileStorage implements HubStorage {
 		const hub = parseHub(await this.readJsonAt(join(entry.path, 'hub.json'), 'backup'));
 		const state = entry.hasState
 			? parseHubState(await this.readJsonAt(join(entry.path, 'estado.json'), 'backup'))
+			: null;
+		const notes = entry.hasNotes
+			? parseNotes(await this.readJsonAt(join(entry.path, 'notes.json'), 'backup'))
+			: null;
+		const highlights = entry.hasHighlights
+			? parseHighlights(await this.readJsonAt(join(entry.path, 'highlights.json'), 'backup'))
 			: null;
 
 		let cache: FeedCache | null = null;
@@ -896,10 +921,16 @@ export class JsonFileStorage implements HubStorage {
 		}
 
 		// Antes de sobrescrever, guarda o estado atual para permitir desfazer.
-		// Tudo acontece sob os três locks, e qualquer falha de escrita desfaz o
-		// que já foi gravado para não deixar hub/estado/cache misturados.
+		// Tudo acontece sob os locks dos arquivos que serão sobrescritos, e
+		// qualquer falha de escrita desfaz o que já foi gravado.
 		return fileLocks.withLocks(
-			[this.lockKey('hub.json'), this.lockKey('estado.json'), this.lockKey('feed-cache.json')],
+			[
+				this.lockKey('hub.json'),
+				this.lockKey('estado.json'),
+				this.lockKey('feed-cache.json'),
+				this.lockKey('notes.json'),
+				this.lockKey('highlights.json')
+			],
 			async () => {
 				const previousHub = await this.loadHubLocked().catch((error) => {
 					if (error instanceof HubValidationError) return null;
@@ -913,6 +944,18 @@ export class JsonFileStorage implements HubStorage {
 					if (error instanceof HubValidationError) return null;
 					throw error;
 				});
+				const previousNotes = notes
+					? await this.loadNotes().catch((error) => {
+							if (error instanceof HubValidationError) return null;
+							throw error;
+						})
+					: null;
+				const previousHighlights = highlights
+					? await this.loadHighlights().catch((error) => {
+							if (error instanceof HubValidationError) return null;
+							throw error;
+						})
+					: null;
 
 				const safety = await this.createBackupUnlocked();
 
@@ -920,6 +963,8 @@ export class JsonFileStorage implements HubStorage {
 					await this.persistHub(hub);
 					if (state) await this.persistState(state);
 					if (cache) await this.persistFeedCache(cache);
+					if (notes) await this.persistNotes(notes);
+					if (highlights) await this.persistHighlights(highlights);
 				} catch (error) {
 					if (previousHub) await this.persistHub(previousHub).catch(() => undefined);
 					if (state && previousState) {
@@ -927,6 +972,12 @@ export class JsonFileStorage implements HubStorage {
 					}
 					if (cache && previousCache) {
 						await this.persistFeedCache(previousCache).catch(() => undefined);
+					}
+					if (notes && previousNotes) {
+						await this.persistNotes(previousNotes).catch(() => undefined);
+					}
+					if (highlights && previousHighlights) {
+						await this.persistHighlights(previousHighlights).catch(() => undefined);
 					}
 					throw error;
 				}

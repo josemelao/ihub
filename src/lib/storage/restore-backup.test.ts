@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { JsonFileStorage } from './json-file';
-import type { FeedCache, HubData, HubState } from '../types';
+import type { FeedCache, HighlightsData, HubData, HubState, NotesData } from '../types';
 
 const hub = (name: string): HubData => ({
 	version: 1,
@@ -28,6 +28,35 @@ const cache: FeedCache = {
 	items: [],
 	sources: {}
 };
+
+const notes = (text: string): NotesData => ({
+	version: 1,
+	notes: [
+		{
+			id: 'nota-1',
+			text,
+			createdAt: '2026-01-01T00:00:00.000Z',
+			updatedAt: '2026-01-01T00:00:00.000Z'
+		}
+	]
+});
+
+const highlights = (quote: string): HighlightsData => ({
+	version: 1,
+	highlights: [
+		{
+			id: 'hl-1',
+			itemId: 'post-1',
+			itemTitle: 'Post',
+			itemUrl: 'https://example.com/post',
+			quote,
+			color: 'yellow',
+			occurrence: 0,
+			createdAt: '2026-01-01T00:00:00.000Z',
+			updatedAt: '2026-01-01T00:00:00.000Z'
+		}
+	]
+});
 
 let dir: string;
 let storage: JsonFileStorage;
@@ -108,5 +137,63 @@ describe('restoreBackup atômico', () => {
 				new Promise((_, reject) => setTimeout(() => reject(new Error('lock preso')), 2000))
 			])
 		).resolves.toBeTruthy();
+	});
+
+	it('inclui notas e destaques no ponto e no bundle', async () => {
+		await storage.saveHub(hub('Original'));
+		await storage.saveNotes(notes('lembrar'));
+		await storage.saveHighlights(highlights('trecho'));
+
+		const point = await storage.backupNow();
+		const bundle = await storage.loadBackupBundle(point.entry.id);
+
+		expect(point.files).toEqual(expect.arrayContaining(['notes.json', 'highlights.json']));
+		expect(point.entry.hasNotes).toBe(true);
+		expect(point.entry.hasHighlights).toBe(true);
+		expect(bundle.notes?.notes[0].text).toBe('lembrar');
+		expect(bundle.highlights?.highlights[0].quote).toBe('trecho');
+	});
+
+	it('restaura notas e destaques junto com hub e estado', async () => {
+		await storage.saveHub(hub('Original'));
+		await storage.saveNotes(notes('antiga'));
+		await storage.saveHighlights(highlights('antigo'));
+		const point = await storage.backupNow();
+
+		await storage.saveNotes(notes('nova'));
+		await storage.saveHighlights(highlights('novo'));
+
+		await storage.restoreBackup(point.entry.id);
+
+		expect((await storage.loadNotes()).notes[0].text).toBe('antiga');
+		expect((await storage.loadHighlights()).highlights[0].quote).toBe('antigo');
+	});
+
+	it('mantém notas e destaques atuais quando o ponto não os tem', async () => {
+		await storage.saveHub(hub('Original'));
+		const point = await storage.backupNow();
+
+		await storage.saveNotes(notes('atual'));
+		await storage.saveHighlights(highlights('atual'));
+
+		await storage.restoreBackup(point.entry.id);
+
+		expect((await storage.loadNotes()).notes[0].text).toBe('atual');
+		expect((await storage.loadHighlights()).highlights[0].quote).toBe('atual');
+	});
+
+	it('não altera nada quando as notas do ponto estão inválidas', async () => {
+		await storage.saveHub(hub('Original'));
+		await storage.saveNotes(notes('antiga'));
+		const point = await storage.backupNow();
+		await writeFile(join(point.directory, 'notes.json'), '{ quebrado', 'utf-8');
+
+		await storage.saveHub(hub('Atual'));
+		await storage.saveNotes(notes('atual'));
+
+		await expect(storage.restoreBackup(point.entry.id)).rejects.toThrow();
+
+		expect((await storage.loadHub()).categories[0].name).toBe('Atual');
+		expect((await storage.loadNotes()).notes[0].text).toBe('atual');
 	});
 });

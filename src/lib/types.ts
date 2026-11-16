@@ -235,6 +235,8 @@ export interface BackupEntry {
 	hasHub: boolean;
 	hasState: boolean;
 	hasCache: boolean;
+	hasNotes?: boolean;
+	hasHighlights?: boolean;
 }
 
 export interface BackupInfo {
