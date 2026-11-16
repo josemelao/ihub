@@ -1,5 +1,6 @@
 <script lang="ts">
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
+	import ReadingStatsStrip from '#lib/components/ReadingStatsStrip.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { buildSavedView } from '#lib/feed/view';
 	import type { PageProps } from './$types';
@@ -17,11 +18,10 @@
 
 <div class="section-head">
 	<h1>Salvos</h1>
-	<span class="muted small">
-		{entries.length}
-		{entries.length === 1 ? 'post salvo' : 'posts salvos'} para ler depois
-	</span>
+	<span class="muted small">para ler depois</span>
 </div>
+
+<ReadingStatsStrip stats={data.stats} />
 
 <FeedBoard
 	{entries}

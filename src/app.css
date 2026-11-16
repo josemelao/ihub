@@ -1508,6 +1508,37 @@ h3 {
 	white-space: nowrap;
 }
 
+.saved-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 0 0 18px;
+}
+
+.saved-stat {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 6px;
+	padding: 5px 11px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--panel2);
+}
+
+.saved-stat-value {
+	font-family: 'Space Grotesk', Inter, sans-serif;
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--tx);
+	white-space: nowrap;
+}
+
+.saved-stat-label {
+	font-size: 12px;
+	color: var(--mut);
+	white-space: nowrap;
+}
+
 .filter-extra {
 	display: flex;
 	flex-direction: column;

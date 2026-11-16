@@ -47,9 +47,7 @@ export function buildReadingStats({
 	for (const doc of docsWithText) words += countWords(doc.text);
 
 	const read = state.saved.filter((id) => Boolean(state.read[id])).length;
-	const archived = state.saved.filter(
-		(id) => archive.entries[id]?.status === 'ready'
-	).length;
+	const archived = state.saved.filter((id) => archive.entries[id]?.status === 'ready').length;
 	const highlightCount = highlights.highlights.filter((highlight) =>
 		saved.has(highlight.itemId)
 	).length;
