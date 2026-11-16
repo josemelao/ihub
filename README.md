@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos e filtro por cor em Destaques.
-- **Versão atual:** `v0.32.0` · **837 testes** em 132 arquivos · **39 E2E**.
-- **Próximos blocos planejados:** estatísticas de leitura (READ-05 fatia 2, `v0.32.1`) e conflito de sincronização (PLAT-04).
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques e estatísticas de leitura em Salvos.
+- **Versão atual:** `v0.32.1` · **877 testes** em 135 arquivos · **44 E2E**.
+- **Próximos blocos planejados:** backup completo em ZIP (notas, destaques e artigos), ORG-11 + PLAT-03b (links/ícones/imagens) e PLAT-12 (performance). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -235,6 +235,7 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 ### Salvos (busca por título ou conteúdo)
 
 - A página **Salvos** (`/favoritos`) lista os posts salvos com busca por **título** (padrão: título, resumo e fonte) ou por **conteúdo**, pelo alternador **Título / Conteúdo**; a escolha fica no navegador.
+- No topo, uma faixa mostra **salvos, lidos, arquivados, destaques e tempo estimado de leitura** (200 palavras por minuto), calculada localmente; o tooltip explica quantos salvos já têm texto extraído.
 - No modo conteúdo, a busca cobre o texto extraído pelo reader e **todos** os destaques e notas, inclusive de posts não salvos (seção “Destaques fora dos salvos”). Cada trecho aparece com o termo marcado e o título abre `/ler/<id>`.
 - A consulta exige todos os termos, ignora acento/caixa e mostra a cobertura (“N de M salvos com texto”) para explicar uma busca vazia. Só encontra conteúdo já extraído.
 - **Ordenar: Salvamento / Publicação** reordena a lista (e os resultados de conteúdo) pela data em que você salvou ou pela data original do post.
@@ -295,39 +296,30 @@ O editor lateral é compacto, dividido em seções (**Fonte/Organização/Atuali
 
 O botão **Adicionar** abre um painel lateral com formulário específico. Para fontes RSS, o botão **Detectar** procura automaticamente o feed na página informada. Toda alteração é validada pelo Zod e gravada no `hub.json` de forma atômica, com backup `.bak`.
 
-### Sincronizar entre dois PCs (Google Drive / OneDrive)
+### Uso em uma máquina só
 
-Não há integração com a API do Drive. A sincronização é feita pela **pasta sincronizada** do Drive/OneDrive:
-
-1. Instale o Drive/OneDrive nos dois PCs e deixe a pasta sincronizando.
-2. Crie um `.env` em cada PC apontando `HUB_DATA_DIR` para essa pasta, por exemplo:
-   ```env
-   HUB_DATA_DIR=C:\Users\SeuUsuario\Google Drive\MeuHub
-   ```
-3. Coloque o `hub.json` nessa pasta (ou exporte de um PC e importe no outro).
-
-O servidor relê o `hub.json` a cada requisição, então basta recarregar a página para ver mudanças vindas do outro PC. **Evite editar ao mesmo tempo nos dois PCs**: a última gravação vence. Para trocas pontuais, prefira exportar/importar.
+O hub foi desenhado para uma única máquina, com `data/` local. O lock de escrita é por processo (cobre abas e jobs do mesmo servidor) e **não há detecção de conflito entre PCs**. Não use a mesma pasta em OneDrive/Drive com dois computadores ao mesmo tempo: a última gravação vence. Para trocar de PC, use **Gerenciar → Exportar** e **Importar**.
 
 ## Telas
 
-| Rota                  | Tela                                                                                               |
-| --------------------- | -------------------------------------------------------------------------------------------------- |
-| `/`                   | Início: status, acesso rápido (9 atalhos/grupos), ferramentas, 5 últimas notícias e painel direito |
-| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                          |
-| `/feed`               | Feed completo com filtros e fontes cadastradas                                                     |
-| `/favoritos`          | Salvos: posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação         |
-| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps                       |
-| `/apps`               | Redireciona para `/biblioteca`                                                                     |
-| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                                |
-| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                             |
-| `/api/export`         | Download do bundle (hub + estado)                                                                  |
-| `/api/import`         | Importação validada (substituir/mesclar)                                                           |
-| `/api/feed`           | Cache do feed com status por fonte                                                                 |
-| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)              |
-| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                                        |
-| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                                     |
-| `/api/search/content` | Busca no texto extraído dos salvos e nos destaques (`?q=&limit=&sort=`)                            |
-| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                                      |
+| Rota                  | Tela                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------- |
+| `/`                   | Início: status, acesso rápido (9 atalhos/grupos), ferramentas, 5 últimas notícias e painel direito       |
+| `/c/[slug]`           | Categoria: grupos, links/apps e feed restrito à categoria                                                |
+| `/feed`               | Feed completo com filtros e fontes cadastradas                                                           |
+| `/favoritos`          | Salvos: estatísticas, posts para depois, busca por título/conteúdo e ordenação por salvamento/publicação |
+| `/biblioteca`         | Biblioteca: abas Todos/PC/Navegador, busca, categorias → grupos → links/apps                             |
+| `/apps`               | Redireciona para `/biblioteca`                                                                           |
+| `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                                      |
+| `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                                   |
+| `/api/export`         | Download do bundle (hub + estado)                                                                        |
+| `/api/import`         | Importação validada (substituir/mesclar)                                                                 |
+| `/api/feed`           | Cache do feed com status por fonte                                                                       |
+| `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)                    |
+| `/api/refresh/status` | Progresso de um job de atualização (`?id=`)                                                              |
+| `/api/state`          | Lidos/salvos (GET) e ações como read/save/mark-all-read (POST)                                           |
+| `/api/search/content` | Busca no texto extraído dos salvos e nos destaques (`?q=&limit=&sort=`)                                  |
+| `/api/discover-feed`  | Descobre o feed RSS/Atom de uma página (POST)                                                            |
 
 ## Segurança e privacidade
 
@@ -379,7 +371,7 @@ npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chr
 npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
 
-O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **39 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **44 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 

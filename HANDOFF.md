@@ -988,6 +988,37 @@ Executada sobre o topo pós-`v0.32.0` (`d7e32ef`), sem mudança de código.
 - **Próxima leva**: READ-05 fatia 2 — estatísticas de leitura em Salvos.
   Plano em
   `C:\Users\PICHAU\.opencode\plan\2026-11-16-estatisticas-leitura.md`.
+  Entregue na `v0.32.1` (seção 48).
 - **Ordem completa**: (1) estatísticas (`v0.32.1`); (2) backup completo em ZIP;
   (3) ORG-11 + PLAT-03b; (4) PLAT-12; (5) PLAT-06/ORG-14/ORG-15/READ-06/PLAT-09
   e dívidas adiadas.
+
+## 48. Fase 3 — estatísticas de leitura em Salvos (v0.32.1)
+
+Executada em 16/11/2026 sobre o topo pós-`v0.32.0`, fechando a fatia 2 do READ-05.
+
+- **Construtor puro**: `src/lib/reader/stats.ts` calcula salvos, lidos, arquivados,
+  destaques, palavras e minutos. `countWords` separa por espaço e
+  `estimateReadingMinutes` usa 200 palavras/minuto (mínimo 1 quando há texto).
+  Só entram ids presentes em `state.saved`: um `read` antigo ou um destaque de
+  post não salvo não infla a faixa. Arquivado conta apenas `status: 'ready'`.
+- **Fonte do texto**: o índice de conteúdo já cacheado (`getSavedContentIndex`),
+  truncado em 50 mil caracteres por artigo; salvo sem texto não conta no tempo,
+  e a cobertura aparece no tooltip (“Baseado em N de M salvos com texto”).
+- **Load**: `src/routes/favoritos/+page.server.ts` usa `parent()` para estado e
+  destaques e lê o índice de arquivo; nenhum dado novo é gravado.
+- **UI**: `ReadingStatsStrip.svelte` mostra cinco pílulas
+  (`.saved-stats`/`.saved-stat`) com `aria-label="Estatísticas dos salvos"` e
+  `data-stat` para testes. O cabeçalho de Salvos perdeu a contagem duplicada.
+  Os estilos usam `--panel2`, `--line`, `--tx` e `--mut` e quebram em 375 px.
+- **Testes**: 7 unitários de `stats` (palavras, minutos, só salvos, zero,
+  salvo sem documento) e 2 E2E novos (`saved-stats.spec.ts`: números reais +
+  axe/375 px). O E2E de arquivados consulta `/api/archive` antes de comparar,
+  porque um save/unsave anterior da suíte apaga a cópia local.
+- **Qualidade**: 877 testes em 135 arquivos, 44 E2E, `npm run verify` e
+  Playwright verdes; axe segue sem violações em `/favoritos`.
+- **Docs**: README (status, seção Salvos, contagens e uso single-machine),
+  `PLANO-EXECUCAO.md` (READ-05 fechado e seção 17) e as pendências na pasta de
+  planos.
+- **Próxima leva**: backup completo — `notes.json`/`highlights.json` nos pontos
+  manuais e ZIP com `reading/` (+ `archive/` opcional).
