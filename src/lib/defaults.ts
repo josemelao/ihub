@@ -6,6 +6,7 @@ import type {
 	HighlightsData,
 	HubData,
 	HubState,
+	LinkHealthData,
 	NotesData
 } from './types';
 
@@ -41,6 +42,12 @@ export const EMPTY_NOTES: NotesData = {
 export const EMPTY_HIGHLIGHTS: HighlightsData = {
 	version: 1,
 	highlights: []
+};
+
+export const EMPTY_LINK_HEALTH: LinkHealthData = {
+	version: 1,
+	checkedAt: '',
+	entries: {}
 };
 
 export const EMPTY_ARCHIVE_INDEX: ArchiveIndex = {

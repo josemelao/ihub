@@ -7,6 +7,7 @@ import type {
 	HighlightsData,
 	HubData,
 	HubState,
+	LinkHealthData,
 	NotesData,
 	ReadingArticle,
 	ValidationIssue
@@ -410,6 +411,28 @@ export function parseHighlights(input: unknown): HighlightsData {
 		throw new HubValidationError(issuesFrom(result.error), 'highlights.json');
 	}
 	return result.data as HighlightsData;
+}
+
+const linkHealthEntrySchema = z.object({
+	status: z.enum(['ok', 'redirect', 'broken', 'timeout', 'error']),
+	code: z.number().int().optional(),
+	finalUrl: z.string().max(2_048).optional(),
+	message: z.string().max(500).optional(),
+	checkedAt: z.string()
+});
+
+export const linkHealthSchema = z.object({
+	version: z.number().int().positive().default(1),
+	checkedAt: z.string().default(''),
+	entries: z.record(z.string(), linkHealthEntrySchema).default({})
+});
+
+export function parseLinkHealth(input: unknown): LinkHealthData {
+	const result = linkHealthSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'link-status.json');
+	}
+	return result.data as LinkHealthData;
 }
 
 export function parseReadingArticle(input: unknown): ReadingArticle {

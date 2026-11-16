@@ -6,6 +6,7 @@ import {
 	EMPTY_FEED_CACHE,
 	EMPTY_HIGHLIGHTS,
 	EMPTY_HUB,
+	EMPTY_LINK_HEALTH,
 	EMPTY_NOTES,
 	EMPTY_STATE
 } from '../defaults';
@@ -24,6 +25,7 @@ import {
 	parseHighlights,
 	parseHub,
 	parseHubState,
+	parseLinkHealth,
 	parseNotes
 } from '../schema';
 import { isNotFound, isRecoverableDataError, StorageError } from './errors';
@@ -48,6 +50,7 @@ import type {
 	HubState,
 	HubStorage,
 	ImportOptions,
+	LinkHealthData,
 	NotesData,
 	ReadingArticle,
 	StateLoadResult
@@ -482,6 +485,31 @@ export class JsonFileStorage implements HubStorage {
 
 	async saveHighlights(data: HighlightsData): Promise<void> {
 		await this.persistHighlights(data);
+	}
+
+	private persistLinkHealth(data: LinkHealthData): Promise<void> {
+		return this.writeJsonAtomic('link-status.json', parseLinkHealth(data), (value) => {
+			try {
+				parseLinkHealth(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+	}
+
+	async loadLinkHealth(): Promise<LinkHealthData> {
+		try {
+			const raw = await this.readJson('link-status.json');
+			return parseLinkHealth(raw);
+		} catch (error) {
+			if (isMissingFile(error)) return structuredClone(EMPTY_LINK_HEALTH);
+			throw error;
+		}
+	}
+
+	async saveLinkHealth(data: LinkHealthData): Promise<void> {
+		await this.persistLinkHealth(data);
 	}
 
 	private persistArchiveIndex(data: ArchiveIndex): Promise<void> {

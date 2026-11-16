@@ -33,6 +33,8 @@ data/estado.json
 data/feed-cache.json
 data/notes.json
 data/highlights.json
+data/link-status.json
+data/icons/
 data/reading/
 data/archive.json
 data/archive/

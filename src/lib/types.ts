@@ -112,6 +112,22 @@ export interface HighlightsData {
 	highlights: ReadingHighlight[];
 }
 
+export type LinkHealthStatus = 'ok' | 'redirect' | 'broken' | 'timeout' | 'error';
+
+export interface LinkHealthEntry {
+	status: LinkHealthStatus;
+	code?: number;
+	finalUrl?: string;
+	message?: string;
+	checkedAt: string;
+}
+
+export interface LinkHealthData {
+	version: number;
+	checkedAt: string;
+	entries: Record<string, LinkHealthEntry>;
+}
+
 export type ArchiveStatus = 'pending' | 'ready' | 'failed';
 
 export interface ArchiveEntry {
@@ -335,6 +351,8 @@ export interface HubStorage {
 		cacheFn: ((cache: FeedCache) => FeedCache | Promise<FeedCache>) | null
 	): Promise<{ hub: HubData; cache: FeedCache | null }>;
 	saveFeedCache(cache: FeedCache): Promise<void>;
+	loadLinkHealth(): Promise<LinkHealthData>;
+	saveLinkHealth(data: LinkHealthData): Promise<void>;
 	exportBundle(): Promise<ExportBundle>;
 	importBundle(
 		bundle: ExportBundle,
