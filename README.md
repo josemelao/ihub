@@ -7,7 +7,7 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 ## Status
 
 - **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, backup completo em ZIP e saúde de links + ícones locais.
-- **Versão atual:** `v0.34.0` · **911 testes** em 143 arquivos · **48 E2E**.
+- **Versão atual:** `v0.35.0` · **915 testes** em 144 arquivos · **48 E2E**.
 - **Próximos blocos planejados:** PLAT-12 (performance com 1.000 posts e critério de SQLite) e, depois, os opcionais PLAT-06/ORG-14/ORG-15/READ-06. PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
@@ -382,11 +382,17 @@ npm run test:e2e        # Playwright: fluxos reais + axe (precisa de build e Chr
 npm run test:e2e:report # abre o relatório HTML do Playwright
 ```
 
-O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **44 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
+O `test:e2e` sobe o build em `127.0.0.1:5760` com um diretório de dados descartável (`.e2e-data/`). A suíte tem **48 testes**: fluxos de produto (adicionar link, salvar/desfavoritar post, busca por título e por conteúdo, destaque fora dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, links quebrados/duplicados, backup em ZIP, marcar tudo como lido com desfazer, nota rápida, palette com busca e comando, ações rápidas da home, mobile 375 px) e axe nas telas principais (`/`, `/feed`, `/biblioteca`, `/gerenciar`, `/favoritos`, `/ler/[id]`, `/highlights` e `/arquivo/[id]`). O `verify` também roda `check:e2e` (type-check dos testes). A suíte é hermética: fontes de feed ficam desligadas no fixture e requisições externas são bloqueadas. O workflow em `.github/workflows/ci.yml` roda `check`, `lint`, `test`, `build` e depois `test:e2e` com Chromium em cada push/PR para `master`.
 
 `npm audit --omit=dev` não encontra vulnerabilidades de runtime. Os avisos restantes do `npm audit` são de dependências de desenvolvimento (ESLint) e não afetam o app.
 
-O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md), [`docs/triage.md`](docs/triage.md), [`docs/bulk.md`](docs/bulk.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+O plano de evolução e as decisões dos sprints ficam em [`PLANO-EXECUCAO.md`](PLANO-EXECUCAO.md), [`docs/sprint-0.md`](docs/sprint-0.md), [`docs/sprint-1.md`](docs/sprint-1.md), [`docs/security.md`](docs/security.md), [`docs/data.md`](docs/data.md), [`docs/triage.md`](docs/triage.md), [`docs/bulk.md`](docs/bulk.md), [`docs/performance.md`](docs/performance.md) e [`docs/checklist-regressao.md`](docs/checklist-regressao.md).
+
+### Performance
+
+- O feed renderiza **10 cards** por vez e usa “Carregar mais”; o masonry só posiciona o que está visível.
+- Com **1.000 posts** sintéticos, `buildFeedView` fica em ~4,5 ms, o filtro em ~2,1 ms e a busca Fuse em <1 ms; o payload do cache fica em 256 KB. O teste `src/lib/perf/feed-1000.test.ts` roda no `npm test` e falha se estourar os orçamentos.
+- Não há virtualização nem SQLite nesta fase: o critério (>5.000 posts, >500 itens, full-text ou múltiplos processos) está longe. Detalhes e quando revisitar: [`docs/performance.md`](docs/performance.md).
 
 ## Mockups
 

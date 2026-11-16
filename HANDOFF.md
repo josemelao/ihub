@@ -1088,3 +1088,26 @@ Executada em 16/11/2026 sobre a `v0.33.0`.
   Playwright verdes. Ícone real conferido no dev: 922 ms no primeiro fetch e
   48 ms no cache (6,5 KB).
 - **Próxima leva**: PLAT-12 — performance com 1.000 posts e critério de SQLite.
+
+## 51. PLAT-12 light — benchmark de 1.000 posts (v0.35.0)
+
+Executada em 16/11/2026 sobre a `v0.34.0`, fechando o PLAT-12 por medição, sem
+virtualização e sem SQLite.
+
+- **Fixture**: `src/lib/perf/feed-1000.test.ts` gera 10 fontes × 100 posts, 30
+  links, 300 lidos e 30 salvos; mede a mediana de 5 execuções com aquecimento.
+- **Números**: `buildFeedView` 4,5 ms (orçamento 150), filtro 2,1 ms (50),
+  índice Fuse 0,4 ms (400), consulta 0,6 ms (50), `buildSavedView` 0,1 ms (50)
+  e payload de 256 KB (limite 2 MB). O teste falha em regressão.
+- **Decisão**: o `FeedBoard` já pagina em 10 cards com “Carregar mais” e a busca
+  é memoizada por identidade; virtualizar o Bento/masonry seria risco alto para
+  ganho nulo. SQLite continua fora do critério (>5.000 posts, >500 itens,
+  full-text ou múltiplos processos).
+- **Estado real**: 165 posts / 124 KB; o cache guarda a janela atual de cada
+  fonte, não 30 dias acumulados. Para 1.000 reais seriam ~35 fontes de alto
+  volume — decisão de produto.
+- **Docs**: `docs/performance.md` com método, números, estado real e quando
+  revisitar; README ganhou a seção “Performance”.
+- **Qualidade**: 915 testes em 144 arquivos, 48 E2E, `npm run verify` verde.
+- **Próxima leva**: ORG-14 (página `/g/[slug]` + “Abrir tudo”) ou ORG-15
+  (recentes/mais usados).
