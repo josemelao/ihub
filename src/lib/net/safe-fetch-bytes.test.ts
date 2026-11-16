@@ -16,6 +16,15 @@ describe('fetchPublicBytes', () => {
 		expect(result.contentType).toContain('image/png');
 	});
 
+	it('aceita ico de favicon', async () => {
+		const result = await fetchPublicBytes('https://example.com/favicon.ico', {
+			fetcher: fetcher(new Uint8Array([1, 2, 3]), 'image/x-icon')
+		});
+
+		expect([...result.bytes]).toEqual([1, 2, 3]);
+		expect(result.contentType).toContain('image/x-icon');
+	});
+
 	it('rejeita content-type que não é imagem permitida', async () => {
 		await expect(
 			fetchPublicBytes('https://example.com/a.svg', {

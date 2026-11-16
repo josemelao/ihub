@@ -9,8 +9,8 @@ const data: LinkHealthData = {
 	version: 1,
 	checkedAt: '2026-01-02T00:00:00.000Z',
 	entries: {
-		'a': { status: 'ok', checkedAt: '2026-01-02T00:00:00.000Z' },
-		'b': {
+		a: { status: 'ok', checkedAt: '2026-01-02T00:00:00.000Z' },
+		b: {
 			status: 'broken',
 			code: 404,
 			message: 'HTTP 404',

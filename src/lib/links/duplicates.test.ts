@@ -30,9 +30,9 @@ function app(id: string, launchValue: string): HubItem {
 
 describe('normalizeLinkUrl', () => {
 	it('ignora caixa do host, www, barra final, hash, tracking e ordem da query', () => {
-		expect(
-			normalizeLinkUrl('https://www.GitHub.com/user/?utm_source=x&b=2&a=1#top')
-		).toBe('https://github.com/user?a=1&b=2');
+		expect(normalizeLinkUrl('https://www.GitHub.com/user/?utm_source=x&b=2&a=1#top')).toBe(
+			'https://github.com/user?a=1&b=2'
+		);
 	});
 
 	it('trata raiz com e sem barra como o mesmo endereço', () => {

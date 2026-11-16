@@ -159,38 +159,35 @@ describe('ícones', () => {
 		order: 0
 	};
 
-	it('gera candidatos de favicon pelo host do link', () => {
-		const candidates = faviconCandidates('https://github.com/user');
-		expect(candidates[0]).toBe('https://icons.duckduckgo.com/ip3/github.com.ico');
-		expect(candidates[1]).toBe('https://www.google.com/s2/favicons?domain=github.com&sz=64');
-		expect(candidates[2]).toBe('https://github.com/favicon.ico');
+	const proxy = (url: string) => `/api/icon?url=${encodeURIComponent(url)}`;
+
+	it('gera candidato de favicon local pelo host do link', () => {
+		expect(faviconCandidates('https://github.com/user')).toEqual([proxy('https://github.com')]);
 		expect(faviconCandidates('url-invalida')).toEqual([]);
 	});
 
-	it('mapeia protocolo de app para o domínio oficial antes do Simple Icons', () => {
-		const steam = appIconCandidates('steam://open/main');
-		expect(steam[0]).toBe('https://icons.duckduckgo.com/ip3/store.steampowered.com.ico');
-		expect(steam).toContain('https://cdn.simpleicons.org/steam');
+	it('mapeia protocolo de app para o domínio oficial servido pelo hub', () => {
+		expect(appIconCandidates('steam://open/main')).toEqual([
+			proxy('https://store.steampowered.com')
+		]);
 
 		const vscode = appIconCandidates('vscode://');
-		expect(vscode[0]).toBe('https://icons.duckduckgo.com/ip3/code.visualstudio.com.ico');
-		expect(vscode.join(' ')).not.toContain('visualstudiocode');
+		expect(vscode).toEqual([proxy('https://code.visualstudio.com')]);
 
 		expect(appIconCandidates('desconhecido://')).toEqual([]);
 	});
 
-	it('prioriza o ícone personalizado e mantém os fallbacks', () => {
+	it('prioriza o ícone personalizado e mantém o fallback do host', () => {
 		const slug = itemIconCandidates({ ...link, icon: 'github' });
-		expect(slug[0]).toBe('https://cdn.simpleicons.org/github');
-		expect(slug[1]).toContain('icons.duckduckgo.com/ip3/github.com.ico');
+		expect(slug).toEqual([proxy('https://github.com')]);
 
 		const url = itemIconCandidates({ ...link, icon: 'https://example.com/a.png' });
-		expect(url[0]).toBe('https://example.com/a.png');
-		expect(url[1]).toContain('icons.duckduckgo.com');
+		expect(url[0]).toBe(proxy('https://example.com/a.png'));
+		expect(url[1]).toBe(proxy('https://github.com'));
 	});
 
 	it('usa favicon para link e domínio do protocolo para app', () => {
-		expect(itemIconCandidates(link)[0]).toContain('icons.duckduckgo.com/ip3/github.com.ico');
-		expect(itemIconCandidates(app)[0]).toContain('store.steampowered.com');
+		expect(itemIconCandidates(link)).toEqual([proxy('https://github.com')]);
+		expect(itemIconCandidates(app)).toEqual([proxy('https://store.steampowered.com')]);
 	});
 });

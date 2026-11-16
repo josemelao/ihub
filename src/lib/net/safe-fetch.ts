@@ -251,7 +251,15 @@ export function isAllowedContentType(contentType: string | null): boolean {
 	);
 }
 
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif'];
+const IMAGE_TYPES = [
+	'image/png',
+	'image/jpeg',
+	'image/gif',
+	'image/webp',
+	'image/avif',
+	'image/x-icon',
+	'image/vnd.microsoft.icon'
+];
 
 export function isAllowedImageType(contentType: string | null): boolean {
 	if (!contentType) return false;

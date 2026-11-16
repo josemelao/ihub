@@ -62,19 +62,6 @@ export function itemPlatform(item: HubItem): 'PC' | 'Link' {
 	return item.type === 'app' ? 'PC' : 'Link';
 }
 
-/** Slugs do Simple Icons que ainda existem (fallback após o favicon oficial). */
-const APP_ICON_SLUGS: Record<string, string> = {
-	steam: 'steam',
-	discord: 'discord',
-	obsidian: 'obsidian',
-	spotify: 'spotify',
-	notion: 'notion',
-	figma: 'figma',
-	zoom: 'zoom',
-	telegram: 'telegram',
-	whatsapp: 'whatsapp'
-};
-
 /** Domínio oficial de cada protocolo: favicon colorido e atualizado. */
 const APP_ICON_DOMAINS: Record<string, string> = {
 	steam: 'store.steampowered.com',
@@ -95,34 +82,31 @@ const APP_ICON_DOMAINS: Record<string, string> = {
 	'ms-outlook': 'outlook.live.com'
 };
 
-function hostIconCandidates(host: string): string[] {
-	const clean = host.trim().toLowerCase();
-	if (!clean) return [];
-	return [
-		`https://icons.duckduckgo.com/ip3/${clean}.ico`,
-		`https://www.google.com/s2/favicons?domain=${encodeURIComponent(clean)}&sz=64`,
-		`https://${clean}/favicon.ico`
-	];
+/** Ícones passam pelo hub; o servidor baixa uma vez e guarda em `data/icons`. */
+export function iconProxy(source: string): string {
+	return `/api/icon?url=${encodeURIComponent(source)}`;
 }
 
-/** Cadeia de favicons: DuckDuckGo → Google → favicon direto do site. */
-export function faviconCandidates(url: string): string[] {
+function siteOrigin(value: string): string | null {
 	try {
-		const hostname = new URL(url).hostname;
-		return hostname ? hostIconCandidates(hostname) : [];
+		const url = new URL(value);
+		return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : null;
 	} catch {
-		return [];
+		return null;
 	}
 }
 
-/** Apps: favicon do domínio oficial e, se falhar, o ícone do Simple Icons. */
+/** Cadeia de favicon: o hub resolve `/favicon.ico`, `/favicon.png` e `apple-touch-icon`. */
+export function faviconCandidates(url: string): string[] {
+	const origin = siteOrigin(url);
+	return origin ? [iconProxy(origin)] : [];
+}
+
+/** Apps: favicon do domínio oficial; sem domínio, cai para as iniciais. */
 export function appIconCandidates(value: string): string[] {
 	const scheme = value.split(':')[0]?.toLowerCase() ?? '';
 	const domain = APP_ICON_DOMAINS[scheme];
-	const slug = APP_ICON_SLUGS[scheme];
-	const candidates = domain ? hostIconCandidates(domain) : [];
-	if (slug) candidates.push(`https://cdn.simpleicons.org/${slug}`);
-	return [...new Set(candidates)];
+	return domain ? [iconProxy(`https://${domain}`)] : [];
 }
 
 /** Lista ordenada de URLs de ícone; o componente tenta uma a uma. */
@@ -130,9 +114,9 @@ export function itemIconCandidates(item: HubItem): string[] {
 	const defaults =
 		item.type === 'link' ? faviconCandidates(item.url) : appIconCandidates(item.launch.value);
 	const custom = item.icon?.trim();
-	if (!custom) return defaults;
-	const customUrl = /^https?:\/\//i.test(custom) ? custom : `https://cdn.simpleicons.org/${custom}`;
-	return [customUrl, ...defaults.filter((url) => url !== customUrl)];
+	if (!custom || !/^https?:\/\//i.test(custom)) return defaults;
+	const proxied = iconProxy(custom);
+	return [proxied, ...defaults.filter((url) => url !== proxied)];
 }
 
 export function itemHref(item: HubItem): string {
