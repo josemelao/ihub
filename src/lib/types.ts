@@ -128,6 +128,17 @@ export interface LinkHealthData {
 	entries: Record<string, LinkHealthEntry>;
 }
 
+export interface UsageEntry {
+	id: string;
+	count: number;
+	lastOpenedAt: string;
+}
+
+export interface UsageData {
+	version: number;
+	entries: Record<string, UsageEntry>;
+}
+
 export type ArchiveStatus = 'pending' | 'ready' | 'failed';
 
 export interface ArchiveEntry {
@@ -353,6 +364,9 @@ export interface HubStorage {
 	saveFeedCache(cache: FeedCache): Promise<void>;
 	loadLinkHealth(): Promise<LinkHealthData>;
 	saveLinkHealth(data: LinkHealthData): Promise<void>;
+	loadUsage(): Promise<UsageData>;
+	updateUsage(fn: (data: UsageData) => UsageData | Promise<UsageData>): Promise<UsageData>;
+	saveUsage(data: UsageData): Promise<void>;
 	exportBundle(): Promise<ExportBundle>;
 	importBundle(
 		bundle: ExportBundle,

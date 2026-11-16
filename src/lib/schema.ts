@@ -10,6 +10,7 @@ import type {
 	LinkHealthData,
 	NotesData,
 	ReadingArticle,
+	UsageData,
 	ValidationIssue
 } from './types';
 
@@ -433,6 +434,25 @@ export function parseLinkHealth(input: unknown): LinkHealthData {
 		throw new HubValidationError(issuesFrom(result.error), 'link-status.json');
 	}
 	return result.data as LinkHealthData;
+}
+
+const usageEntrySchema = z.object({
+	id: z.string().min(1).max(64),
+	count: z.number().int().nonnegative(),
+	lastOpenedAt: z.string()
+});
+
+export const usageSchema = z.object({
+	version: z.number().int().positive().default(1),
+	entries: z.record(z.string(), usageEntrySchema).default({})
+});
+
+export function parseUsage(input: unknown): UsageData {
+	const result = usageSchema.safeParse(input);
+	if (!result.success) {
+		throw new HubValidationError(issuesFrom(result.error), 'usage.json');
+	}
+	return result.data as UsageData;
 }
 
 export function parseReadingArticle(input: unknown): ReadingArticle {

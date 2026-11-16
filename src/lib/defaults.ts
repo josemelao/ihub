@@ -7,7 +7,8 @@ import type {
 	HubData,
 	HubState,
 	LinkHealthData,
-	NotesData
+	NotesData,
+	UsageData
 } from './types';
 
 export const EMPTY_HUB: HubData = {
@@ -47,6 +48,11 @@ export const EMPTY_HIGHLIGHTS: HighlightsData = {
 export const EMPTY_LINK_HEALTH: LinkHealthData = {
 	version: 1,
 	checkedAt: '',
+	entries: {}
+};
+
+export const EMPTY_USAGE: UsageData = {
+	version: 1,
 	entries: {}
 };
 

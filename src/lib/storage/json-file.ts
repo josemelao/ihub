@@ -8,7 +8,8 @@ import {
 	EMPTY_HUB,
 	EMPTY_LINK_HEALTH,
 	EMPTY_NOTES,
-	EMPTY_STATE
+	EMPTY_STATE,
+	EMPTY_USAGE
 } from '../defaults';
 import { migrateHub } from '../migrations/hub';
 import {
@@ -26,7 +27,8 @@ import {
 	parseHub,
 	parseHubState,
 	parseLinkHealth,
-	parseNotes
+	parseNotes,
+	parseUsage
 } from '../schema';
 import { isNotFound, isRecoverableDataError, StorageError } from './errors';
 import { recoverHubState } from '../state-recovery';
@@ -53,7 +55,8 @@ import type {
 	LinkHealthData,
 	NotesData,
 	ReadingArticle,
-	StateLoadResult
+	StateLoadResult,
+	UsageData
 } from '../types';
 import { writeFileAtomically } from './atomic';
 import { nodeFileDeps } from './node-deps';
@@ -510,6 +513,39 @@ export class JsonFileStorage implements HubStorage {
 
 	async saveLinkHealth(data: LinkHealthData): Promise<void> {
 		await this.persistLinkHealth(data);
+	}
+
+	private persistUsage(data: UsageData): Promise<void> {
+		return this.writeJsonAtomic('usage.json', parseUsage(data), (value) => {
+			try {
+				parseUsage(value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+	}
+
+	async loadUsage(): Promise<UsageData> {
+		try {
+			const raw = await this.readJson('usage.json');
+			return parseUsage(raw);
+		} catch (error) {
+			if (isMissingFile(error)) return structuredClone(EMPTY_USAGE);
+			throw error;
+		}
+	}
+
+	async updateUsage(fn: (data: UsageData) => UsageData | Promise<UsageData>): Promise<UsageData> {
+		return fileLocks.withLock(this.lockKey('usage.json'), async () => {
+			const next = parseUsage(await fn(await this.loadUsage()));
+			await this.persistUsage(next);
+			return next;
+		});
+	}
+
+	async saveUsage(data: UsageData): Promise<void> {
+		await this.persistUsage(data);
 	}
 
 	private persistArchiveIndex(data: ArchiveIndex): Promise<void> {
