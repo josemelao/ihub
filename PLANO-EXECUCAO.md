@@ -3,7 +3,7 @@
 > **Versão:** 1.1  
 > **Data:** 10/11/2026  
 > **Base analisada:** commit `d799914`  
-> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`), leva Reddit/fechamentos (`v0.28.0`), READ-01/READ-02 (`v0.29.0`), READ-03 (`v0.30.0`), READ-04 (`v0.31.0`), ajustes de densidade + correção do dev em `/highlights` (`v0.31.1`) e READ-05 fatia 1, busca no conteúdo + nomenclatura Salvos (`v0.32.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados.  
+> **Status:** Fase 1 (`v0.19.0`), ORG-06/12/17/18 (`v0.20.0`), PLAT-09 (`v0.22.0`), PLAT-08 (`v0.23.0`), PLAT-07/PLAT-10 (`v0.24.0`), PLAT-05 (`v0.25.0`), ORG-19 (`v0.26.0`), PLAT-11 (`v0.27.0`), leva Reddit/fechamentos (`v0.28.0`), READ-01/READ-02 (`v0.29.0`), READ-03 (`v0.30.0`), READ-04 (`v0.31.0`), ajustes de densidade + correção do dev em `/highlights` (`v0.31.1`) e READ-05 fatia 1, busca no conteúdo + nomenclatura Salvos (`v0.32.0`) concluídos (SEC-02, DATA-03 e DATA-07 fechados); PLAT-03a (fontes locais) feito, proxy de imagem pendente. **v0.28.0 validada em 12/11/2026 (automação em ambiente isolado + validação manual do dono); PLAT-02 com logon real validado.** Escopo aprovado — Sprint 0, Sprint 1, fase de segurança, fase de dados, blocos de triagem e seleção em massa (ORG-01/07/08/09/10/13), captura rápida (ORG-04/05), organização manual (ORG-02/16), PWA (PLAT-01) e tags (ORG-03) executados. **Atualização 16/11/2026:** home 50/50, grupos no acesso rápido, feeds comprimidos/429 e rail do reader entregues após a `v0.32.0`. Pendências e ordem acordada na **seção 17**; PLAT-04 descartado (uso single-machine, sem OneDrive).  
 > **Escopo:** evolução do hub pessoal local (links + apps do PC + feed RSS/YouTube/Reddit)  
 > **Observação:** versão versionada em `PLANO-EXECUCAO.md` na raiz do projeto. O plano completo também fica em `C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md`.
 
@@ -1711,6 +1711,8 @@ Diferenciação / depois        → AVALIAR
 
 ### PLAT-04 — Detecção de conflito de sincronização + backup rotativo
 
+> **Descartado em 16/11/2026:** o hub é usado em uma única máquina, com `data/` local e sem OneDrive/Drive. O lock por processo (DATA-01) cobre o caso; não há trabalho pendente aqui.
+
 **Prioridade:** P1 · **Esforço:** L · **Depende de:** DATA-07/DATA-09
 
 **Problema:** a sincronização por pasta (Drive/OneDrive) usa “última gravação vence”; arquivos de conflito do Drive podem aparecer e o usuário não sabe qual é o bom. Em dois PCs, dá para perder alterações.
@@ -2101,6 +2103,8 @@ Diferenciação / depois        → AVALIAR
 
 ## 14. Decisões pendentes (precisam do dono)
 
+> **Atualização 16/11/2026:** as decisões abaixo foram resolvidas no Sprint 0 (seção 1.7) ou nas fases seguintes. A lista fica como registro histórico; o que está aberto vive na **seção 17**.
+
 1. **Busca:** incluir posts na palette (recomendado) ou apenas corrigir o texto e focar o filtro do feed?
 2. **Terminologia:** “Salvos” ou “Favoritos”? “Links” ou “Sites”?
 3. **Notas:** `notes.json` separado (recomendado) ou dentro do `hub.json`?
@@ -2315,6 +2319,41 @@ Copy-Item "C:\Users\PICHAU\.opencode\plan\plano-execucao-ihub.md" "C:\Users\PICH
 19. feat(security): add CSP and security headers
 20. feat(schema): validate hub state and feed cache
 ```
+
+---
+
+## 17. Pendências e ordem acordada (16/11/2026)
+
+Registro do que está realmente aberto depois da `v0.32.0` e da leva de home/feeds/reader que veio depois da tag. A ordem foi acordada com o dono do projeto.
+
+### 17.1 Abertos do plano
+
+| ID | O que falta | Esforço | Observação |
+| --- | --- | --- | --- |
+| READ-05 (fatia 2) | Estatísticas em Salvos: salvos, lidos, arquivados, destaques e tempo de leitura | S/M | Próxima leva (`v0.32.1`) |
+| — | Backup completo: notas/destaques nos pontos manuais + ZIP com `reading/` e `archive/` opcional | M | Dívida adiada; maior risco real de perda de dados |
+| ORG-11 | Links quebrados, duplicados e cache local de favicons | L | Fazer junto com PLAT-03b |
+| PLAT-03b | Proxy de imagem + cache local de ícones (fontes locais e `no-referrer` já feitos) | M/L | Compartilha `safe-fetch` e cache com ORG-11 |
+| PLAT-12 | Performance com 1.000 posts + memoização/virtualização + critério de SQLite | L | Depois de ORG-11/PLAT-03b |
+| PLAT-06 | Widgets e layout configurável da home | L | Opcional; `homeLayout` empilhado/dividido já existe |
+| ORG-14 | Página `/g/[slug]` + “Abrir tudo” + 404 amigável | M | Opcional |
+| ORG-15 | Recentes / “mais usados” + limpar histórico | M | Opcional |
+| READ-06 | TTS no reader | L | Opcional (P3) |
+| PLAT-09 | 2 fluxos E2E restantes (importar bookmarks/OPML e “Testar fonte”) | S/M | Hoje manuais |
+
+Dívidas adiadas que continuam abertas: render inline dos destaques, export/backup dos arquivos arquivados, HTML arquivado → Markdown, imagens no ZIP, exportar a Biblioteca, extração em lote dos salvos sem texto, busca no conteúdo na palette/Biblioteca e DnD de grupos/categorias/fontes.
+
+**Descartado:** PLAT-04 (conflito de sincronização) — uso single-machine, sem OneDrive nem dois PCs. O lock por processo já cobre.
+
+### 17.2 Ordem acordada
+
+1. **READ-05 fatia 2** — estatísticas de leitura em Salvos (`v0.32.1`).
+2. **Backup completo** — incluir `notes.json`/`highlights.json` nos pontos manuais e baixar um ZIP com os JSONs + `reading/` (+ `archive/` opcional).
+3. **ORG-11 + PLAT-03b** — uma única leva de higiene de links e mídia.
+4. **PLAT-12** — medir, memoizar, paginar/virtualizar e documentar o critério de SQLite.
+5. **Opcionais** — PLAT-06, ORG-14, ORG-15, READ-06, PLAT-09 e as dívidas adiadas.
+
+Plano detalhado da primeira leva em `C:\Users\PICHAU\.opencode\plan\2026-11-16-estatisticas-leitura.md`.
 
 ---
 

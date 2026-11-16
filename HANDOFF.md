@@ -261,9 +261,10 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 10. Limitações conhecidas / pendências
 
-- **Concorrência**: duas escritas simultâneas usam “última vence”; não há fila/otimistic lock.
-- **Importação**: `bundle.state` não é validado antes de gravar o hub; um estado malformado pode deixar import parcial.
+- **Escopo single-machine**: o lock é por processo (DATA-01) e cobre abas/concorrência no mesmo servidor. Dois processos ou dois PCs no mesmo `data/` não são suportados; PLAT-04 foi descartado em 16/11/2026.
+- **Backup incompleto**: os pontos manuais copiam só `hub.json`, `estado.json` e `feed-cache.json`. `notes.json`, `highlights.json`, `data/reading/` e `data/archive/` ficam de fora (o export JSON cobre notas e destaques, mas não os artigos/arquivos). Correção prevista na próxima leva.
 - **Proxy de rede**: o `fetch` do Node não lê `HTTPS_PROXY` automaticamente; redes com proxy podem falhar no feed.
+- **Ícones e imagens externas**: fontes locais e `no-referrer` já entraram, mas favicons ainda usam DuckDuckGo/Google/Simple Icons e não há proxy/cache local de imagem (PLAT-03b).
 - YouTube aceita `@handle`, URL do canal, ID `UC...` ou URL de feed; o ID é resolvido automaticamente no refresh e pelo botão **Detectar**.
 - O feed do YouTube (`/feeds/videos.xml`) cai com 404/500 por horas, do lado
   deles. O app preserva o cache e tenta de novo a cada intervalo; alternativas
@@ -274,18 +275,15 @@ de0c3ec feat(feed): bento mosaic with varied spans, 3:2 images and portrait awar
 
 ## 11. Próximos passos sugeridos
 
-Próximo bloco definido: **READ-05 fatia 2 — estatísticas de leitura** (`v0.32.1`),
-seguido de **PLAT-04** (conflito de sincronização), que é o aberto com maior
-risco de perda de dados.
+Ordem acordada em 16/11/2026 (detalhes na seção 17 do `PLANO-EXECUCAO.md`):
 
-1. READ-05 fatia 2: faixa de estatísticas em Salvos (`stats.ts` + page load).
-2. PLAT-04: detecção de conflito de sincronização e lock stale.
-3. PLAT-12: performance com 1.000 posts + critério para SQLite.
-4. ORG-11: links quebrados/duplicados + cache de favicons.
-5. PLAT-03b (proxy de imagem), PLAT-06 (widgets), ORG-14/15.
-6. READ-06 (TTS, opcional).
-7. Dívidas adiadas: render inline dos destaques, export/backup dos arquivos
-   arquivados, HTML arquivado → Markdown, imagens no ZIP.
+1. READ-05 fatia 2: estatísticas de leitura em Salvos (`v0.32.1`).
+2. Backup completo: notas/destaques nos pontos manuais + ZIP com `reading/` e `archive/` opcional.
+3. ORG-11 + PLAT-03b: links quebrados/duplicados, favicons locais e proxy de imagem (uma leva só).
+4. PLAT-12: performance com 1.000 posts + critério para SQLite.
+5. Opcionais: PLAT-06, ORG-14, ORG-15, READ-06, PLAT-09 (2 E2E restantes) e dívidas adiadas.
+
+**Descartado:** PLAT-04 (conflito de sincronização) — uso single-machine, sem OneDrive nem dois PCs.
 
 ## 12. Notas para o próximo agente
 
@@ -971,3 +969,25 @@ Executada depois do item 45, a partir do uso real.
 - **Nota**: o `playwright.config.ts` sobe o `build/` existente sem rebuildar —
   rode `npm run build` antes de `npx playwright test` depois de mexer em
   componentes.
+
+## 47. Higienização de documentação e ordem da próxima leva (16/11/2026)
+
+Executada sobre o topo pós-`v0.32.0` (`d7e32ef`), sem mudança de código.
+
+- **`PLANO-EXECUCAO.md`**: status atualizado; decisões pendentes da seção 14
+  marcadas como históricas; **PLAT-04 descartado** (uso single-machine, sem
+  OneDrive/Drive nem dois PCs); nova **seção 17** com o que está aberto e a
+  ordem acordada.
+- **`pendencias-ihub.md`** (pasta de planos): reescrito para refletir a `v0.32.0`
+  e os entregues pós-tag; checklist da `v0.28.0` deixou de ser lista viva e
+  aponta para `docs/validacao-v0.28.md`.
+- **`HANDOFF.md`**: seção 10 perdeu as limitações já resolvidas (concorrência
+  intra-processo e validação de `bundle.state`) e ganhou o gap real de backup
+  (notas/destaques/artigos/arquivos fora dos pontos manuais) e o PLAT-03b; a
+  seção 11 passou a listar a ordem acordada.
+- **Próxima leva**: READ-05 fatia 2 — estatísticas de leitura em Salvos.
+  Plano em
+  `C:\Users\PICHAU\.opencode\plan\2026-11-16-estatisticas-leitura.md`.
+- **Ordem completa**: (1) estatísticas (`v0.32.1`); (2) backup completo em ZIP;
+  (3) ORG-11 + PLAT-03b; (4) PLAT-12; (5) PLAT-06/ORG-14/ORG-15/READ-06/PLAT-09
+  e dívidas adiadas.
