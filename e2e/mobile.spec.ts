@@ -41,6 +41,7 @@ test('preferências de leitura persistem no hub', async ({ page }) => {
 	await page.locator('#e-font-size').selectOption('15');
 	await page.getByLabel('Contraste alto').check();
 	await page.getByRole('button', { name: 'Salvar aparência' }).click();
+	await expect(page.getByText('Alteração salva.')).toBeVisible();
 
 	await expect(page.locator('html')).toHaveAttribute('data-density', 'compact');
 
