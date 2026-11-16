@@ -22,9 +22,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 
 	const sources = sortFeedSources(hub.feedSources.filter((source) => source.groupId === group.id));
 	const sourceIds = new Set(sources.map((source) => source.id));
-	const entries = buildFeedView(hub, feed, state).filter((entry) =>
-		sourceIds.has(entry.source.id)
-	);
+	const entries = buildFeedView(hub, feed, state).filter((entry) => sourceIds.has(entry.source.id));
 
 	return { group, category, items, sources, entries };
 };

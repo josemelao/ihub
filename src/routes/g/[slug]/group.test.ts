@@ -61,8 +61,19 @@ const feed: FeedCache = {
 
 const state: HubState = { version: 1, read: {}, saved: [], savedItems: {} };
 
-async function run(slug: string): Promise<Awaited<ReturnType<typeof load>>> {
-	return load({ params: { slug }, parent: async () => ({ hub, feed, state }) } as never);
+type GroupPageData = {
+	group: { id: string; name: string };
+	category: { name: string };
+	items: HubItem[];
+	sources: FeedSource[];
+	entries: { item: { id: string }; source: FeedSource }[];
+};
+
+async function run(slug: string): Promise<GroupPageData> {
+	return (await load({
+		params: { slug },
+		parent: async () => ({ hub, feed, state })
+	} as never)) as GroupPageData;
 }
 
 describe('/g/[slug] load', () => {
