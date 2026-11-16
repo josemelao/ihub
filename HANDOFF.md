@@ -1056,3 +1056,35 @@ Executada em 16/11/2026 sobre a `v0.32.1`, fechando a dívida de backup.
   Playwright verdes.
 - **Próxima leva**: ORG-11 + PLAT-03b (links quebrados/duplicados, favicons
   locais e proxy de imagem).
+
+## 50. ORG-11 + PLAT-03b — links e ícones locais (v0.34.0)
+
+Executada em 16/11/2026 sobre a `v0.33.0`.
+
+- **Duplicados**: `src/lib/links/duplicates.ts` normaliza http(s) sem caixa no
+  host, `www`, barra final, hash, `utm_*`/`fbclid`/`gclid` e ordem da query;
+  caminhos diferentes continuam distintos. Gerenciar → Itens lista os grupos em
+  um painel e permite remover as cópias com o `ConfirmDialog`.
+- **Saúde dos links**: `src/lib/links/health.ts` usa `fetchPublicText` (1 MB,
+  8 s, concorrência 4) e classifica `ok`, `redirect` (destino comparado por URL
+  normalizada), `broken` (4xx), `timeout` e `error` (5xx/rede). `link-status.json`
+  guarda `{version, checkedAt, entries}` com Zod e escrita atômica; a rota
+  `GET/POST /api/links/health` coalesce execuções. A UI mostra o contador, a
+  data e badges por linha.
+- **Ícones locais**: `src/lib/icons/cache.ts` procura `favicon.ico`,
+  `favicon.png` e `apple-touch-icon.png` (ou a URL exata de um ícone) via
+  `fetchPublicBytes`, grava em `data/icons/<hash>.<ext>` e guarda um `.miss`
+  por 7 dias. `GET /api/icon?url=` serve do cache com `immutable`; `safe-fetch`
+  passou a aceitar `image/x-icon` e `image/vnd.microsoft.icon`.
+- **Display**: `faviconCandidates`/`appIconCandidates` devolvem `/api/icon?url=`;
+  o campo `icon` com URL também passa pelo cache. Slugs do Simple Icons deixaram
+  de ser buscados e caem para favicon/iniciais.
+- **Escopo**: thumbnails de feed continuam diretas com `no-referrer`; não houve
+  proxy genérico de imagem nesta leva.
+- **E2E**: `/api/icon` é bloqueada no fixture com 404 imediato para a suíte não
+  disparar buscas externas no servidor. O teste de preferências ficou estável ao
+  esperar “Alteração salva.”, que agora é definida **depois** do `invalidateAll`.
+- **Qualidade**: 911 testes em 143 arquivos, 48 E2E, `npm run verify` e
+  Playwright verdes. Ícone real conferido no dev: 922 ms no primeiro fetch e
+  48 ms no cache (6,5 KB).
+- **Próxima leva**: PLAT-12 — performance com 1.000 posts e critério de SQLite.

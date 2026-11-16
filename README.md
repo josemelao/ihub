@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos e backup completo em ZIP.
-- **Versão atual:** `v0.33.0` · **887 testes** em 137 arquivos · **46 E2E**.
-- **Próximos blocos planejados:** ORG-11 + PLAT-03b (links quebrados/duplicados, ícones e imagens) e PLAT-12 (performance). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, backup completo em ZIP e saúde de links + ícones locais.
+- **Versão atual:** `v0.34.0` · **911 testes** em 143 arquivos · **48 E2E**.
+- **Próximos blocos planejados:** PLAT-12 (performance com 1.000 posts e critério de SQLite) e, depois, os opcionais PLAT-06/ORG-14/ORG-15/READ-06. PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -152,6 +152,8 @@ Tudo passa por uma camada de storage (`src/lib/storage/json-file.ts`) com escrit
 - `data/highlights.json` — destaques e notas por item salvo (não entra no Git).
 - `data/reading/<id>.json` — texto completo extraído pelo reader, já sanitizado (não entra no Git).
 - `data/archive.json` e `data/archive/<id>/` — cópia local da página inteira (HTML + imagens) dos posts salvos (não entra no Git).
+- `data/link-status.json` — resultado da última verificação de links (regenerável; não entra no Git).
+- `data/icons/` — favicons baixados e cacheados pelo hub (regenerável; não entra no Git).
 
 Edite o `hub.json` e recarregue a página. Se o JSON tiver erro, o app **não quebra**: mostra um aviso com o caminho do problema e usa `hub.json.bak` (o último arquivo válido), quando existir.
 
@@ -166,9 +168,9 @@ A página **Biblioteca** (`/biblioteca`) reúne **links e apps do PC** no mesmo 
 - A sidebar mostra, por categoria, **itens · fontes de feed** (ex.: `17 · 3`), com detalhes no tooltip.
 - Organização por **categoria → grupo**. Um grupo pode combinar serviços do mesmo assunto (ex.: Darktide = app na Steam + site de builds + wiki + subreddit), e cada item mantém seu `type` (`app` ou `link`).
 - Itens sem grupo aparecem em **“Sem grupo”**.
-- **Ícones**: links usam o favicon do domínio (DuckDuckGo → Google → `/favicon.ico`) e apps usam o favicon do site oficial (VS Code, Steam, Word etc.), com Simple Icons como fallback. Todos ficam sobre um tile claro para contraste; se a cadeia falhar, aparecem as iniciais.
+- **Ícones**: links e apps usam `/api/icon?url=...`, que baixa o favicon oficial (`/favicon.ico`, `/favicon.png` ou `apple-touch-icon.png`) via `safe-fetch`, guarda em `data/icons/` e serve do cache nas próximas visitas. Sem DuckDuckGo/Google/Simple Icons no carregamento; se nada for encontrado, aparecem as iniciais.
 - **Descrição curta** opcional por item aparece no card da Biblioteca, no tooltip do Acesso rápido e na busca.
-- O campo opcional `icon` sobrescreve o ícone: use um slug do Simple Icons (`github`) ou uma URL `https://...`.
+- O campo opcional `icon` sobrescreve o ícone com uma URL `https://...` (também passa pelo cache local). Slugs antigos do Simple Icons não são mais buscados e caem para o favicon do item/iniciais.
 - A rota antiga `/apps` redireciona para `/biblioteca`.
 
 ### Tags
@@ -280,12 +282,18 @@ Na tela **Gerenciar**:
 - **Fallback**: ↑/↓ continua reordenando; no mobile, use **Editar** ou os botões ↑/↓. DnD de grupos/categorias/fontes ainda não entrou.
 - Detalhes: [docs/organization.md](docs/organization.md).
 
+### Saúde dos links e duplicados
+
+- **Verificar links** (Gerenciar → Itens) usa `fetchPublicText` com 1 MB, 8 s por link e concorrência 4; o resultado fica em `data/link-status.json` e aparece como contador e badge por linha.
+- Estados: `ok`, `redirect` (com o destino no tooltip), `broken` (4xx), `timeout` e `error` (5xx/rede). Um link com problema não impede os demais.
+- **Duplicados** comparam URLs ignorando caixa do host, `www`, barra final, hash, `utm_*`/`fbclid`/`gclid` e ordem da query; caminhos diferentes continuam distintos. O painel lista as cópias e permite remover com confirmação.
+
 ### Editar pela interface (M4)
 
 Em **Gerenciar**, as abas são funcionais:
 
 - **Fontes do feed**: adicionar, editar, remover, ligar/desligar, **atualizar só uma fonte** e buscar por nome/alvo/grupo/categoria. Status de cada fonte. Para Reddit, um interruptor **Exibir em inglês** define `locale=en`; desligado usa o idioma do navegador.
-- **Itens**: links e apps juntos, com subchips **Todos / Links / Apps**, busca local e agrupamento por **categoria → grupo** (inclui “Sem grupo”). Adicionar link e adicionar app ficam no cabeçalho.
+- **Itens**: links e apps juntos, com subchips **Todos / Links / Apps**, busca local e agrupamento por **categoria → grupo** (inclui “Sem grupo”). Adicionar link e adicionar app ficam no cabeçalho. **Verificar links** roda em paralelo (4 por vez), marca **quebrado/redireciona** por linha e agrupa **duplicados** por URL normalizada, com botão para remover as cópias.
 - **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens ou fontes).
 - **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso). Mostra itens, grupos e fontes.
 - **Filtros salvos**: adicionar/editar/remover filtros de busca, com Incluir, Excluir, Modo, Categoria, Fonte e “Somente não lidos”.
@@ -314,6 +322,8 @@ O hub foi desenhado para uma única máquina, com `data/` local. O lock de escri
 | `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                                   |
 | `/api/export`         | Download do bundle (hub + estado)                                                                        |
 | `/api/backup/zip`     | Backup completo em ZIP (JSONs + `reading/`; `?arquivos=1` inclui `archive/`)                             |
+| `/api/links/health`   | Status da última verificação (GET) e verificação dos links do hub (POST)                                 |
+| `/api/icon`           | Favicon em cache local (`?url=`), com fallback 404 para as iniciais                                      |
 | `/api/import`         | Importação validada (substituir/mesclar)                                                                 |
 | `/api/feed`           | Cache do feed com status por fonte                                                                       |
 | `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)                    |
@@ -406,6 +416,7 @@ Eles não fazem parte do build do app.
 - Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
 - Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão; os pontos incluem hub, estado, cache, notas e destaques.
 - O **Backup completo (ZIP)** inclui os JSONs + `reading/` e, com a opção marcada, `archive/`; o `manifest.json` lista arquivos, contagens e tamanho. A geração é em streaming e o temporário é apagado ao fim do download.
+- **Ícones e privacidade**: favicons são baixados pelo servidor uma vez e servidos de `data/icons/`; thumbnails de feed continuam diretas com `referrerpolicy="no-referrer"` (não há proxy genérico de thumbnail nesta versão).
 - Escritas da interface (POST/DELETE) enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST/DELETE vazio ou form com **403** (proteção intencional).
 - Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
 - `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.
