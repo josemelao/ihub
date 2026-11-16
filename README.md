@@ -1,19 +1,52 @@
 # Meu Hub
 
-Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed por palavra-chave. Roda apenas no seu computador, em `localhost`.
+[![CI](https://github.com/josemelao/ihub/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/josemelao/ihub/actions/workflows/ci.yml)
+[![Versão](https://img.shields.io/github/v/tag/josemelao/ihub?label=vers%C3%A3o&sort=semver)](https://github.com/josemelao/ihub/tags)
+[![Node](https://img.shields.io/badge/node-%3E%3D24-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![SvelteKit](https://img.shields.io/badge/SvelteKit-3-FF3E00?logo=svelte&logoColor=white)](https://svelte.dev)
+[![Testes](https://img.shields.io/badge/testes-927%20unit%20%2B%2054%20e2e-brightgreen)](#qualidade)
 
-> Handoff técnico (o que foi feito, como e pendências): [HANDOFF.md](HANDOFF.md).
+Hub pessoal **local-first** que funciona como página inicial do navegador: links, apps do Windows e um leitor de feeds RSS/Atom, Reddit e YouTube — sem login, sem nuvem e sem telemetria. O servidor escuta apenas em `127.0.0.1` e os dados ficam em `data/` na sua máquina.
+
+> **Documentação técnica:** [HANDOFF.md](HANDOFF.md) (histórico e decisões), [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) (backlog e critérios) e [docs/](docs/) (temas específicos).
+
+## Sumário
+
+- [Status](#status)
+- [Recursos](#recursos)
+- [Stack](#stack)
+- [Instalar em outra máquina (Windows)](#instalar-em-outra-máquina-windows)
+- [Dados](#dados)
+- [Telas](#telas)
+- [Segurança e privacidade](#segurança-e-privacidade)
+- [Estrutura](#estrutura)
+- [PWA e offline](#pwa-e-offline)
+- [Qualidade](#qualidade)
+- [Mockups](#mockups)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos, backup completo em ZIP, saúde de links + ícones locais, página de grupo + abrir tudo e recentes/mais usados.
-- **Versão atual:** `v0.37.0` · **927 testes** em 148 arquivos · **54 E2E**.
-- **Próximos blocos planejados:** opcionais PLAT-06 (widgets) e READ-06 (TTS). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
-- O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
+- **Versão atual:** `v0.37.0`.
+- **Qualidade:** **927 testes unitários** em 148 arquivos + **54 E2E**; `npm run verify` verde; axe sem violações críticas/sérias nas telas principais.
+- **Plataforma:** Windows 10/11, Node.js 24+, servidor local em `127.0.0.1:5757`.
+- **Escopo:** uso pessoal **single-machine**. PLAT-04 (sincronização entre PCs) e PLAT-06 (widgets/layout da home) foram descartados; o layout atual está fechado.
+- **Próximos passos:** manutenção e dívidas opcionais — veja [HANDOFF.md](HANDOFF.md).
+
+## Recursos
+
+- **Biblioteca** de links e apps do Windows, organizada por categoria → grupo, com busca, tags e ícones em cache local.
+- **Feed completo** de RSS/Atom, Reddit e YouTube, com filtros por palavra-chave, não lidos, fontes e filtros salvos.
+- **Leitura sem sair**: reader mode, destaques com notas/cores, arquivo offline da página e busca no texto dos salvos.
+- **Salvar para depois** com snapshots, exportação em Markdown e página de Salvos com estatísticas de leitura.
+- **Organização e captura**: importar favoritos/OPML, quick add, bookmarklet, DnD de itens e tags.
+- **Operação local**: backup em ZIP, pontos de restauração, diagnóstico, PWA/offline e autostart no Windows.
+- **Privacidade**: sem login, sem nuvem, sem telemetria; favicons e fontes servidos/cacheados pelo próprio hub.
 
 ## Stack
 
-SvelteKit 3 + Svelte 5 (runes) + TypeScript, `@sveltejs/adapter-node`, Vitest, Zod, Fuse.js, `fast-xml-parser` e adapter-node. Tema escuro único, responsivo.
+SvelteKit 3 + Svelte 5 (runes) + TypeScript, `@sveltejs/adapter-node`, Vitest, Playwright, Zod, Fuse.js e `fast-xml-parser`. Tema escuro único, responsivo e acessível.
 
 ## Instalar em outra máquina (Windows)
 
@@ -78,11 +111,11 @@ Copy-Item .env.example .env
 
 Variáveis aceitas:
 
-| Variável       | Padrão      | Função                                                             |
-| -------------- | ----------- | ------------------------------------------------------------------ |
-| `HOST`         | `127.0.0.1` | interface de rede (**não exponha na rede**)                        |
-| `PORT`         | `5757`      | porta                                                              |
-| `HUB_DATA_DIR` | `data`      | pasta dos JSON (pode ser uma pasta sincronizada do Drive/OneDrive) |
+| Variável       | Padrão      | Função                                              |
+| -------------- | ----------- | --------------------------------------------------- |
+| `HOST`         | `127.0.0.1` | interface de rede (**não exponha na rede**)         |
+| `PORT`         | `5757`      | porta                                               |
+| `HUB_DATA_DIR` | `data`      | pasta dos JSON (mantenha local; uso single-machine) |
 
 Sem `.env`, os padrões acima já funcionam.
 
@@ -412,28 +445,20 @@ python -m http.server 8000
 
 Eles não fazem parte do build do app.
 
-## Segurança e limites
+### Limites e decisões técnicas
 
-- Servidor só em `127.0.0.1`, com allowlist de Host/Origin; CSRF nativo do SvelteKit.
-- Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). Protocolos `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados. Execução de comandos fica para a V2, com lista permitida.
-- URLs de itens de feed, thumbnails e snapshots só aceitam `http(s)`; itens perigosos são descartados/rejeitados.
+- Apps abrem apenas por protocolo (`steam://`, `discord://`, `vscode://`...). `javascript:`, `data:`, `vbscript:` e `file:` são rejeitados; execução de comandos não existe nesta versão.
 - `estado.json` e `feed-cache.json` são validados por Zod; arquivo inválido tenta `.bak` e avisa no layout.
 - APIs têm limite de corpo: 2 MB em hub/state, 10 MB em import e 64 KB nas APIs pequenas; excesso retorna 413.
-- O refresh de feeds usa fetch seguro: timeout, 5 MB, bloqueio de loopback/IP privado e validação de redirects.
-- Headers de segurança ativos: `nosniff`, `no-referrer`, `X-Frame-Options: DENY` e `Permissions-Policy`.
-- CSP em **enforce** (v0.19.0): `default-src 'self'`, `object-src 'none'`, `frame-ancestors 'none'` e players liberados só para YouTube-nocookie/Redditmedia. `script-src` mantém `'unsafe-inline'` porque o SvelteKit injeta o script de hidratação; nonce/hash fica para PLAT-09.
-- Assets estáticos (`/fonts/*`, `/_app/*`) são servidos pelo adapter-node antes do `hooks.server`; os headers de segurança cobrem HTML e APIs (ver `docs/security.md`).
+- O refresh usa fetch seguro (timeout, 5 MB, bloqueio de loopback/IP privado e redirects revalidados) e é coalescido entre scheduler e botão.
 - Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
-- Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
-- Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão; os pontos incluem hub, estado, cache, notas e destaques.
-- O **Backup completo (ZIP)** inclui os JSONs + `reading/` e, com a opção marcada, `archive/`; o `manifest.json` lista arquivos, contagens e tamanho. A geração é em streaming e o temporário é apagado ao fim do download.
-- **Ícones e privacidade**: favicons são baixados pelo servidor uma vez e servidos de `data/icons/`; thumbnails de feed continuam diretas com `referrerpolicy="no-referrer"` (não há proxy genérico de thumbnail nesta versão).
-- Escritas da interface (POST/DELETE) enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST/DELETE vazio ou form com **403** (proteção intencional).
-- Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
-- `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.
-- Sem login, sem versão online, sem tema claro.
-- Escrita de links/fontes pela interface é validada e restrita ao `hub.json`.
-- O descobridor de feeds só acessa `http(s)` públicos (bloqueia loopback/redes privadas) e limita o tamanho da resposta.
+- Backups automáticos mantêm `.bak` + 6 gerações; pontos manuais incluem hub, estado, cache, notas e destaques. O ZIP completo inclui `reading/` e, opcionalmente, `archive/`.
+- Ícones são baixados uma vez e servidos de `data/icons/`; thumbnails de feed continuam diretas com `no-referrer` (sem proxy genérico nesta versão).
+- POST/DELETE enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia formulário/vazio com 403. A importação mostra diff e política de settings.
+- `estado.json` poda leituras com mais de 90 dias (exceto salvos) e snapshots órfãos.
+- Sem login, sem versão online e sem tema claro. Escrita de links/fontes é validada e restrita ao `hub.json`.
+- Assets estáticos (`/fonts/*`, `/_app/*`) saem antes do `hooks.server`; os headers de segurança cobrem HTML e APIs (ver `docs/security.md`).
+- **Não suportado:** dois PCs na mesma pasta, SQLite (critério não atingido) e proxy genérico de thumbnail/`HTTPS_PROXY` automático.
 
 ### Descobrir o protocolo de um app (Windows)
 
@@ -444,3 +469,15 @@ Eles não fazem parte do build do app.
 ### Rede do trabalho e proxy
 
 O servidor busca RSS/YouTube/Reddit diretamente. Se a rede do trabalho exigir proxy, o `fetch` do Node não usa `HTTPS_PROXY` automaticamente; nesse caso use VPN ou configure o proxy no nível do sistema/rede. Para diagnosticar, use **Gerenciar → Atualizar agora** e veja o erro de cada fonte.
+
+## Contribuindo
+
+Este é um projeto pessoal e **local-first**. Issues com passos de reprodução e sugestões são bem-vindas; não há garantia de prazo para PRs. Antes de abrir um PR:
+
+1. Rode `npm run verify` (check + lint + testes + build).
+2. Mantenha o escopo pequeno e um commit por mudança.
+3. Nunca inclua `data/*.json`, `.env` ou dados pessoais.
+
+## Licença
+
+Projeto pessoal, sem licença de distribuição definida. Se quiser reutilizar o código, abra uma issue para conversarmos. Para publicar como open source, o passo natural é adicionar um `LICENSE` (por exemplo, MIT).

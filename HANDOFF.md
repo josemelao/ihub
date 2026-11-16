@@ -1,7 +1,7 @@
 # Handoff — Meu Hub
 
-Data: 2026-11-11
-Estado: **M0–M5 concluídos + iteração de Biblioteca/feed + Sprint 0 (baseline) + Sprint 1 (P0 de UX) + segurança + dados + triagem/seleção em massa + captura rápida + organização manual + PWA/autostart + tags como filtro (v0.17.0) + correções da revisão de código (v0.18.0)**. Projeto local, funcional e com testes verdes. **v0.19.0 a v0.32.0 entregues; validação da v0.28.0 concluída (automação + manual) em 12/11/2026.**
+Data: 2026-11-16
+Estado: **v0.37.0 entregue; plano encerrado e projeto em manutenção.** M0–M5, Sprint 0/1, segurança, dados, triagem, captura rápida, organização, PWA/autostart, tags, reader/highlights/arquivo, export Markdown, busca no conteúdo, backups, links/ícones, página de grupo e recentes/mais usados concluídos. **PLAT-04 (sync) e PLAT-06 (widgets da home) descartados.**
 
 ## 1. O que é
 
@@ -10,7 +10,7 @@ Hub pessoal local que roda no navegador como página inicial:
 - Links e apps do PC organizados em categorias/grupos.
 - Feed de RSS/Atom, Reddit e YouTube com filtro por palavra-chave.
 - Busca rápida (Ctrl K), leitura/salvamento de posts e visualizações Bento/Compacto/Completo.
-- Dados em JSON local, com exportar/importar e possibilidade de pasta sincronizada (Drive/OneDrive).
+- Dados em JSON local, com exportar/importar e backup em ZIP; uso **single-machine** (sem sync entre PCs).
 
 Sem login, sem versão online, tema escuro único, servidor apenas em `127.0.0.1`.
 
@@ -1159,3 +1159,22 @@ Executada em 16/11/2026 sobre a `v0.36.0`.
 - **Qualidade**: 927 testes em 148 arquivos, 54 E2E, `npm run verify` e
   Playwright verdes.
 - **Próxima leva**: opcionais PLAT-06 (widgets) e READ-06 (TTS).
+
+## 54. Encerramento do plano — PLAT-06 descartado (16/11/2026)
+
+Executada sobre a `v0.37.0`, sem mudança de código.
+
+- **PLAT-06 (widgets/layout configurável da home) descartado.** A home já foi
+  compactada e ajustada (topo ~225 px, 50/50, grupos no acesso rápido, lateral
+  enxuta); customizar widgets não resolve um incômodo diário e mexeria em layout,
+  acessibilidade e testes. O layout atual fica **fechado**.
+- **Plano encerrado.** A fila aberta fica só com opcionais/dívidas: PLAT-09
+  (2 E2E manuais), READ-06 (TTS) e as dívidas listadas na seção 17 do
+  `PLANO-EXECUCAO.md`. O projeto entra em **modo manutenção**.
+- **README reformulado no padrão GitHub**: badges (CI, versão, Node, SvelteKit,
+  testes), descrição local-first, Sumário, Status/Recursos, seções de instalação,
+  dados, telas, segurança, estrutura, qualidade, mockups, Contribuindo e Licença.
+  A antiga duplicidade “Segurança e limites” virou subseção “Limites e decisões
+  técnicas”.
+- **Correção de documentação**: o HANDOFF ainda citava pasta sincronizada
+  (Drive/OneDrive); o produto é single-machine desde a decisão do PLAT-04.
