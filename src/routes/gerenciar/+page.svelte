@@ -590,6 +590,7 @@
 	let backupBusy = $state(false);
 	let backupMessage = $state('');
 	let backupFailed = $state(false);
+	let includeArchive = $state(false);
 	let restoringId = $state<string | null>(null);
 	let confirmingBackup = $state<BackupEntry | null>(null);
 	let deletingBackupId = $state<string | null>(null);
@@ -1715,7 +1716,8 @@
 		</div>
 	</div>
 	<p class="muted small" style="margin-top: 4px">
-		Cópias locais em <code>{backupInfo?.root ?? 'data/backups'}</code>.
+		Cópias locais em <code>{backupInfo?.root ?? 'data/backups'}</code>. Cada ponto inclui hub,
+		estado, cache, notas e destaques.
 		{#if backupInfo?.lastAutomaticAt}
 			Último backup automático: {relativeTime(backupInfo.lastAutomaticAt)} ·
 			{backupInfo.generations} gerações.
@@ -1771,6 +1773,31 @@
 	{:else}
 		<p class="muted">Nenhum ponto manual ainda. Crie um antes de mudanças grandes.</p>
 	{/if}
+
+	<div class="section-head" style="margin-top: 28px">
+		<h2 class="fs-16">Backup completo</h2>
+		<div class="chips">
+			{#if includeArchive}
+				<a class="btn btn-primary" href={resolve('/api/backup/zip?arquivos=1')} download>
+					<Icon name="download" size={16} />
+					Baixar backup completo (ZIP)
+				</a>
+			{:else}
+				<a class="btn btn-primary" href={resolve('/api/backup/zip')} download>
+					<Icon name="download" size={16} />
+					Baixar backup completo (ZIP)
+				</a>
+			{/if}
+		</div>
+	</div>
+	<label class="check" style="margin-top: 6px">
+		<input type="checkbox" bind:checked={includeArchive} />
+		Incluir páginas arquivadas (pode ser grande)
+	</label>
+	<p class="muted small">
+		ZIP com hub, estado, cache, notas, destaques e texto dos artigos. Para restaurar, pare o
+		servidor e descompacte o ZIP sobre a pasta <code>data/</code>.
+	</p>
 
 	<div class="section-head" style="margin-top: 28px">
 		<h2 class="fs-16">Exportar salvos</h2>
@@ -2023,7 +2050,7 @@
 {#if confirmingBackup}
 	<ConfirmDialog
 		title="Restaurar este ponto?"
-		message={`Isso substitui o hub, o estado e o cache atuais pelo ponto ${confirmingBackup.id}. Um ponto de segurança do estado atual será criado antes.`}
+		message={`Isso substitui o hub, o estado, o cache, as notas e os destaques atuais pelo ponto ${confirmingBackup.id}. Um ponto de segurança do estado atual será criado antes.`}
 		confirmLabel="Restaurar"
 		onconfirm={confirmRestoreBackup}
 		oncancel={() => (confirmingBackup = null)}
