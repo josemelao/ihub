@@ -4,6 +4,7 @@
 	import { initials, tint } from '#lib/display';
 	import { buildPaletteItems, searchPalette, type PaletteItem } from '#lib/palette';
 	import { refreshWithProgress } from '#lib/refresh-client';
+	import { trackItemOpen } from '#lib/usage-client';
 	import type { FeedCache, HubData, HubState, NotesData } from '#lib/types';
 	import Icon from './Icon.svelte';
 
@@ -66,6 +67,10 @@
 		}
 
 		onclose();
+
+		if (entry.type === 'link' || entry.type === 'app') {
+			if (entry.id.startsWith('entry:item:')) trackItemOpen(entry.id.slice('entry:item:'.length));
+		}
 
 		if (!entry.href) return;
 

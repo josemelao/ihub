@@ -7,13 +7,15 @@
 	import FeedBoard from '#lib/components/FeedBoard.svelte';
 	import HomeStatus from '#lib/components/HomeStatus.svelte';
 	import HomeTools from '#lib/components/HomeTools.svelte';
+	import ItemRow from '#lib/components/ItemRow.svelte';
 	import QuickAccess from '#lib/components/QuickAccess.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { DEFAULT_QUICK_ACCESS_LIMIT } from '#lib/quick-access';
 	import { relativeTime } from '#lib/display';
 	import { matchesFilter } from '#lib/feed/filter';
 	import { buildFeedView, buildSavedView } from '#lib/feed/view';
-	import type { SavedFilter } from '#lib/types';
+	import { recentUsage } from '#lib/usage';
+	import type { HubItem, SavedFilter } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -29,6 +31,11 @@
 	);
 	const entries = $derived(buildFeedView(hub, data.feed, data.state));
 	const savedRecent = $derived(buildSavedView(hub, data.feed, data.state).slice(0, 3));
+	const recentItems = $derived(
+		recentUsage(data.usage, 5)
+			.map((entry) => hub.items.find((item) => item.id === entry.id))
+			.filter((item): item is HubItem => Boolean(item))
+	);
 
 	let note = $state('');
 	let noteStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -207,6 +214,20 @@
 					<span class="muted small">Nenhum filtro salvo.</span>
 				{/if}
 			</div>
+		</section>
+
+		<section class="panel section" aria-labelledby="t-recentes">
+			<div class="section-head">
+				<h2 id="t-recentes" class="fs-15">Recentes</h2>
+				<a class="muted small" href={resolve('/biblioteca')}>Biblioteca</a>
+			</div>
+			{#if recentItems.length > 0}
+				{#each recentItems as item (item.id)}
+					<ItemRow {item} color={colors[item.categoryId] ?? '#8AA4FF'} />
+				{/each}
+			{:else}
+				<span class="muted small">Abra um link ou app para começar o histórico.</span>
+			{/if}
 		</section>
 
 		<section class="panel section" aria-labelledby="t-salvos">

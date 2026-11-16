@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { itemHref, itemKind, tint } from '#lib/display';
+	import { trackItemOpen } from '#lib/usage-client';
 	import {
 		DEFAULT_QUICK_ACCESS_LIMIT,
 		moveQuickAccess,
@@ -123,6 +124,9 @@
 						? (entry.item.description ?? undefined)
 						: `Abrir ${entry.group.name} na biblioteca`}
 					draggable={editing && Boolean(onreorder)}
+					onclick={() => {
+						if (entry.kind === 'item') trackItemOpen(entry.item.id);
+					}}
 					ondragstart={() => (draggingId = entry.key)}
 					ondragend={() => (draggingId = null)}
 					ondragover={(event) => {

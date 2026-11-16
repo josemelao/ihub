@@ -1,4 +1,10 @@
-import { EMPTY_FEED_CACHE, EMPTY_HIGHLIGHTS, EMPTY_NOTES, EMPTY_STATE } from '#lib/defaults';
+import {
+	EMPTY_FEED_CACHE,
+	EMPTY_HIGHLIGHTS,
+	EMPTY_NOTES,
+	EMPTY_STATE,
+	EMPTY_USAGE
+} from '#lib/defaults';
 import { pruneOrphanFeedCache } from '#lib/feed/cache';
 import { startScheduler } from '#lib/feed/scheduler';
 import { backfillSavedSnapshots } from '#lib/feed/view';
@@ -92,6 +98,7 @@ export const load: LayoutServerLoad = async () => {
 	}
 
 	const hubMissing = !(await storage.hasHub());
+	const usage = await storage.loadUsage().catch(() => structuredClone(EMPTY_USAGE));
 
 	return {
 		hub,
@@ -106,6 +113,7 @@ export const load: LayoutServerLoad = async () => {
 		highlights: highlightsResult.value,
 		highlightsError: highlightsResult.error,
 		state,
-		feed
+		feed,
+		usage
 	};
 };

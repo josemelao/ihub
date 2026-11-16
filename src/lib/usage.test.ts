@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { UsageData } from '../types';
+import type { UsageData } from './types';
 import { MAX_USAGE_ENTRIES, mostUsedUsage, recentUsage, recordUsage } from './usage';
 
 const empty: UsageData = { version: 1, entries: {} };
@@ -20,7 +20,11 @@ describe('recordUsage', () => {
 	it('limita o histórico aos 500 itens mais recentes', () => {
 		let data = empty;
 		for (let index = 0; index < MAX_USAGE_ENTRIES + 2; index += 1) {
-			data = recordUsage(data, `item-${index}`, new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString());
+			data = recordUsage(
+				data,
+				`item-${index}`,
+				new Date(Date.UTC(2026, 0, 1, 0, 0, index)).toISOString()
+			);
 		}
 
 		expect(Object.keys(data.entries)).toHaveLength(MAX_USAGE_ENTRIES);

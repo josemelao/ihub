@@ -5,16 +5,47 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Icon from '#lib/components/Icon.svelte';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
 	import LibraryCard from '#lib/components/LibraryCard.svelte';
 	import TopBar from '#lib/components/TopBar.svelte';
 	import { matchesLibraryItem, searchTerms } from '#lib/library-filter';
 	import { collectTags, tagKey } from '#lib/tags';
+	import { mostUsedUsage } from '#lib/usage';
 	import type { HubItem } from '#lib/types';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const hub = $derived(data.hub);
+	const colors = $derived(Object.fromEntries(hub.categories.map((cat) => [cat.id, cat.color])));
+	const mostUsedItems = $derived(
+		mostUsedUsage(data.usage, 8)
+			.map((entry) => hub.items.find((item) => item.id === entry.id))
+			.filter((item): item is HubItem => Boolean(item))
+	);
+
+	let confirmingClear = $state(false);
+	let clearMessage = $state('');
+
+	async function clearUsage(): Promise<void> {
+		confirmingClear = false;
+		clearMessage = '';
+		try {
+			const response = await fetch('/api/usage', {
+				method: 'DELETE',
+				headers: { 'content-type': 'application/json' },
+				body: '{}'
+			});
+			if (!response.ok) {
+				clearMessage = 'Falha ao limpar o histórico.';
+				return;
+			}
+			clearMessage = 'Histórico limpo.';
+			await invalidateAll();
+		} catch {
+			clearMessage = 'Falha de rede ao limpar o histórico.';
+		}
+	}
 
 	async function togglePin(id: string, pinned: boolean): Promise<void> {
 		const response = await fetch('/api/hub', {
@@ -250,6 +281,26 @@
 	<div class="alert reader-status" role="status">{focusMessage}</div>
 {/if}
 
+{#if mostUsedItems.length > 0}
+	<section class="section" aria-labelledby="t-most-used">
+		<div class="section-head">
+			<h2 id="t-most-used">Mais usados</h2>
+			<button class="mini-btn" type="button" onclick={() => (confirmingClear = true)}>
+				Limpar histórico
+			</button>
+		</div>
+		<div class="library-grid">
+			{#each mostUsedItems as item (item.id)}
+				<LibraryCard {item} color={colors[item.categoryId] ?? '#8AA4FF'} />
+			{/each}
+		</div>
+	</section>
+{/if}
+
+{#if clearMessage}
+	<div class="notice reader-status" role="status">{clearMessage}</div>
+{/if}
+
 <div class="tabs" role="tablist" aria-label="Filtrar a biblioteca por plataforma">
 	<button
 		class="tab"
@@ -434,4 +485,14 @@
 			{/if}
 		</div>
 	</div>
+{/if}
+
+{#if confirmingClear}
+	<ConfirmDialog
+		title="Limpar histórico?"
+		message="As contagens de abertura e a lista de recentes serão apagadas. Os itens e links não são removidos."
+		confirmLabel="Limpar"
+		onconfirm={clearUsage}
+		oncancel={() => (confirmingClear = false)}
+	/>
 {/if}

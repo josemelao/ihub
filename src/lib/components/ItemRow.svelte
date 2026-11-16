@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { itemHref, itemKind } from '#lib/display';
+	import { trackItemOpen } from '#lib/usage-client';
 	import type { HubItem } from '#lib/types';
 	import ItemIcon from './ItemIcon.svelte';
 
@@ -14,6 +15,7 @@
 	target={item.type === 'link' ? '_blank' : undefined}
 	rel="noopener noreferrer"
 	title={item.description ?? undefined}
+	onclick={() => trackItemOpen(item.id)}
 >
 	<ItemIcon {item} {color} size={30} />
 	<span class="item-name">{item.name}</span>
