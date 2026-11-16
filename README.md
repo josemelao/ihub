@@ -6,9 +6,9 @@ Hub pessoal local (página inicial do navegador) com links, apps do PC e um feed
 
 ## Status
 
-- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques e estatísticas de leitura em Salvos.
-- **Versão atual:** `v0.32.1` · **877 testes** em 135 arquivos · **44 E2E**.
-- **Próximos blocos planejados:** backup completo em ZIP (notas, destaques e artigos), ORG-11 + PLAT-03b (links/ícones/imagens) e PLAT-12 (performance). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
+- **Concluído:** M0–M5, Sprint 0, Sprint 1 (P0 de UX), fase de segurança, fase de dados (locks, backups e restauração), triagem do feed (não lidos, chips, filtros com escopo), seleção em massa com atalhos, captura rápida (bookmarks/OPML, quick add e bookmarklet), organização manual (ordem de fontes e drag & drop de itens), PWA/offline, autostart no Windows, tags como filtro, reader mode, destaques, arquivo/offline do salvo, export Markdown, busca no conteúdo dos salvos, filtro por cor em Destaques, estatísticas de leitura em Salvos e backup completo em ZIP.
+- **Versão atual:** `v0.33.0` · **887 testes** em 137 arquivos · **46 E2E**.
+- **Próximos blocos planejados:** ORG-11 + PLAT-03b (links quebrados/duplicados, ícones e imagens) e PLAT-12 (performance). PLAT-04 (conflito de sincronização) foi descartado: o uso é single-machine.
 - O plano completo e o histórico ficam em [PLANO-EXECUCAO.md](PLANO-EXECUCAO.md) e [HANDOFF.md](HANDOFF.md).
 
 ## Stack
@@ -114,7 +114,7 @@ npm start
 - **JSON inválido:** o app mostra o problema e tenta o backup `.bak`; restaure um ponto em **Gerenciar → Backups** se necessário.
 - **Node antigo:** `node -v` precisa ser 24+.
 - **Feed não atualiza:** confira o status em **Gerenciar → Fontes**; erros de rede/rate limit aparecem por fonte.
-- **Backup/restauração:** os pontos manuais ficam em `data\backups\manual-*` e podem ser baixados pela aba **Backups**.
+- **Backup/restauração:** os pontos manuais ficam em `data\backups\manual-*` e podem ser baixados pela aba **Backups**. O ZIP completo (com `reading/` e, opcionalmente, `archive/`) restaura descompactando sobre `data\` com o servidor parado.
 
 ### 9. Iniciar com o Windows
 
@@ -289,7 +289,7 @@ Em **Gerenciar**, as abas são funcionais:
 - **Grupos**: criar, renomear, mover de categoria, reordenar (↑/↓) e remover (bloqueia se tiver itens ou fontes).
 - **Categorias**: adicionar, renomear/cor, reordenar (↑/↓) e remover (bloqueia se estiver em uso). Mostra itens, grupos e fontes.
 - **Filtros salvos**: adicionar/editar/remover filtros de busca, com Incluir, Excluir, Modo, Categoria, Fonte e “Somente não lidos”.
-- **Backups**: criar, listar, baixar, restaurar e excluir pontos de restauração; mostra a idade do último backup automático.
+- **Backups**: criar, listar, baixar, restaurar e excluir pontos de restauração (hub, estado, cache, notas e destaques); mostra a idade do último backup automático. O **Backup completo (ZIP)** baixa os JSONs + `reading/` (+ `archive/` opcional) com um `manifest.json`.
 - **Aparência**: escolher a cor de destaque do tema (predefinidas ou cor personalizada).
 
 O editor lateral é compacto, dividido em seções (**Fonte/Organização/Atualização/Filtros**, **Identificação/Organização/Aparência/Extras**), com cabeçalho e rodapé fixos — os botões **Cancelar/Salvar** ficam sempre visíveis. A remoção usa um diálogo próprio, no tema escuro, em vez do `confirm()` do navegador.
@@ -313,6 +313,7 @@ O hub foi desenhado para uma única máquina, com `data/` local. O lock de escri
 | `/gerenciar`          | Fontes/links/apps/grupos, edição, status do feed, exportar/importar                                      |
 | `/api/hub`            | JSON do hub validado (GET) e mutações validadas (POST)                                                   |
 | `/api/export`         | Download do bundle (hub + estado)                                                                        |
+| `/api/backup/zip`     | Backup completo em ZIP (JSONs + `reading/`; `?arquivos=1` inclui `archive/`)                             |
 | `/api/import`         | Importação validada (substituir/mesclar)                                                                 |
 | `/api/feed`           | Cache do feed com status por fonte                                                                       |
 | `/api/refresh`        | Dispara a atualização de todas as fontes (`async: true` devolve um job com progresso)                    |
@@ -403,7 +404,8 @@ Eles não fazem parte do build do app.
 - Assets estáticos (`/fonts/*`, `/_app/*`) são servidos pelo adapter-node antes do `hooks.server`; os headers de segurança cobrem HTML e APIs (ver `docs/security.md`).
 - Escritas usam lock por processo + gravação atômica com retry para `EPERM`/`EBUSY`; hub e cache de uma fonte são atualizados na mesma transação.
 - Refresh é coalescido: scheduler e botão “Atualizar feed” compartilham a mesma execução, sem fetches duplicados.
-- Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão.
+- Backups automáticos mantêm `.bak` + 6 gerações rotativas. A aba **Backups** cria pontos datados em `data/backups/`, com caminho absoluto, download, restauração (com ponto de segurança antes) e exclusão; os pontos incluem hub, estado, cache, notas e destaques.
+- O **Backup completo (ZIP)** inclui os JSONs + `reading/` e, com a opção marcada, `archive/`; o `manifest.json` lista arquivos, contagens e tamanho. A geração é em streaming e o temporário é apagado ao fim do download.
 - Escritas da interface (POST/DELETE) enviam `content-type: application/json`; o CSRF do SvelteKit bloqueia POST/DELETE vazio ou form com **403** (proteção intencional).
 - Importação mostra o diff (novos/atualizados/removidos) e a política de settings antes de aplicar.
 - `estado.json` é podado: leituras com mais de 90 dias (exceto posts salvos) e snapshots órfãos saem automaticamente.

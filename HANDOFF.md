@@ -1021,4 +1021,38 @@ Executada em 16/11/2026 sobre o topo pós-`v0.32.0`, fechando a fatia 2 do READ-
   `PLANO-EXECUCAO.md` (READ-05 fechado e seção 17) e as pendências na pasta de
   planos.
 - **Próxima leva**: backup completo — `notes.json`/`highlights.json` nos pontos
-  manuais e ZIP com `reading/` (+ `archive/` opcional).
+  manuais e ZIP com `reading/` (+ `archive/` opcional). Entregue na `v0.33.0`
+  (seção 49).
+
+## 49. Backup completo em ZIP e pontos com notas/destaques (v0.33.0)
+
+Executada em 16/11/2026 sobre a `v0.32.1`, fechando a dívida de backup.
+
+- **Pontos manuais completos**: `createBackupUnlocked` passou a copiar
+  `notes.json` e `highlights.json` (com os `.bak`); `BackupEntry` ganhou
+  `hasNotes`/`hasHighlights`; `loadBackupBundle` devolve os dois; `restoreBackup`
+  valida tudo antes de gravar, restaura sob os locks dos cinco arquivos e faz
+  rollback de notas/destaques junto com hub/estado/cache. Ponto antigo sem esses
+  arquivos não apaga os atuais.
+- **ZIP completo**: `src/lib/backup/zip.ts` coleta os JSONs + `reading/` e,
+  opcionalmente, `archive.json` + `archive/<id>/...`. O `manifest.json` traz
+  app, versão, data, `includesArchive`, lista de arquivos, contagens e bytes.
+  `writeBackupZip` grava em streaming com `Zip`/`ZipPassThrough`, respeitando
+  backpressure e sem recomprimir imagens.
+- **Rota**: `GET /api/backup/zip` (padrão sem arquivos) e `?arquivos=1`; gera em
+  `mkdtemp`, devolve `Readable.toWeb` com `content-length` e apaga o temporário
+  no `close`/`error` do stream.
+- **UI**: Gerenciar → Backups ganhou “Backup completo (ZIP)” com a opção
+  “Incluir páginas arquivadas (pode ser grande)”; o texto dos pontos e o
+  diálogo de restauração passaram a citar notas e destaques.
+- **Restauração do ZIP**: documentada como descompactar sobre `data/` com o
+  servidor parado; a restauração por ponto continua dentro do app.
+- **Testes**: 4 novos de storage (ponto/bundle/restauração/ponto inválido),
+  4 do coletor/escritor e 2 da rota; E2E novo baixa o ZIP padrão e o com
+  `archive/`, descompacta e confere o manifesto. O teste de preferências
+  passou a esperar “Alteração salva.” antes do reload (race do atributo
+  otimista, não regressão).
+- **Qualidade**: 887 testes em 137 arquivos, 46 E2E, `npm run verify` e
+  Playwright verdes.
+- **Próxima leva**: ORG-11 + PLAT-03b (links quebrados/duplicados, favicons
+  locais e proxy de imagem).
