@@ -18,13 +18,22 @@
 			<span class="muted small">{items.length} itens</span>
 		</div>
 		{#if !virtual}
-			<a
-				class="library-group-edit"
-				href={`${resolve('/biblioteca')}?grupo=${encodeURIComponent(group.id)}`}
-				title="Abrir este grupo na Biblioteca"
-			>
-				abrir na biblioteca
-			</a>
+			<div class="group-links">
+				<a
+					class="library-group-edit"
+					href={resolve('/g/[slug]', { slug: group.id })}
+					title="Abrir a página deste grupo"
+				>
+					abrir grupo
+				</a>
+				<a
+					class="library-group-edit"
+					href={`${resolve('/biblioteca')}?grupo=${encodeURIComponent(group.id)}`}
+					title="Abrir este grupo na Biblioteca"
+				>
+					abrir na biblioteca
+				</a>
+			</div>
 		{/if}
 	</div>
 	{#each items as item (item.id)}

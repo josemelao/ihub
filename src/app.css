@@ -3135,6 +3135,17 @@ a.source-row:hover .soft {
 	text-underline-offset: 2px;
 }
 
+.group-links {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-left: auto;
+}
+
+.group-links .library-group-edit {
+	margin-left: 0;
+}
+
 .library-group-edit:hover {
 	color: var(--accent);
 }
