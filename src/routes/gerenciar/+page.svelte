@@ -12,6 +12,7 @@
 	import ManageSearch from '#lib/components/ManageSearch.svelte';
 	import { relativeTime } from '#lib/display';
 	import { sortFeedSources } from '#lib/feed/order';
+	import { duplicateItemIds, findDuplicateGroups } from '#lib/links/duplicates';
 	import { refreshWithProgress } from '#lib/refresh-client';
 	import { collectTags, tagKey } from '#lib/tags';
 	import type { ImportPreview } from '#lib/import-preview';
@@ -28,6 +29,8 @@
 		Group,
 		HubItem,
 		HubState,
+		LinkHealthData,
+		LinkHealthEntry,
 		SavedFilter,
 		ValidationIssue
 	} from '#lib/types';
@@ -457,8 +460,8 @@
 				return;
 			}
 
-			actionMessage = 'Alteração salva.';
 			await invalidateAll();
+			actionMessage = 'Alteração salva.';
 		} catch {
 			actionError = 'Falha de rede ao salvar.';
 		}
@@ -596,6 +599,63 @@
 	let deletingBackupId = $state<string | null>(null);
 	let confirmingBackupDelete = $state<BackupEntry | null>(null);
 	let copiedBackupId = $state<string | null>(null);
+
+	let linkHealth = $state<LinkHealthData | null>(null);
+	let linkCheckBusy = $state(false);
+	let linkCheckMessage = $state('');
+	let linkCheckFailed = $state(false);
+
+	const duplicateGroups = $derived(findDuplicateGroups(hub.items));
+	const duplicateIds = $derived(duplicateItemIds(duplicateGroups));
+	const brokenLinkCount = $derived(
+		hub.items.filter((item) => item.type === 'link' && isLinkProblem(linkHealth?.entries[item.id]))
+			.length
+	);
+
+	function isLinkProblem(entry: LinkHealthEntry | undefined): boolean {
+		return entry?.status === 'broken' || entry?.status === 'timeout' || entry?.status === 'error';
+	}
+
+	async function loadLinkHealth(): Promise<void> {
+		try {
+			const response = await fetch('/api/links/health');
+			if (response.ok) linkHealth = (await response.json()) as LinkHealthData;
+		} catch {
+			// diagnóstico opcional: não bloqueia a página
+		}
+	}
+
+	async function runLinkCheck(): Promise<void> {
+		linkCheckBusy = true;
+		linkCheckMessage = '';
+		linkCheckFailed = false;
+		try {
+			const response = await fetch('/api/links/health', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: '{}'
+			});
+			const result = (await response.json()) as LinkHealthData & { ok?: boolean; error?: string };
+			if (!response.ok || result.ok === false) {
+				linkCheckFailed = true;
+				linkCheckMessage = result.error ?? 'Falha ao verificar os links.';
+				return;
+			}
+
+			linkHealth = {
+				version: result.version,
+				checkedAt: result.checkedAt,
+				entries: result.entries
+			};
+			const total = Object.keys(result.entries).length;
+			linkCheckMessage = `${total} ${total === 1 ? 'link verificado' : 'links verificados'}.`;
+		} catch {
+			linkCheckFailed = true;
+			linkCheckMessage = 'Falha de rede ao verificar os links.';
+		} finally {
+			linkCheckBusy = false;
+		}
+	}
 
 	function formatBytes(value: number): string {
 		if (value < 1024) return `${value} B`;
@@ -810,6 +870,7 @@
 	onMount(() => {
 		void loadBackupInfo();
 		void loadArchiveEntries();
+		void loadLinkHealth();
 		if (typeof Notification !== 'undefined') {
 			notifyBlocked = Notification.permission === 'denied';
 		}
@@ -1362,6 +1423,60 @@
 	</div>
 {:else if tab === 'itens'}
 	<BookmarkletCard />
+	<div class="link-health-bar">
+		<button class="btn" type="button" onclick={runLinkCheck} disabled={linkCheckBusy}>
+			<Icon name="refresh" size={16} />
+			{linkCheckBusy ? 'Verificando...' : 'Verificar links'}
+		</button>
+		{#if linkHealth?.checkedAt}
+			<span class="muted small">Última verificação: {relativeTime(linkHealth.checkedAt)}</span>
+		{/if}
+		{#if brokenLinkCount > 0}
+			<span class="tag health-broken">
+				{brokenLinkCount}
+				{brokenLinkCount === 1 ? 'quebrado' : 'quebrados'}
+			</span>
+		{/if}
+		{#if duplicateIds.size > 0}
+			<span class="tag health-dup">
+				{duplicateIds.size}
+				{duplicateIds.size === 1 ? 'duplicado' : 'duplicados'}
+			</span>
+		{/if}
+	</div>
+	{#if linkCheckMessage}
+		<div class:alert={linkCheckFailed} class:notice={!linkCheckFailed} role="status">
+			{linkCheckMessage}
+		</div>
+	{/if}
+	{#if duplicateGroups.length > 0}
+		<div class="panel link-duplicates">
+			<h3 class="fs-15">Links duplicados</h3>
+			<p class="muted small">
+				Mesmo endereço depois de normalizar host, barra final e parâmetros de rastreamento. Remova
+				as cópias que não quer manter.
+			</p>
+			{#each duplicateGroups as group (group.key)}
+				<div class="duplicate-group">
+					<code>{group.key}</code>
+					<ul>
+						{#each group.items as item (item.id)}
+							<li>
+								<span>{item.name}</span>
+								<button
+									class="mini-btn danger"
+									type="button"
+									onclick={() => removeEntry('item', item.id, item.name)}
+								>
+									Remover
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/each}
+		</div>
+	{/if}
 	<div class="chips" role="group" aria-label="Filtrar itens por tipo">
 		<button
 			class="chip"
@@ -1440,6 +1555,24 @@
 										{#if item.description}· {item.description}{/if}
 									</span>
 								</span>
+								{#if linkHealth?.entries[item.id] && isLinkProblem(linkHealth.entries[item.id])}
+									<span
+										class="tag health-broken"
+										title={linkHealth.entries[item.id]?.message ?? 'Link com problema'}
+									>
+										quebrado
+									</span>
+								{:else if linkHealth?.entries[item.id]?.status === 'redirect'}
+									<span
+										class="tag health-redirect"
+										title={linkHealth.entries[item.id]?.finalUrl ?? ''}
+									>
+										redireciona
+									</span>
+								{/if}
+								{#if duplicateIds.has(item.id)}
+									<span class="tag health-dup">duplicado</span>
+								{/if}
 								<div class="manage-actions">
 									<button
 										class="mini-btn icon"

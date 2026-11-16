@@ -10,6 +10,8 @@ export const test = base.extend({
 		await page.route('**/*', (route) => {
 			const url = new URL(route.request().url());
 			if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') {
+				// Ícones fariam o servidor buscar favicons externos; a suíte é hermética.
+				if (url.pathname === '/api/icon') return route.fulfill({ status: 404, body: '' });
 				return route.continue();
 			}
 			return route.abort();
