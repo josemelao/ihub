@@ -197,11 +197,22 @@ interface PinnedAddress {
 }
 
 /**
+ * Resolução de DNS injetável: produção usa o `lookup` do Node; testes passam
+ * um resolver fixo para não depender de rede.
+ */
+export type HostResolver = (host: string) => Promise<PinnedAddress[]>;
+
+const dnsResolver: HostResolver = (host) => lookup(host, { all: true, verbatim: true });
+
+/**
  * Resolve o host uma única vez e devolve um IP público. O IP é o que vai ser
  * usado na conexão, então uma segunda resolução (DNS rebinding) não muda o
  * destino do request.
  */
-export async function resolvePublicAddress(input: string | URL): Promise<PinnedAddress> {
+export async function resolvePublicAddress(
+	input: string | URL,
+	resolveHost: HostResolver = dnsResolver
+): Promise<PinnedAddress> {
 	const url = input instanceof URL ? input : new URL(input);
 
 	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
@@ -220,9 +231,9 @@ export async function resolvePublicAddress(input: string | URL): Promise<PinnedA
 		return { address: host, family: literal };
 	}
 
-	let addresses: { address: string; family: number }[];
+	let addresses: PinnedAddress[];
 	try {
-		addresses = await lookup(host, { all: true, verbatim: true });
+		addresses = await resolveHost(host);
 	} catch {
 		throw new Error('Não foi possível resolver o host.');
 	}
@@ -234,9 +245,12 @@ export async function resolvePublicAddress(input: string | URL): Promise<PinnedA
 	return { address: addresses[0].address, family: addresses[0].family };
 }
 
-export async function assertSafeUrl(input: string | URL): Promise<URL> {
+export async function assertSafeUrl(
+	input: string | URL,
+	resolveHost: HostResolver = dnsResolver
+): Promise<URL> {
 	const url = input instanceof URL ? input : new URL(input);
-	await resolvePublicAddress(url);
+	await resolvePublicAddress(url, resolveHost);
 	return url;
 }
 
@@ -304,6 +318,7 @@ export async function readTextLimited(response: Response, maxBytes: number): Pro
 export interface FetchTextOptions {
 	maxBytes?: number;
 	timeoutMs?: number;
+	resolver?: HostResolver;
 	fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
 }
 
@@ -404,7 +419,8 @@ function headerOf(headers: IncomingHttpHeaders, name: string): string | null {
 
 function fetchTextPinned(
 	target: string,
-	options: { timeoutMs: number; maxBytes: number }
+	options: { timeoutMs: number; maxBytes: number },
+	resolveHost: HostResolver
 ): Promise<{ text: string; finalUrl: string }> {
 	return (async () => {
 		let current = new URL(target);
@@ -413,7 +429,7 @@ function fetchTextPinned(
 			const wait = blockedFor(current);
 			if (wait > 0) throw new RateLimitError(rateLimitMessage(wait), wait);
 
-			const pinned = await resolvePublicAddress(current);
+			const pinned = await resolvePublicAddress(current, resolveHost);
 			const response = await requestPinned(current, pinned, options);
 
 			if (response.status >= 300 && response.status < 400) {
@@ -456,12 +472,13 @@ function fetchTextPinned(
 async function fetchTextWithFetcher(
 	target: string,
 	options: { timeoutMs: number; maxBytes: number },
-	fetcher: (input: string, init?: RequestInit) => Promise<Response>
+	fetcher: (input: string, init?: RequestInit) => Promise<Response>,
+	resolveHost: HostResolver
 ): Promise<{ text: string; finalUrl: string }> {
 	let current = new URL(target);
 
 	for (let redirects = 0; redirects < 4; redirects += 1) {
-		await assertSafeUrl(current);
+		await assertSafeUrl(current, resolveHost);
 
 		const response = await fetcher(current.toString(), {
 			redirect: 'manual',
@@ -500,11 +517,12 @@ export async function fetchPublicText(
 	const maxBytes = options.maxBytes ?? 5_000_000;
 	const timeoutMs = options.timeoutMs ?? 10_000;
 	const limits = { maxBytes, timeoutMs };
+	const resolveHost = options.resolver ?? dnsResolver;
 
 	// Com fetcher injetado (testes), mantém o caminho via Response; em produção
 	// a conexão usa o IP já validado.
-	if (options.fetcher) return fetchTextWithFetcher(target, limits, options.fetcher);
-	return fetchTextPinned(target, limits);
+	if (options.fetcher) return fetchTextWithFetcher(target, limits, options.fetcher, resolveHost);
+	return fetchTextPinned(target, limits, resolveHost);
 }
 
 async function readBytesLimited(response: Response, maxBytes: number): Promise<Uint8Array> {
@@ -536,6 +554,7 @@ async function readBytesLimited(response: Response, maxBytes: number): Promise<U
 export interface FetchBytesOptions {
 	maxBytes?: number;
 	timeoutMs?: number;
+	resolver?: HostResolver;
 	fetcher?: (input: string, init?: RequestInit) => Promise<Response>;
 }
 
@@ -548,12 +567,13 @@ export interface FetchedBytes {
 async function fetchBytesWithFetcher(
 	target: string,
 	options: { timeoutMs: number; maxBytes: number },
-	fetcher: (input: string, init?: RequestInit) => Promise<Response>
+	fetcher: (input: string, init?: RequestInit) => Promise<Response>,
+	resolveHost: HostResolver
 ): Promise<FetchedBytes> {
 	let current = new URL(target);
 
 	for (let redirects = 0; redirects < 4; redirects += 1) {
-		await assertSafeUrl(current);
+		await assertSafeUrl(current, resolveHost);
 
 		const response = await fetcher(current.toString(), {
 			redirect: 'manual',
@@ -584,7 +604,8 @@ async function fetchBytesWithFetcher(
 
 async function fetchBytesPinned(
 	target: string,
-	options: { timeoutMs: number; maxBytes: number }
+	options: { timeoutMs: number; maxBytes: number },
+	resolveHost: HostResolver
 ): Promise<FetchedBytes> {
 	let current = new URL(target);
 
@@ -592,7 +613,7 @@ async function fetchBytesPinned(
 		const wait = blockedFor(current);
 		if (wait > 0) throw new RateLimitError(rateLimitMessage(wait), wait);
 
-		const pinned = await resolvePublicAddress(current);
+		const pinned = await resolvePublicAddress(current, resolveHost);
 		const response = await requestPinned(current, pinned, options);
 
 		if (response.status >= 300 && response.status < 400) {
@@ -636,7 +657,8 @@ export async function fetchPublicBytes(
 	const maxBytes = options.maxBytes ?? 2_000_000;
 	const timeoutMs = options.timeoutMs ?? 10_000;
 	const limits = { maxBytes, timeoutMs };
+	const resolveHost = options.resolver ?? dnsResolver;
 
-	if (options.fetcher) return fetchBytesWithFetcher(target, limits, options.fetcher);
-	return fetchBytesPinned(target, limits);
+	if (options.fetcher) return fetchBytesWithFetcher(target, limits, options.fetcher, resolveHost);
+	return fetchBytesPinned(target, limits, resolveHost);
 }
